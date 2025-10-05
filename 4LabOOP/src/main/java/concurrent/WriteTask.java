@@ -20,7 +20,7 @@ public class WriteTask implements Runnable{
             for (int i = 0; i < function.getCount(); i++){
                 synchronized (lock){
                     function.setY(i, value);
-                    System.out.println("Writing for index " + i + " complete");
+                    System.out.printf("Writing for index %d complete\n", i);
                     System.out.flush();
 
                     lock.notify();

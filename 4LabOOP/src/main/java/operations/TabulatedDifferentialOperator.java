@@ -42,8 +42,6 @@ public class TabulatedDifferentialOperator implements DifferentialOperator<Tabul
             xValues[i] = points[i].x;
         }
 
-        //if (count == 1) {
-          //  yValues[0] = 0;
         if (count == 2) {
             double h = points[1].x - points[0].x;
             double deriv = (points[1].y - points[0].y) / h;
@@ -63,6 +61,7 @@ public class TabulatedDifferentialOperator implements DifferentialOperator<Tabul
 
         return factory.create(xValues, yValues);
     }
+
     public TabulatedFunction deriveSynchronously(TabulatedFunction function) {
         if (function == null) {
             throw new IllegalArgumentException("Функция не может быть null");

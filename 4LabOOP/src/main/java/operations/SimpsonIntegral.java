@@ -7,8 +7,8 @@ import java.util.concurrent.RecursiveTask;
 public class SimpsonIntegral extends RecursiveTask<Double> {
     private final MathFunction func;
     private final double a, b;
-    private final long n; // должно быть чётным
-    private final long THRESHOLD;
+    private final long n; //должно быть чётным
+    private final long THRESHOLD;//порог для переключения на параллельное вычисление
 
     public SimpsonIntegral(MathFunction func, double a, double b, long n) {
         this.func = func;
@@ -21,9 +21,9 @@ public class SimpsonIntegral extends RecursiveTask<Double> {
     @Override
     protected Double compute() {
         if (n <= THRESHOLD) {
-            return computeSimpsonSequential(a, b, n);
+            return computeSimpsonSequential(a, b, n);//один поток делает
         } else {
-            //Делим отрезок и число разбиений пополам
+            //делим отрезок и число разбиений пополам
             double mid = a + (b - a) / 2.0;
             long halfN = n / 2;
 
@@ -39,14 +39,13 @@ public class SimpsonIntegral extends RecursiveTask<Double> {
     }
 
     private double computeSimpsonSequential(double a, double b, long n) {
-        double h = (b - a) / n;
-        double sum = func.apply(a) + func.apply(b);
+        double h = (b - a) / n;//шаг разбиение
+        double sum = func.apply(a) + func.apply(b);//начальное и конечное значение
 
         for (int i = 1; i < n; i++) {
             double x = a + i * h;
             sum += (i % 2 == 0) ? 2.0 * func.apply(x) : 4.0 * func.apply(x);
         }
-
         return sum * h / 3.0;
     }
 }

@@ -2,7 +2,7 @@ package concurrent;
 
 import functions.TabulatedFunction;
 
-public class ReadTask implements Runnable{
+public class    ReadTask implements Runnable{
 
     private final TabulatedFunction function;
     private final Object lock;
@@ -20,7 +20,7 @@ public class ReadTask implements Runnable{
                 synchronized (lock){
                     double x = function.getX(i);
                     double y = function.getY(i);
-                    System.out.println("After read: i = " + i + ", x = " + String.format("%.6f", x) + ", y = " + String.format("%.6f", y));
+                    System.out.printf("After read: i = %d, x = %f, y = %f\n", i, x, y);
                     System.out.flush();
 
                     lock.notify();

@@ -9,7 +9,7 @@ public class TestParralellism2000 {
         MathFunction complexFunc = x -> 1.0 / (1.0 + x * x) ;
         double a = -5.0;
         double b = 5.0;
-        long n = 6_854_775_806L;
+        long n = 6_000_000_000L;
 
         int[] parallelismLevels = {1, 2, 4, 8, 16};
 
