@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Тесты для класса ParallelIntegrator")
 class ParallelIntegratorTest {
 
+    private static final double NANOS_TO_MILLIS = 1_000_000.0;
+
     @Test
     @DisplayName("Интеграл константной функции должен быть равен площади прямоугольника")
     void testConstantFunction() {
@@ -397,4 +399,177 @@ class ParallelIntegratorTest {
         assertEquals(expected, result, 1e-6,
                 "Интеграл |x| на [-2,2] должен быть 4");
     }
+
+    @Test
+    @DisplayName("Измерение времени для константной функции")
+    void testConstantFunctionTiming() {
+        MathFunction constant = new ConstantFunction(5.0);
+        double a = 0.0;
+        double b = 10.0;
+        int n = 1000000;
+        int parallelism = 4;
+        double expected = 5.0 * (b - a); // 50
+
+        System.out.println("\n====Тест константной функции====");
+        System.out.printf("n = %d, parallelism = %d%n", n, parallelism);
+
+        Object[] result = ParallelIntegrator.integrateWithFixedPool(constant, a, b, n, parallelism);
+        double integralValue = (Double) result[0];
+        long durationNanos = (Long) result[1];
+        double durationMillis = durationNanos / NANOS_TO_MILLIS;
+
+        System.out.printf("Результат: %.3f%n", integralValue);
+        System.out.printf("Время выполнения: %.3f мс%n", durationMillis);
+
+        assertEquals(expected, integralValue, 1e-10);
+        assertTrue(durationNanos > 0, "Время выполнения должно быть положительным");
+    }
+
+    @Test
+    @DisplayName("Сравнение времени для разных уровней параллелизма")
+    void testParallelismScalingTiming() {
+        MathFunction complexFunc = x -> 1.0 / (1.0 + x * x) ;
+        double a = -5.0;
+        double b = 5.0;
+        int n = 2000000;
+
+        int[] parallelismLevels = {1, 2, 4, 8};
+
+        System.out.println("\n====Сравнение параллелизма====");
+        System.out.printf("n = %d%n", n);
+
+        double baseResult = 0;
+        long baseTime = 0;
+
+        for (int parallelism : parallelismLevels) {
+            Object[] result = ParallelIntegrator.integrateWithFixedPool(complexFunc, a, b, n, parallelism);
+            double integralValue = (Double) result[0];
+            long durationNanos = (Long) result[1];
+            double durationMillis = durationNanos / NANOS_TO_MILLIS;
+
+            if (parallelism == 1) {
+                baseResult = integralValue;
+                baseTime = durationNanos;
+            }
+
+            System.out.printf("Parallelism %d: %.3f мс, результат: %.10f%n",
+                    parallelism, durationMillis, integralValue);
+
+            assertEquals(baseResult, integralValue, 1e-10,
+                    "Результаты должны совпадать для всех уровней параллелизма");
+            assertTrue(durationNanos > 0, "Время выполнения должно быть положительным");
+        }
+
+        System.out.printf("Ускорение (1 поток как база): %.2f%%%n",
+                (baseTime > 0 ? (double) baseTime / baseTime * 100 : 0));
+    }
+
+    @Test
+    @DisplayName("Сравнение однопоточного и многопоточного выполнения")
+    void testSingleVsMultiThreadTiming() {
+        MathFunction func = x -> Math.log(1 + x * x) * Math.sin(x);
+        double a = 0.0;
+        double b = 20.0;
+        int n = 3000000;
+
+        System.out.println("\n====Однопоточное vs Многопоточное====");
+        System.out.printf("n = %d%n", n);
+
+        //Однопоточное выполнение
+        Object[] singleResult = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, 1);
+        double singleValue = (Double) singleResult[0];
+        long singleTimeNanos = (Long) singleResult[1];
+        double singleTimeMillis = singleTimeNanos / NANOS_TO_MILLIS;
+
+        //Многопоточное выполнение
+        Object[] multiResult = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, 4);
+        double multiValue = (Double) multiResult[0];
+        long multiTimeNanos = (Long) multiResult[1];
+        double multiTimeMillis = multiTimeNanos / NANOS_TO_MILLIS;
+
+        System.out.printf("Однопоточное: %.3f мс, результат: %.10f%n", singleTimeMillis, singleValue);
+        System.out.printf("Многопоточное: %.3f мс, результат: %.10f%n", multiTimeMillis, multiValue);
+
+        double speedup = (double) singleTimeNanos / multiTimeNanos;
+        System.out.printf("Ускорение: %.2f раз%n", speedup);
+
+        assertEquals(singleValue, multiValue, 1e-10, "Результаты должны совпадать");
+        assertTrue(singleTimeNanos > 0, "Время однопоточного выполнения должно быть положительным");
+        assertTrue(multiTimeNanos > 0, "Время многопоточного выполнения должно быть положительным");
+    }
+
+    @Test
+    @DisplayName("Проверка a == b: должен возвращать 0 и время 0")
+    void testAEqualsB() {
+        MathFunction func = new ConstantFunction(5.0);
+        double a = 3.14;
+        double b = 3.14;
+        int n = 1000;
+        int parallelism = 4;
+
+        Object[] result = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, parallelism);
+        double integralValue = (Double) result[0];
+        long duration = (Long) result[1];
+
+        assertEquals(0.0, integralValue, 1e-10, "При a == b интеграл должен быть 0");
+        assertEquals(0L, duration, "При a == b время должно быть 0");
+    }
+
+    @Test
+    @DisplayName("Проверка исключения при n = 0")
+    void testNZeroThrowsException() {
+        MathFunction func = new ConstantFunction(1.0);
+        double a = 0.0;
+        double b = 1.0;
+        int n = 0;
+        int parallelism = 4;
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ParallelIntegrator.integrateWithFixedPool(func, a, b, n, parallelism),
+                "Должно бросаться исключение при n = 0"
+        );
+
+        assertEquals("n должно быть положительным", exception.getMessage(),
+                "Сообщение об ошибке должно быть корректным");
+    }
+
+    @Test
+    @DisplayName("Проверка исключения при parallelism = 0")
+    void testParallelismZeroThrowsException() {
+        MathFunction func = new ConstantFunction(1.0);
+        double a = 0.0;
+        double b = 1.0;
+        int n = 1000;
+        int parallelism = 0;
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ParallelIntegrator.integrateWithFixedPool(func, a, b, n, parallelism),
+                "Должно бросаться исключение при parallelism = 0"
+        );
+
+        assertEquals("parallelism должно быть положительным", exception.getMessage(),
+                "Сообщение об ошибке должно быть корректным");
+    }
+
+    @Test
+    @DisplayName("Проверка a > b: результат должен быть отрицательным")
+    void testAGreaterThanB() {
+        MathFunction constant = new ConstantFunction(2.0);
+        double a = 10.0; //a > b
+        double b = 0.0;
+        int n = 1000;
+        int parallelism = 4;
+        double expected = -20.0; //2 * (0 - 10) = -20
+
+        Object[] result = ParallelIntegrator.integrateWithFixedPool(constant, a, b, n, parallelism);
+        double integralValue = (Double) result[0];
+        long duration = (Long) result[1];
+
+        assertEquals(expected, integralValue, 1e-10,
+                "При a > b интеграл должен быть отрицательным");
+        assertTrue(duration > 0, "Время выполнения должно быть положительным");
+    }
+
 }
