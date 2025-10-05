@@ -23,7 +23,7 @@ public class LinkedListTabulatedFunctionSerialization {
         TabulatedFunction firstDerivative = differentialOperator.derive(originalFunction);
         TabulatedFunction secondDerivative = differentialOperator.derive(firstDerivative);
 
-        try (FileOutputStream fileOutputStream = new FileOutputStream("3LabOOP/output/serialized linked list functions.bin");
+        try (FileOutputStream fileOutputStream = new FileOutputStream("output/serialized linked list functions.bin");
              BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream)) {
 
@@ -41,7 +41,7 @@ public class LinkedListTabulatedFunctionSerialization {
             e.printStackTrace();
         }
 
-        try (FileInputStream fileInputStream = new FileInputStream("3LabOOP/output/serialized linked list functions.bin");
+        try (FileInputStream fileInputStream = new FileInputStream("output/serialized linked list functions.bin");
              BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
              ObjectInputStream objectInputStream = new ObjectInputStream(bufferedInputStream)) {
 

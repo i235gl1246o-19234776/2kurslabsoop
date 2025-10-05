@@ -13,7 +13,7 @@ import java.io.BufferedReader;
 public class TabulatedFunctionFileInputStream {
 
     public static void main(String[] args) {
-        try (FileInputStream fileInputStream = new FileInputStream("3LabOOP/input/array_function.bin");
+        try (FileInputStream fileInputStream = new FileInputStream("input/array_function.bin");
              BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream)) {
 
             ArrayTabulatedFunctionFactory arrayFactory = new ArrayTabulatedFunctionFactory();

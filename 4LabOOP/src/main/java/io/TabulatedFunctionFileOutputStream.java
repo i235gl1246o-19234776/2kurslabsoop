@@ -12,10 +12,10 @@ public class TabulatedFunctionFileOutputStream {
         TabulatedFunction arrayFunction = new ArrayTabulatedFunction(xValues, yValues);
         TabulatedFunction linkedListFunction = new LinkedListTabulatedFunction(xValues, yValues);
 
-        try (FileOutputStream arrayFileStream = new FileOutputStream("3LabOOP/output/array_function.bin");
+        try (FileOutputStream arrayFileStream = new FileOutputStream("output/array_function.bin");
              BufferedOutputStream arrayBufferedStream = new BufferedOutputStream(arrayFileStream);
 
-             FileOutputStream linkedListFileStream = new FileOutputStream("3LabOOP/output/linked_list function.bin");
+             FileOutputStream linkedListFileStream = new FileOutputStream("output/linked_list function.bin");
              BufferedOutputStream linkedListBufferedStream = new BufferedOutputStream(linkedListFileStream)) {
 
             FunctionsIO.writeTabulatedFunction(arrayBufferedStream, arrayFunction);

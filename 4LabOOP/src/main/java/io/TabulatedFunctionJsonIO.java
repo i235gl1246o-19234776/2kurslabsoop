@@ -15,7 +15,7 @@ public class TabulatedFunctionJsonIO {
         ArrayTabulatedFunction function = new ArrayTabulatedFunction(xValues, yValues);
 
         // Запись в JSON
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("3LabOOP/output/function.json"))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("output/function.json"))) {
             FunctionsIO.serializeJson(writer, function);
             System.out.println("Функция успешно сериализована в JSON: output/function.json");
         } catch (IOException e) {
@@ -24,7 +24,7 @@ public class TabulatedFunctionJsonIO {
         }
 
         // Чтение из JSON
-        try (BufferedReader reader = new BufferedReader(new FileReader("3LabOOP/output/function.json"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("output/function.json"))) {
             ArrayTabulatedFunction loadedFunction = FunctionsIO.deserializeJson(reader);
             System.out.println("Функция успешно десериализована из JSON:");
             System.out.println("xValues: " + java.util.Arrays.toString(loadedFunction.getXVal()));

@@ -1,21 +1,10 @@
 package operations;
 import functions.MathFunction;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ForkJoinPool;
 
 public class ParallelIntegrator {
-
-    /**
-     * Вычисляет определённый интеграл ∫ₐᵇ f(x) dx методом Симпсона с параллелизацией.
-     *
-     * @param func подынтегральная функция
-     * @param a нижний предел интегрирования
-     * @param b верхний предел интегрирования
-     * @param n желаемое число разбиений (будет приведено к чётному)
-     * @return приближённое значение интеграла
-     */
-    public static double integrate(MathFunction func, double a, double b, int n) {
+    public static double integrate(MathFunction func, double a, double b, long n) {
         if (a == b) {
             return 0;
         }
@@ -33,7 +22,7 @@ public class ParallelIntegrator {
         }
     }
 
-    public static Object[] integrateWithFixedPool(MathFunction func, double a, double b, int n, int parallelism) {
+    public static Object[] integrateWithFixedPool(MathFunction func, double a, double b, long n, int parallelism) {
         if (a == b) {
             return new Object[]{0.0, 0L};
         }

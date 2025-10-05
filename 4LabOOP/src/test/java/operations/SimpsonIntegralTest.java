@@ -239,7 +239,7 @@ class SimpsonIntegralTest {
         MathFunction oddFunction = x -> x * x * x;
         double a = -2.0;
         double b = 2.0;
-        int n = 1000;
+        long n = 1000;
 
         SimpsonIntegral integral = new SimpsonIntegral(oddFunction, a, b, n);
 

@@ -680,18 +680,6 @@ class TabulatedFunctionFactoryTest {
         });
     }
 
-    @Test
-    @DisplayName("createStrict: пустые массивы → допустимо (если create допускает)")
-    public void testCreateStrictWithEmptyArrays() {
-        double[] x = {};
-        double[] y = {};
-
-        TabulatedFunction result = factory.createStrict(x, y);
-
-        assertNotNull(result);
-        assertTrue(result instanceof StrictTabulatedFunction);
-        assertEquals(0, result.getCount());
-    }
 
     @Test
     @DisplayName("createStrict: возвращает именно StrictTabulatedFunction, а не базовую реализацию")

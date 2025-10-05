@@ -8,10 +8,10 @@ public class TabulatedFunctionFileWriter {
     public static void main(String[] args) {
         try (
                 BufferedWriter arrayWriter = new BufferedWriter(
-                        new FileWriter("3LabOOP/output/array_function.txt")
+                        new FileWriter("output/array_function.txt")
                 );
                 BufferedWriter linkedListWriter = new BufferedWriter(
-                        new FileWriter("3LabOOP/output/linked_list_function.txt")
+                        new FileWriter("output/linked_list_function.txt")
                 )
         ) {
 

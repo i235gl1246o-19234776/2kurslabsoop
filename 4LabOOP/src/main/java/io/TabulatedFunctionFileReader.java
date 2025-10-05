@@ -9,7 +9,7 @@ import java.io.*;
 public class TabulatedFunctionFileReader {
 
     public static void main(String[] args) {
-        String filePath = "3LabOOP/input/function.txt";
+        String filePath = "input/function.txt";
 
         try (
                 BufferedReader reader1 = new BufferedReader(new FileReader(filePath));
