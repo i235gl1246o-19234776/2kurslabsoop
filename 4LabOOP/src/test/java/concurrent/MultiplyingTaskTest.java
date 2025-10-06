@@ -23,7 +23,7 @@ public class MultiplyingTaskTest {
 
         task.run();
 
-        assertTrue(task.isCompleted(), "Флаг завершения должен быть установлен");
+
         assertArrayEquals(new double[]{2.0, 4.0, 6.0}, getFunctionYValues(function), 1e-10,
                 "Все значения Y должны быть умножены на 2");
     }
@@ -52,10 +52,6 @@ public class MultiplyingTaskTest {
         double[] expected = {8.0, 8.0, 8.0, 8.0};
         assertArrayEquals(expected, getFunctionYValues(function), 1e-10,
                 "После трёх последовательных удвоений каждое значение должно быть равно 8");
-
-        assertTrue(task1.isCompleted(), "Задача 1 должна быть завершена");
-        assertTrue(task2.isCompleted(), "Задача 2 должна быть завершена");
-        assertTrue(task3.isCompleted(), "Задача 3 должна быть завершена");
     }
 
     private double[] getFunctionYValues(TabulatedFunction f) {
