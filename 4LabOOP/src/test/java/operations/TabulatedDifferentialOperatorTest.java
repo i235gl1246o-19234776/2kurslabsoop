@@ -198,10 +198,9 @@ public class TabulatedDifferentialOperatorTest {
         assertNotNull(result);
         assertEquals(3, result.getCount());
 
-        // f'(x) = 2x → f'(1)=2, f'(2)=4, f'(3)=6
-        // Наш метод использует численное дифференцирование, поэтому проверим приближённо
-        assertEquals(2.0, result.getY(0), 0.5);   // крайняя точка — менее точна
-        assertEquals(4.0, result.getY(1), 0.1);  // центр — точнее
+        //f'(x) = 2x → f'(1)=2, f'(2)=4, f'(3)=6
+        assertEquals(2.0, result.getY(0), 0.5);
+        assertEquals(4.0, result.getY(1), 0.1);
         assertEquals(6.0, result.getY(2), 0.5);
     }
 

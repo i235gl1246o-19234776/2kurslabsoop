@@ -267,21 +267,17 @@ class SynchronizedTabulatedFunctionTest {
     @Test
     @DisplayName("doSynchronously: операция возвращает double (составное вычисление)")
     public void testDoSynchronouslyReturnsDouble() {
-        // Given
         double[] x = {0.0, 1.0, 2.0};
         double[] y = {1.0, 2.0, 3.0};
         TabulatedFunction base = new ArrayTabulatedFunction(x, y);
         SynchronizedTabulatedFunction syncFunc = new SynchronizedTabulatedFunction(base);
 
-        // When
         Double result = syncFunc.doSynchronously(func -> {
-            // Составная операция: сумма первого и последнего Y
             double first = func.getY(0);
             double last = func.getY(func.getCount() - 1);
-            return first + last; // 1.0 + 3.0 = 4.0
+            return first + last;
         });
 
-        // Then
         assertEquals(4.0, result, 1e-10);
     }
 
@@ -308,7 +304,6 @@ class SynchronizedTabulatedFunctionTest {
                 new ArrayTabulatedFunction(x, y)
         );
 
-        // Удвоим все значения внутри одной синхронизированной операции
         Void result = syncFunc.doSynchronously(func -> {
             for (int i = 0; i < func.getCount(); i++) {
                 func.setY(i, func.getY(i) * 2);
@@ -318,7 +313,6 @@ class SynchronizedTabulatedFunctionTest {
 
         assertNull(result);
 
-        // Проверяем результат
         assertEquals(2.0, syncFunc.getY(0), 1e-10);
         assertEquals(2.0, syncFunc.getY(1), 1e-10);
         assertEquals(2.0, syncFunc.getY(2), 1e-10);
@@ -333,7 +327,6 @@ class SynchronizedTabulatedFunctionTest {
                 new ArrayTabulatedFunction(x, y)
         );
 
-        // Увеличим оба значения на 1, только если их сумма чётная
         Boolean updated = syncFunc.doSynchronously(func -> {
             double y0 = func.getY(0);
             double y1 = func.getY(1);
