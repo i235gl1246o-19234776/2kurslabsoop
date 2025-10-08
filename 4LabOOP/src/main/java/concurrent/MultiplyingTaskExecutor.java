@@ -6,7 +6,6 @@ import functions.UnitFunction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MultiplyingTaskExecutor {
     public static void main(String[] args) {
@@ -15,15 +14,16 @@ public class MultiplyingTaskExecutor {
         );
 
         List<Thread> threads = new ArrayList<>();
-        // потокобезопасный лист
-        List<MultiplyingTask> tasks = new CopyOnWriteArrayList<>();
+        List<MultiplyingTask> tasks = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
             MultiplyingTask task = new MultiplyingTask(function);
             tasks.add(task);
             Thread thread = new Thread(task);
             threads.add(thread);
-            thread.start(); //запуск потока
+        }
+        for (Thread thread : threads){
+            thread.start();
         }
 
         for (Thread thread : threads) {
