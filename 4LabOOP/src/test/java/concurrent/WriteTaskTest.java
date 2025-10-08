@@ -32,7 +32,7 @@ class WriteTaskTest {
         double[] yValues = {10.0, 20.0, 30.0};
         function = new LinkedListTabulatedFunctionFactory().create(xValues, yValues);
         lock = new Object();
-        writeTask = new WriteTask(function, 99.0, lock);
+        writeTask = new WriteTask(function, 99.0);
 
         originalOut = System.out;
         outputStream = new ByteArrayOutputStream();
@@ -50,7 +50,7 @@ class WriteTaskTest {
     void testConstructor() {
         assertNotNull(writeTask, "Объект WriteTask должен быть создан");
 
-        WriteTask taskWithDifferentValue = new WriteTask(function, 50.0, lock);
+        WriteTask taskWithDifferentValue = new WriteTask(function, 50.0);
         assertNotNull(taskWithDifferentValue, "Должен создаваться с разными значениями");
     }
 
@@ -58,7 +58,7 @@ class WriteTaskTest {
     @DisplayName("WriteTask должен корректно работать в паре с ReadTask")
     @Timeout(value = 3, unit = TimeUnit.SECONDS)
     void testWriteReadIntegration() throws InterruptedException {
-        ReadTask readTask = new ReadTask(function, lock);
+        ReadTask readTask = new ReadTask(function);
 
         Thread writeThread = new Thread(writeTask);
         Thread readThread = new Thread(readTask);
@@ -86,8 +86,8 @@ class WriteTaskTest {
     @Timeout(value = 3, unit = TimeUnit.SECONDS)
     void testWriteTaskSetsCorrectValues() throws InterruptedException {
         double testValue = 77.5;
-        WriteTask testWriteTask = new WriteTask(function, testValue, lock);
-        ReadTask readTask = new ReadTask(function, lock);
+        WriteTask testWriteTask = new WriteTask(function, testValue);
+        ReadTask readTask = new ReadTask(function);
 
         Thread writeThread = new Thread(testWriteTask);
         Thread readThread = new Thread(readTask);
@@ -168,8 +168,8 @@ class WriteTaskTest {
         double[] originalX = {1.0, 2.0, 3.0};
         double[] originalY = {10.0, 20.0, 30.0};
         TabulatedFunction testFunction = new LinkedListTabulatedFunctionFactory().create(originalX, originalY);
-        WriteTask testWriteTask = new WriteTask(testFunction, 99.0, lock);
-        ReadTask readTask = new ReadTask(testFunction, lock);
+        WriteTask testWriteTask = new WriteTask(testFunction, 99.0);
+        ReadTask readTask = new ReadTask(testFunction);
 
         Thread writeThread = new Thread(testWriteTask);
         Thread readThread = new Thread(readTask);
@@ -191,8 +191,8 @@ class WriteTaskTest {
     @Timeout(value = 4, unit = TimeUnit.SECONDS)
     void testMultipleWriteTasks() throws InterruptedException {
         Object sharedLock = new Object();
-        WriteTask writeTask1 = new WriteTask(function, 50.0, sharedLock);
-        WriteTask writeTask2 = new WriteTask(function, 75.0, sharedLock);
+        WriteTask writeTask1 = new WriteTask(function, 50.0);
+        WriteTask writeTask2 = new WriteTask(function, 75.0);
 
         Thread thread1 = new Thread(writeTask1);
         Thread thread2 = new Thread(writeTask2);
@@ -214,7 +214,7 @@ class WriteTaskTest {
     @DisplayName("WriteTask должен флашить вывод после каждой операции")
     @Timeout(value = 3, unit = TimeUnit.SECONDS)
     void testWriteTaskFlushesOutput() throws InterruptedException {
-        ReadTask readTask = new ReadTask(function, lock);
+        ReadTask readTask = new ReadTask(function);
 
         Thread writeThread = new Thread(writeTask);
         Thread readThread = new Thread(readTask);
@@ -237,8 +237,8 @@ class WriteTaskTest {
     @Timeout(value = 3, unit = TimeUnit.SECONDS)
     void testWriteTaskWithNegativeValues() throws InterruptedException {
         double negativeValue = -99.0;
-        WriteTask negativeWriteTask = new WriteTask(function, negativeValue, lock);
-        ReadTask readTask = new ReadTask(function, lock);
+        WriteTask negativeWriteTask = new WriteTask(function, negativeValue);
+        ReadTask readTask = new ReadTask(function);
 
         Thread writeThread = new Thread(negativeWriteTask);
         Thread readThread = new Thread(readTask);

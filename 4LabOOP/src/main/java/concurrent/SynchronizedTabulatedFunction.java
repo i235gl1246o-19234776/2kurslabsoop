@@ -18,99 +18,53 @@ public class SynchronizedTabulatedFunction implements TabulatedFunction{
     }
 
     @Override
-    public int getCount(){
-        lock.lock();
-        try{
-            return function.getCount();
-        } finally {
-            lock.unlock();
-        }
+    public synchronized int getCount(){
+        return function.getCount();
     }
 
     @Override
-    public double getX(int index){
-        lock.lock();
-        try{
-            return function.getX(index);
-        }finally {
-            lock.unlock();
-        }
+    public synchronized double getX(int index){
+        return function.getX(index);
     }
 
     @Override
-    public double getY(int index){
-        lock.lock();
-        try{
-            return function.getY(index);
-        }finally {
-            lock.unlock();
-        }
+    public synchronized double getY(int index){
+        return function.getY(index);
     }
 
     @Override
-    public void setY(int index, double value) {
-        lock.lock();
-        try {
-            function.setY(index, value);
-        } finally {
-            lock.unlock();
-        }
+    public synchronized void setY(int index, double value) {
+        function.setY(index, value);
     }
 
     @Override
-    public double leftBound() {
-        lock.lock();
-        try {
-            return function.leftBound();
-        } finally {
-            lock.unlock();
-        }
+    public synchronized double leftBound() {
+        return function.leftBound();
     }
 
     @Override
-    public double rightBound() {
-        lock.lock();
-        try {
-            return function.rightBound();
-        } finally {
-            lock.unlock();
-        }
+    public synchronized double rightBound() {
+        return function.rightBound();
     }
 
     @Override
-    public int indexOfX(double x) {
-        lock.lock();
-        try {
-            return function.indexOfX(x);
-        } finally {
-            lock.unlock();
-        }
+    public synchronized int indexOfX(double x) {
+        return function.indexOfX(x);
     }
 
     @Override
-    public int indexOfY(double y) {
-        lock.lock();
-        try {
-            return function.indexOfY(y);
-        } finally {
-            lock.unlock();
-        }
+    public synchronized int indexOfY(double y) {
+        return function.indexOfY(y);
     }
 
     @Override
-    public double apply(double x) {
-        lock.lock();
-        try {
-            return function.apply(x);
-        } finally {
-            lock.unlock();
-        }
+    public synchronized double apply(double x) {
+        return function.apply(x);
     }
 
     @Override
     public Iterator<Point> iterator(){
-        lock.lock();
-        try{
+        synchronized (function) {
             Point[] pointsCopy = TabulatedFunctionOperationService.asPoints(function);
 
             return new Iterator<Point>() {
@@ -125,23 +79,18 @@ public class SynchronizedTabulatedFunction implements TabulatedFunction{
 
                 @Override
                 public Point next() {
-                    if(!hasNext()){
+                    if (!hasNext()) {
                         throw new NoSuchElementException("Элементов больше нет, ы");
                     }
                     return points[currIndex++];
                 }
             };
-        }finally {
-            lock.unlock();
         }
     }
 
-    public <T> T doSynchronously(Operation<T> operation) {
-        lock.lock();
-        try {
+    public <T> T doSynchronously(Operation<? extends T> operation) {
+        synchronized (function) {
             return operation.apply(this);
-        } finally {
-            lock.unlock();
         }
     }
 

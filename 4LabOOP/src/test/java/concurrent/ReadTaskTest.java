@@ -30,7 +30,7 @@ class ReadTaskTest {
         double[] yValues = {10.0, 20.0, 30.0};
         function = new LinkedListTabulatedFunctionFactory().create(xValues, yValues);
         lock = new Object();
-        readTask = new ReadTask(function, lock);
+        readTask = new ReadTask(function);
 
         originalOut = System.out;
         outputStream = new ByteArrayOutputStream();
@@ -53,7 +53,7 @@ class ReadTaskTest {
     @DisplayName("ReadTask должен читать данные при совместной работе с WriteTask")
     @Timeout(value = 3, unit = TimeUnit.SECONDS)
     void testReadWriteIntegration() throws InterruptedException {
-        WriteTask writeTask = new WriteTask(function, 99.0, lock);
+        WriteTask writeTask = new WriteTask(function, 99.0);
 
         Thread readThread = new Thread(readTask);
         Thread writeThread = new Thread(writeTask);
