@@ -16,24 +16,15 @@ public class TestParralellism2000 {
         System.out.println("\n====Сравнение параллелизма====");
         System.out.printf("n = %d%n", n);
 
-        double baseResult = 0;
-        long baseTime = 0;
-
         for (int parallelism : parallelismLevels) {
-            Object[] result = ParallelIntegrator.integrateWithFixedPool(complexFunc, a, b, n, parallelism);
-            double integralValue = (Double) result[0];
-            long durationNanos = (Long) result[1];
-            double durationMillis = durationNanos / NANOS_TO_MILLIS;
+            ParallelIntegrator.IntegrationResult result = ParallelIntegrator.integrateWithFixedPool(complexFunc, a, b, n, parallelism);
+            double integralValue = result.result();
+            long durationNanos = result.duration();
 
-            if (parallelism == 1) {
-                baseTime = durationNanos;
-            }
+            double durationMillis = durationNanos / NANOS_TO_MILLIS;
 
             System.out.printf("Parallelism %d: %.3f мс, результат: %.10f%n",
                     parallelism, durationMillis, integralValue);
         }
-
-        System.out.printf("Ускорение (1 поток как база): %.2f%%%n",
-                (baseTime > 0 ? (double) baseTime / baseTime * 100 : 0));
     }
 }
