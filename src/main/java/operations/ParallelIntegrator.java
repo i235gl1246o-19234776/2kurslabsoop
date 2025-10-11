@@ -22,9 +22,11 @@ public class ParallelIntegrator {
         }
     }
 
-    public static Object[] integrateWithFixedPool(MathFunction func, double a, double b, long n, int parallelism) {
+    public record IntegrationResult(double result, long duration) {} //создает неизменяемый объект с геттерами, equals(), hashCode() и toString()
+
+    public static IntegrationResult integrateWithFixedPool(MathFunction func, double a, double b, long n, int parallelism) {
         if (a == b) {
-            return new Object[]{0.0, 0L};
+            return new IntegrationResult(0.0, 0L);
         }
         if (n <= 0) {
             throw new IllegalArgumentException("n должно быть положительным");
@@ -50,7 +52,7 @@ public class ParallelIntegrator {
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
 
-            return new Object[]{result, duration};
+            return new IntegrationResult(result, duration);
         }
     }
 
