@@ -5,7 +5,6 @@ import functions.*;
 public class ReadWriteTaskExecutor {
 
     public static void main(String[] args) {
-        final Object lock = new Object();
 
         ConstantFunction constantFunction = new ConstantFunction(-1.0);
 

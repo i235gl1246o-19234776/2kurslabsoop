@@ -5,16 +5,12 @@ import operations.TabulatedFunctionOperationService;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class SynchronizedTabulatedFunction implements TabulatedFunction{
     private final TabulatedFunction function;
-    private final Lock lock;
 
     public SynchronizedTabulatedFunction(TabulatedFunction function){
         this.function = function;
-        this.lock = new ReentrantLock();
     }
 
     @Override

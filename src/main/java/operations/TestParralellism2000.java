@@ -6,10 +6,10 @@ public class TestParralellism2000 {
     private static final double NANOS_TO_MILLIS = 1_000_000.0;
 
     public static void main(String[] args) {
-        MathFunction complexFunc = x -> 1.0 / (1.0 + x * x) ;
-        double a = -5.0;
-        double b = 5.0;
-        long n = 6_000_000_000L;
+        MathFunction complexFunc = x -> (1.0 + x * x)/ (1.0 + x * x * x * x) ;
+        double a = -500.0;
+        double b = 500.0;
+        long n = 6_000_000L;
 
         int[] parallelismLevels = {1, 2, 4, 8, 16};
 
