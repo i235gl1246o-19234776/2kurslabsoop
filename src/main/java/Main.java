@@ -1,4 +1,7 @@
+import functions.ArrayTabulatedFunction;
 import functions.MathFunction;
+import functions.NewtonMethod;
+import functions.RungeKuttaFunction;
 import io.*;
 import operations.ParallelIntegrator;
 
@@ -18,6 +21,7 @@ public class Main {
         //TabulatedFunctionFileWriter.main(args);
         //TabulatedFunctionJsonIO.main(args);
         //ForkJoinPool
+
     }
 
 }

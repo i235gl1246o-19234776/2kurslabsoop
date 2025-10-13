@@ -413,9 +413,9 @@ class ParallelIntegratorTest {
         System.out.println("\n====Тест константной функции====");
         System.out.printf("n = %d, parallelism = %d%n", n, parallelism);
 
-        Object[] result = ParallelIntegrator.integrateWithFixedPool(constant, a, b, n, parallelism);
-        double integralValue = (Double) result[0];
-        long durationNanos = (Long) result[1];
+        ParallelIntegrator.IntegrationResult result = ParallelIntegrator.integrateWithFixedPool(constant, a, b, n, parallelism);
+        double integralValue = result.result();
+        long durationNanos = result.duration();
         double durationMillis = durationNanos / NANOS_TO_MILLIS;
 
         System.out.printf("Результат: %.3f%n", integralValue);
@@ -442,9 +442,9 @@ class ParallelIntegratorTest {
         long baseTime = 0;
 
         for (int parallelism : parallelismLevels) {
-            Object[] result = ParallelIntegrator.integrateWithFixedPool(complexFunc, a, b, n, parallelism);
-            double integralValue = (Double) result[0];
-            long durationNanos = (Long) result[1];
+            ParallelIntegrator.IntegrationResult result = ParallelIntegrator.integrateWithFixedPool(complexFunc, a, b, n, parallelism);
+            double integralValue = result.result();
+            long durationNanos = result.duration();
             double durationMillis = durationNanos / NANOS_TO_MILLIS;
 
             if (parallelism == 1) {
@@ -476,15 +476,15 @@ class ParallelIntegratorTest {
         System.out.printf("n = %d%n", n);
 
         //Однопоточное выполнение
-        Object[] singleResult = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, 1);
-        double singleValue = (Double) singleResult[0];
-        long singleTimeNanos = (Long) singleResult[1];
+        ParallelIntegrator.IntegrationResult singleResult = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, 1);
+        double singleValue = singleResult.result();
+        long singleTimeNanos = singleResult.duration();
         double singleTimeMillis = singleTimeNanos / NANOS_TO_MILLIS;
 
         //Многопоточное выполнение
-        Object[] multiResult = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, 4);
-        double multiValue = (Double) multiResult[0];
-        long multiTimeNanos = (Long) multiResult[1];
+        ParallelIntegrator.IntegrationResult multiResult = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, 4);
+        double multiValue = multiResult.result();
+        long multiTimeNanos = multiResult.duration();
         double multiTimeMillis = multiTimeNanos / NANOS_TO_MILLIS;
 
         System.out.printf("Однопоточное: %.3f мс, результат: %.10f%n", singleTimeMillis, singleValue);
@@ -507,9 +507,9 @@ class ParallelIntegratorTest {
         int n = 1000;
         int parallelism = 4;
 
-        Object[] result = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, parallelism);
-        double integralValue = (Double) result[0];
-        long duration = (Long) result[1];
+        ParallelIntegrator.IntegrationResult result = ParallelIntegrator.integrateWithFixedPool(func, a, b, n, parallelism);
+        double integralValue = result.result();
+        long duration = result.duration();
 
         assertEquals(0.0, integralValue, 1e-10, "При a == b интеграл должен быть 0");
         assertEquals(0L, duration, "При a == b время должно быть 0");
@@ -563,9 +563,9 @@ class ParallelIntegratorTest {
         int parallelism = 4;
         double expected = -20.0; //2 * (0 - 10) = -20
 
-        Object[] result = ParallelIntegrator.integrateWithFixedPool(constant, a, b, n, parallelism);
-        double integralValue = (Double) result[0];
-        long duration = (Long) result[1];
+        ParallelIntegrator.IntegrationResult result = ParallelIntegrator.integrateWithFixedPool(constant, a, b, n, parallelism);
+        double integralValue = result.result();
+        long duration = result.duration();
 
         assertEquals(expected, integralValue, 1e-10,
                 "При a > b интеграл должен быть отрицательным");

@@ -9,14 +9,17 @@ import java.util.concurrent.CountDownLatch;
 
 public class MultiplyingTaskExecutor {
     public static void main(String[] args) {
+
+        int n = 100;
+
         TabulatedFunction function = new LinkedListTabulatedFunction(
                 new UnitFunction(), 1.0, 10000.0, 10000
         );
 
         List<Thread> threads = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(10);
+        CountDownLatch latch = new CountDownLatch(n);
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < n; i++) {
             MultiplyingTask task = new MultiplyingTask(function);
 
             Thread thread = new Thread(() -> {
