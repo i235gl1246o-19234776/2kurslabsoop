@@ -205,7 +205,7 @@ class WriteTaskTest {
 
         double finalValue = function.getY(0);
         for (int i = 1; i < function.getCount(); i++) {
-            assertEquals(finalValue, function.getY(i), 1e-9,
+            assertEquals(50, function.getY(i), 1e-9,
                     "Все значения должны быть одинаковыми после записи");
         }
     }

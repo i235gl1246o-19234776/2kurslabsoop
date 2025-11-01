@@ -8,9 +8,8 @@ import java.util.logging.Logger;
 public class SqlLoader {
     private static final Logger logger = Logger.getLogger(SqlLoader.class.getName());
 
-    // Загрузка SQL по имени файла (например, "FunctionCreate.sql")
     public static String loadSql(String filename) {
-        String path = "scripts/" + filename; // ← теперь путь: scripts/имя_файла.sql
+        String path = "scripts/" + filename;
 
         try (InputStream inputStream = SqlLoader.class.getClassLoader().getResourceAsStream(path)) {
             if (inputStream == null) {

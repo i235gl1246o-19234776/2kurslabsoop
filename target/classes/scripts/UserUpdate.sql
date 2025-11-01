@@ -1,3 +1,0 @@
-UPDATE users
-SET username = ?, password_hash = ?
-WHERE id = ?;
