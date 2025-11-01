@@ -9,7 +9,7 @@ public class DatabaseConnection {
     private static final Logger logger = Logger.getLogger(DatabaseConnection.class.getName());
 
     // Убираем статические переменные - используем ThreadLocal для изоляции
-    private static final ThreadLocal<String> url = ThreadLocal.withInitial(() -> "jdbc:postgresql://localhost:5432/functions_database");
+    private static final ThreadLocal<String> url = ThreadLocal.withInitial(() -> "jdbc:postgresql://localhost:5432/test_10k_db"); //functions_database
     private static final ThreadLocal<String> user = ThreadLocal.withInitial(() -> "postgres");
     private static final ThreadLocal<String> password = ThreadLocal.withInitial(() -> "1234");
     private static final ThreadLocal<Boolean> isTestMode = ThreadLocal.withInitial(() -> false);
@@ -23,7 +23,7 @@ public class DatabaseConnection {
     }
 
     public static void resetToDefaultConnection() {
-        url.set("jdbc:postgresql://localhost:5432/functions_database");
+        url.set("jdbc:postgresql://localhost:5432/test_10k_db");
         user.set("postgres");
         password.set("1234");
         isTestMode.set(false);

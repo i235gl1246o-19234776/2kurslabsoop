@@ -1,6 +1,8 @@
 package repository;
 
 import model.Function;
+import model.SearchFunctionResult;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -187,5 +189,125 @@ public class FunctionRepository {
         function.setFunctionName(rs.getString("function_name"));
         function.setFunctionExpression(rs.getString("function_expression"));
         return function;
+    }
+    public List<SearchFunctionResult> search(
+            Long userId,
+            String userName,
+            String functionNamePattern,
+            String typeFunction,
+            Double xVal,
+            Double yVal,
+            Long operationsTypeId,
+            String sortBy,
+            String sortOrder) throws SQLException {
+
+        // Валидация сортировки
+        if (!"function_id".equals(sortBy) && !"function_name".equals(sortBy) &&
+                !"type_function".equals(sortBy) && !"user_name".equals(sortBy)) {
+            sortBy = "function_id";
+        }
+        if (!"asc".equals(sortOrder) && !"desc".equals(sortOrder)) {
+            sortOrder = "asc";
+        }
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT 
+            f.id AS function_id,
+            f.user_id,
+            u.name AS user_name,
+            f.function_name,
+            f.function_expression,
+            f.type_function
+        FROM functions f
+        JOIN "users" u ON f.user_id = u.id
+        """);
+        boolean needsOperationsJoin = operationsTypeId != null;
+        if (needsOperationsJoin) {
+            sql.append(" LEFT JOIN operations o ON f.id = o.function_id ");
+        }
+
+
+        boolean needsTabulatedJoin = (xVal != null || yVal != null);
+        if (needsTabulatedJoin) {
+            sql.append(" LEFT JOIN tabulated_function t ON f.id = t.function_id ");
+        }
+
+        sql.append(" WHERE 1=1 ");
+
+        var params = new ArrayList<Object>();
+
+        if (userId != null) {
+            sql.append(" AND f.user_id = ? ");
+            params.add(userId);
+        }
+        if (userName != null && !userName.trim().isEmpty()) {
+            sql.append(" AND u.name ILIKE ? ");
+            params.add("%" + userName.trim() + "%");
+        }
+        if (functionNamePattern != null && !functionNamePattern.trim().isEmpty()) {
+            sql.append(" AND f.function_name ILIKE ? ");
+            params.add("%" + functionNamePattern.trim() + "%");
+        }
+        if (typeFunction != null && !typeFunction.trim().isEmpty()) {
+            sql.append(" AND f.type_function = ? ");
+            params.add(typeFunction.trim());
+        }
+        if (xVal != null) {
+            sql.append(" AND t.x_val = ? ");
+            params.add(xVal);
+        }
+        if (yVal != null) {
+            sql.append(" AND t.y_val = ? ");
+            params.add(yVal);
+        }
+        if (operationsTypeId != null) {
+            sql.append(" AND o.operations_type_id = ? ");
+            params.add(operationsTypeId);
+        }
+
+        sql.append(" GROUP BY f.id, u.id ");
+        sql.append(" ORDER BY ").append(sortBy).append(" ").append(sortOrder);
+
+        // === ЛОГИРОВАНИЕ ===
+        logger.info(String.format(
+                "Выполняется поиск функций: userId=%s, userName='%s', functionName='%s', type='%s', x=%s, y=%s, sortBy=%s, sortOrder=%s",
+                userId,
+                userName,
+                functionNamePattern,
+                typeFunction,
+                xVal,
+                yVal,
+                sortBy,
+                sortOrder
+        ));
+
+        List<SearchFunctionResult> results = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                results.add(new SearchFunctionResult(
+                        rs.getLong("function_id"),
+                        rs.getLong("user_id"),
+                        rs.getString("user_name"),
+                        rs.getString("function_name"),
+                        rs.getString("function_expression"),
+                        rs.getString("type_function")
+                ));
+            }
+
+            logger.info("Поиск завершён: найдено " + results.size() + " функций");
+            return results;
+
+        } catch (SQLException e) {
+            logger.severe("Ошибка при поиске функций: " + e.getMessage());
+            throw e;
+        }
     }
 }
