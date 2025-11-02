@@ -8,8 +8,8 @@ public class PerformanceLogger {
 
     public void logPerformance(String testName, String queryDescription, long executionTimeMs, int resultCount) {
         String sql = """
-            INSERT INTO performance_log (test_name, query_description, execution_time_ms, result_count)
-            VALUES (?, ?, ?, ?)
+                INSERT INTO performance_log (test_name, query_description, duration_ms, records_found)
+                VALUES (?, ?, ?, ?);
             """;
 
         try (Connection conn = DatabaseConnection.getConnection();

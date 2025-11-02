@@ -159,7 +159,7 @@ public class FunctionRepository {
     }
 
     public boolean deleteFunction(Long id, Long userId) throws SQLException {
-        String sql = "DELETE FROM functions WHERE id = ? AND user_id = ?";
+        String sql = SqlLoader.loadSql("functions/delete_function.sql");
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -229,7 +229,7 @@ public class FunctionRepository {
 
         boolean needsTabulatedJoin = (xVal != null || yVal != null);
         if (needsTabulatedJoin) {
-            sql.append(" LEFT JOIN tabulated_function t ON f.id = t.function_id ");
+            sql.append(" LEFT JOIN tabulated_functions t ON f.id = t.function_id ");
         }
 
         sql.append(" WHERE 1=1 ");
