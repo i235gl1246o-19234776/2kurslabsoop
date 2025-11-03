@@ -37,7 +37,8 @@ public class ParallelIntegrator {
 
         long startTime = System.nanoTime();
 
-        try (ForkJoinPool customPool = new ForkJoinPool(parallelism)) {
+        ForkJoinPool customPool = new ForkJoinPool(parallelism);
+        try {
             SimpsonIntegral task;
             double result;
 
@@ -53,6 +54,8 @@ public class ParallelIntegrator {
             long duration = endTime - startTime;
 
             return new IntegrationResult(result, duration);
+        } finally {
+            customPool.shutdown(); // рекомендуется для явного завершения
         }
     }
 
