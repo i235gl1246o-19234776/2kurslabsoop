@@ -1,9 +1,11 @@
-package org.example.repository;
+package core.repository;
 
-import org.example.entity.UserEntity;
+import core.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
+    boolean existsByName(String name);
+    UserEntity findByName(String name);
 }

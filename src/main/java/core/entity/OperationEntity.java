@@ -1,4 +1,4 @@
-package org.example.entity;
+package core.entity;
 
 import jakarta.persistence.*;
 import java.util.Objects;

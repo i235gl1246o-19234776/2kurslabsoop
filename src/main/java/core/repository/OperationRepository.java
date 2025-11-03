@@ -1,6 +1,6 @@
-package org.example.repository;
+package core.repository;
 
-import org.example.entity.OperationEntity;
+import core.entity.OperationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
