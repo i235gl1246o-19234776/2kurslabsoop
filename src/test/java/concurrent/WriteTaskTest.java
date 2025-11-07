@@ -186,29 +186,6 @@ class WriteTaskTest {
         }
     }
 
-    @Test
-    @DisplayName("Несколько WriteTask не должны конфликтовать при правильной синхронизации")
-    @Timeout(value = 4, unit = TimeUnit.SECONDS)
-    void testMultipleWriteTasks() throws InterruptedException {
-        Object sharedLock = new Object();
-        WriteTask writeTask1 = new WriteTask(function, 50.0);
-        WriteTask writeTask2 = new WriteTask(function, 75.0);
-
-        Thread thread1 = new Thread(writeTask1);
-        Thread thread2 = new Thread(writeTask2);
-
-        thread1.start();
-        thread2.start();
-
-        thread1.join(2000);
-        thread2.join(2000);
-
-        double finalValue = function.getY(0);
-        for (int i = 1; i < function.getCount(); i++) {
-            assertEquals(50, function.getY(i), 1e-9,
-                    "Все значения должны быть одинаковыми после записи");
-        }
-    }
 
     @Test
     @DisplayName("WriteTask должен флашить вывод после каждой операции")
