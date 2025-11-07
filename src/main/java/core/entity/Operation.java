@@ -5,52 +5,48 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "operations")
-public class OperationEntity {
+public class Operation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "function_id", nullable = false)
-    private FunctionEntity function;
+    @JoinColumn(name = "function_id", nullable = false, foreignKey = @ForeignKey(name = "fk_operations_function"))
+    private Function function;
 
     @Column(name = "operations_type_id", nullable = false)
     private Integer operationsTypeId;
 
-    // Пустой конструктор
-    public OperationEntity() {}
+    public Operation() {}
 
-    // Конструктор с параметрами
-    public OperationEntity(FunctionEntity function, Integer operationsTypeId) {
+    public Operation(Function function, Integer operationsTypeId) {
         this.function = function;
         this.operationsTypeId = operationsTypeId;
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public FunctionEntity getFunction() { return function; }
-    public void setFunction(FunctionEntity function) { this.function = function; }
-
+    public Function getFunction() { return function; }
     public Integer getOperationsTypeId() { return operationsTypeId; }
+
+    public void setId(Long id) { this.id = id; }
+    public void setFunction(Function function) { this.function = function; }
     public void setOperationsTypeId(Integer operationsTypeId) { this.operationsTypeId = operationsTypeId; }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof OperationEntity that)) return false;
-        return Objects.equals(operationsTypeId, that.operationsTypeId);
+        if (!(o instanceof Operation op)) return false;
+        return Objects.equals(id, op.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(operationsTypeId);
+        return Objects.hash(id);
     }
 
     @Override
     public String toString() {
-        return "OperationEntity{id=" + id + ", operationsTypeId=" + operationsTypeId + "}";
+        return "OperationEntity{id=" + id + ", type=" + operationsTypeId + "}";
     }
 }

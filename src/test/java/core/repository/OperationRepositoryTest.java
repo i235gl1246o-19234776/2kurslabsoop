@@ -1,50 +1,55 @@
 package core.repository;
 
-import core.entity.FunctionEntity;
-import core.entity.OperationEntity;
-import core.entity.UserEntity;
+import core.entity.Operation;
+import core.entity.Function;
+import core.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-})
-class OperationRepositoryTest {
+@SpringBootTest
+@TestPropertySource("classpath:test.properties")
+@Transactional
+public class OperationRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private FunctionRepository functionRepository;
-
     @Autowired
     private OperationRepository operationRepository;
 
     @Test
-    void testSaveFindDeleteOperation() {
-        // Подготовка зависимостей
-        UserEntity user = new UserEntity("testuser", "hash123");
-        UserEntity savedUser = userRepository.save(user);
+    void testOperationCrudAndCustomSearch() {
+        // Подготовка
+        User user = new User();
+        user.setName("diana");
+        user.setPasswordHash("pass");
+        user = userRepository.save(user);
 
-        FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.ANALYTIC, "f(x)", "x^2");
-        FunctionEntity savedFunction = functionRepository.save(function);
+        Function func = new Function();
+        func.setUser(user);
+        func.setTypeFunction("analytic");
+        func.setFunctionName("op_func");
+        func = functionRepository.save(func);
 
-        // Создаём операцию (например, операция с ID = 1 = "дифференцирование")
-        OperationEntity operation = new OperationEntity(savedFunction, 1);
+        Operation op = new Operation();
+        op.setFunction(func);
+        op.setOperationsTypeId(42);
+        Operation saved = operationRepository.save(op);
 
-        OperationEntity saved = operationRepository.save(operation);
-        OperationEntity found = operationRepository.findById(saved.getId()).orElse(null);
-        operationRepository.delete(saved);
-        OperationEntity deleted = operationRepository.findById(saved.getId()).orElse(null);
+        var ops = operationRepository.findByFunctionId(func.getId());
+        assertEquals(1, ops.size());
+        assertEquals(42, ops.get(0).getOperationsTypeId());
 
-        assertThat(saved).isNotNull();
-        assertThat(found).isNotNull();
-        assertThat(found.getOperationsTypeId()).isEqualTo(1);
-        assertThat(deleted).isNull();
+        var opsByType = operationRepository.findByOperationsTypeId(42);
+        assertTrue(opsByType.stream().anyMatch(o -> o.getId().equals(saved.getId())));
+
+        operationRepository.deleteById(saved.getId());
+        assertFalse(operationRepository.findById(saved.getId()).isPresent());
     }
 }

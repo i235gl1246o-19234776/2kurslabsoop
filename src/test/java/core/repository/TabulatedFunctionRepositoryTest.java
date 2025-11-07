@@ -1,51 +1,55 @@
 package core.repository;
 
-import core.entity.FunctionEntity;
-import core.entity.TabulatedFunctionEntity;
-import core.entity.UserEntity;
+import core.entity.TabulatedFunction;
+import core.entity.Function;
+import core.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-})
-class TabulatedFunctionRepositoryTest {
+@SpringBootTest
+@TestPropertySource("classpath:test.properties")
+@Transactional
+public class TabulatedFunctionRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private FunctionRepository functionRepository;
-
     @Autowired
-    private TabulatedFunctionRepository tabulatedFunctionRepository;
+    private TabulatedFunctionRepository tfRepository;
 
     @Test
-    void testSaveFindDeleteTabulatedFunction() {
-        // Подготовка зависимостей
-        UserEntity user = new UserEntity("testuser", "hash123");
-        UserEntity savedUser = userRepository.save(user);
+    void testTabulatedFunctionCrudAndCustomSearch() {
+        User user = new User();
+        user.setName("charlie");
+        user.setPasswordHash("pass");
+        user = userRepository.save(user);
 
-        FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.TABULAR, "data", null);
-        FunctionEntity savedFunction = functionRepository.save(function);
+        Function func = new Function();
+        func.setUser(user);
+        func.setTypeFunction("tabular");
+        func.setFunctionName("table1");
+        func = functionRepository.save(func);
 
-        // Создаём табулированное значение
-        TabulatedFunctionEntity point = new TabulatedFunctionEntity(savedFunction, 1.0, 2.5);
+        TabulatedFunction point = new TabulatedFunction();
+        point.setFunction(func);
+        point.setXVal(1.0);
+        point.setYVal(1.0);
+        TabulatedFunction saved = tfRepository.save(point);
 
-        TabulatedFunctionEntity saved = tabulatedFunctionRepository.save(point);
-        TabulatedFunctionEntity found = tabulatedFunctionRepository.findById(saved.getId()).orElse(null);
-        tabulatedFunctionRepository.delete(saved);
-        TabulatedFunctionEntity deleted = tabulatedFunctionRepository.findById(saved.getId()).orElse(null);
+        var points = tfRepository.findByFunctionId(func.getId());
+        assertEquals(1, points.size());
+        assertEquals(1.0, points.get(0).getXVal());
 
-        assertThat(saved).isNotNull();
-        assertThat(found).isNotNull();
-        assertThat(found.getXVal()).isEqualTo(1.0);
-        assertThat(found.getYVal()).isEqualTo(2.5);
-        assertThat(deleted).isNull();
+        var pointsByX = tfRepository.findByXVal(1.0);
+        assertTrue(pointsByX.stream().anyMatch(p -> p.getId().equals(saved.getId())));
+
+        tfRepository.deleteById(saved.getId());
+        assertFalse(tfRepository.findById(saved.getId()).isPresent());
     }
 }

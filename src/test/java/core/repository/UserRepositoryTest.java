@@ -1,36 +1,39 @@
 package core.repository;
 
-import core.entity.UserEntity;
+import core.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-})
-class UserRepositoryTest {
+@SpringBootTest
+@TestPropertySource("classpath:test.properties")
+@Transactional
 
+public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
     @Test
-    void testSaveFindDeleteUser() {
-        UserEntity user = new UserEntity();
-        user.setName("testuser");
+    void testUserCrudAndCustomSearch() {
+        User user = new User();
+        user.setName("alice");
         user.setPasswordHash("hash123");
+        User saved = userRepository.save(user);
 
-        UserEntity saved = userRepository.save(user);
-        UserEntity found = userRepository.findById(saved.getId()).orElse(null);
-        userRepository.delete(saved);
-        UserEntity deleted = userRepository.findById(saved.getId()).orElse(null);
+        assertTrue(userRepository.findById(saved.getId()).isPresent());
 
-        assertThat(saved).isNotNull();
-        assertThat(found).isNotNull();
-        assertThat(found.getName()).isEqualTo("testuser");
-        assertThat(deleted).isNull();
+        var foundByName = userRepository.findByName("alice");
+        assertTrue(foundByName.isPresent());
+        assertEquals(saved.getId(), foundByName.get().getId());
+
+        assertTrue(userRepository.existsByName("alice"));
+        assertFalse(userRepository.existsByName("nonexistent"));
+
+        userRepository.deleteById(saved.getId());
+        assertFalse(userRepository.findById(saved.getId()).isPresent());
     }
 }
