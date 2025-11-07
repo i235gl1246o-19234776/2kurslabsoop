@@ -1,0 +1,13 @@
+Метод,Время, мс
+full_scan,326
+search_by_name_exact,181
+search_by_name_pattern,85
+search_by_type_analytic,188
+search_by_user_existing,195
+search_by_user_not_found,80
+sort_by_name_asc,108
+sort_by_id_desc,80
+search_by_x_val,67
+search_by_y_val,66
+search_by_operations_type,66
+search_combined_user_type_x,66
