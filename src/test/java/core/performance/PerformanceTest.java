@@ -14,7 +14,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Locale;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -51,11 +51,10 @@ public class PerformanceTest {
 
     private void appendResult(String method, double avgMs) {
         try (BufferedWriter w = new BufferedWriter(new FileWriter(CSV_FILE, true))) {
-            w.write(String.format("%s,%.2f", method, avgMs));
+            w.write(String.format(Locale.US, "%s,%.2f", method, avgMs));
             w.newLine();
         } catch (IOException ignore) {}
     }
-
     // ————————————————————————
     // 1. Наполнение и очистка БД
     // ————————————————————————
