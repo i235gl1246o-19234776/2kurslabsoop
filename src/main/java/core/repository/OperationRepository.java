@@ -1,13 +1,9 @@
 package core.repository;
 
-import core.entity.Operation;
+import core.entity.OperationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface OperationRepository extends JpaRepository<Operation, Long>{
-    List<Operation> findByFunctionId(Long functionId);
-    List<Operation> findByOperationsTypeId(Integer operationsTypeId);
+public interface OperationRepository extends JpaRepository<OperationEntity, Long> {
 }

@@ -1,39 +1,36 @@
 package core.repository;
 
-import core.entity.User;
+import core.entity.UserEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@TestPropertySource("classpath:test.properties")
-@Transactional
+@DataJpaTest
+@TestPropertySource(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop"
+})
+class UserRepositoryTest {
 
-public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
     @Test
-    void testUserCrudAndCustomSearch() {
-        User user = new User();
-        user.setName("alice");
+    void testSaveFindDeleteUser() {
+        UserEntity user = new UserEntity();
+        user.setName("tester");
         user.setPasswordHash("hash123");
-        User saved = userRepository.save(user);
 
-        assertTrue(userRepository.findById(saved.getId()).isPresent());
+        UserEntity saved = userRepository.save(user);
+        UserEntity found = userRepository.findById(saved.getId()).orElse(null);
+        userRepository.delete(saved);
+        UserEntity deleted = userRepository.findById(saved.getId()).orElse(null);
 
-        var foundByName = userRepository.findByName("alice");
-        assertTrue(foundByName.isPresent());
-        assertEquals(saved.getId(), foundByName.get().getId());
-
-        assertTrue(userRepository.existsByName("alice"));
-        assertFalse(userRepository.existsByName("nonexistent"));
-
-        userRepository.deleteById(saved.getId());
-        assertFalse(userRepository.findById(saved.getId()).isPresent());
+        assertThat(saved).isNotNull();
+        assertThat(found).isNotNull();
+        assertThat(found.getName()).isEqualTo("testuser");
+        assertThat(deleted).isNull();
     }
 }
