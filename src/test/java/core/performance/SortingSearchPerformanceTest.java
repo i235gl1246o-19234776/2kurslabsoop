@@ -50,14 +50,14 @@ public class SortingSearchPerformanceTest {
     @BeforeAll
     static void setupCsv() throws IOException {
         try (BufferedWriter w = new BufferedWriter(new FileWriter(CSV_FILE))) {
-            w.write("Метод,Время, мс");
+            w.write("Метод,\"Время, мс\"");
             w.newLine();
         }
     }
 
-    private void appendResult(String method, long avgMs) {
+    private void appendResult(String method, double avgMs) {
         try (BufferedWriter w = new BufferedWriter(new FileWriter(CSV_FILE, true))) {
-            w.write(String.format(Locale.US, "%s,%d", method, avgMs));
+            w.write(String.format(Locale.US, "%s,%.2f", method, avgMs));
             w.newLine();
         } catch (IOException ignore) {}
     }
