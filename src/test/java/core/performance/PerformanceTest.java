@@ -3,8 +3,6 @@ package core.performance;
 import core.entity.*;
 import core.repository.*;
 import org.junit.jupiter.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,9 +21,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PerformanceTest {
 
-    private static final Logger log = LoggerFactory.getLogger(PerformanceTest.class);
     private static final int USER_COUNT = 100;
-    private static final int FUNCTIONS_PER_USER = 100; // Итого: 10 000 функций
+    private static final int FUNCTIONS_PER_USER = 100; // ~10k функций
+    private static final int ITERATIONS = 1000;
     private static final String CSV_FILE = "framework-test-perfomance.csv";
 
     @Autowired
@@ -51,23 +49,25 @@ public class PerformanceTest {
         }
     }
 
-    private void appendResult(String method, double timeMs) {
+    private void appendResult(String method, double avgMs) {
         try (BufferedWriter w = new BufferedWriter(new FileWriter(CSV_FILE, true))) {
-            w.write(String.format("%s,%.2f", method, timeMs));
+            w.write(String.format("%s,%.2f", method, avgMs));
             w.newLine();
-        } catch (IOException e) {
-            log.error("Failed to write CSV", e);
-        }
+        } catch (IOException ignore) {}
     }
 
     // ————————————————————————
-    // 1. Наполнение БД (~10k функций → >10k записей)
+    // 1. Наполнение и очистка БД
     // ————————————————————————
     @Test
     @Order(1)
     void populateDatabase() {
-        log.info("Populating DB: {} users × {} functions", USER_COUNT, FUNCTIONS_PER_USER);
-        Instant start = Instant.now();
+        // Очистка в правильном порядке
+        operationRepository.deleteAllInBatch();
+        tabulatedFunctionRepository.deleteAllInBatch();
+        functionRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        userRepository.flush();
 
         for (int i = 0; i < USER_COUNT; i++) {
             UserEntity user = new UserEntity("user" + i, "hash" + i);
@@ -75,19 +75,18 @@ public class PerformanceTest {
             users.add(savedUser);
 
             for (int j = 0; j < FUNCTIONS_PER_USER; j++) {
-                boolean isTabular = (j % 2 == 0);
-                FunctionEntity.FunctionType type = isTabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic;
+                boolean istabular = (j % 2 == 0);
+                FunctionEntity.FunctionType type = istabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic;
                 FunctionEntity func = new FunctionEntity(
                         savedUser,
                         type,
                         "func_" + i + "_" + j,
-                        isTabular ? null : "x^2 + " + j
+                        istabular ? null : "x^2 + " + j
                 );
                 FunctionEntity savedFunc = functionRepository.save(func);
                 functions.add(savedFunc);
 
-                if (isTabular) {
-                    // 5 точек на табулярную функцию → +250k записей
+                if (istabular) {
                     for (int k = 0; k < 5; k++) {
                         tabulatedFunctionRepository.save(new TabulatedFunctionEntity(
                                 savedFunc,
@@ -100,207 +99,245 @@ public class PerformanceTest {
                 }
             }
         }
-
-        long ms = Duration.between(start, Instant.now()).toMillis();
-        log.info("Populated DB in {} ms", ms);
     }
 
     // ————————————————————————
-    // 2. Замеры — точные вызовы репозиториев
+    // 2. Замеры (по 1000 итераций каждый)
     // ————————————————————————
 
     @Test
     @Order(2)
     void user_createUser() {
-        UserEntity u = new UserEntity("temp_u", "hash");
-        Instant t0 = Instant.now();
-        userRepository.save(u);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        userRepository.delete(u);
-        appendResult("user_createUser", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            UserEntity u = new UserEntity("temp_create_" + i, "hash");
+            userRepository.save(u);
+            userRepository.delete(u);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("user_createUser", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(3)
     void user_findById() {
         UserEntity target = users.get(0);
-        Instant t0 = Instant.now();
-        UserEntity found = userRepository.findById(target.getId()).orElse(null);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("user_findById", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            userRepository.findById(target.getId());
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("user_findById", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(4)
     void user_findByName() {
         String name = users.get(0).getName();
-        Instant t0 = Instant.now();
-        UserEntity found = userRepository.findByName(name);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("user_findByName", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            userRepository.findByName(name);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("user_findByName", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(5)
     void user_userNameExists() {
         String name = users.get(0).getName();
-        Instant t0 = Instant.now();
-        boolean exists = userRepository.existsByName(name);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("user_userNameExists", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            userRepository.existsByName(name);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("user_userNameExists", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(6)
     void user_updateUser() {
-        UserEntity u = users.get(0);
-        u.setName(u.getName() + "_upd");
-        Instant t0 = Instant.now();
-        userRepository.save(u);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("user_updateUser", ms);
+        UserEntity original = users.get(0);
+        String baseName = original.getName();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            original.setName(baseName + "_upd_" + i);
+            userRepository.save(original);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        // Восстановим имя
+        original.setName(baseName);
+        userRepository.save(original);
+        appendResult("user_updateUser", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(7)
     void user_deleteUser() {
-        UserEntity temp = userRepository.save(new UserEntity("to_del", "del"));
-        Instant t0 = Instant.now();
-        userRepository.delete(temp);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("user_deleteUser", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            UserEntity temp = new UserEntity("to_delete_" + i, "del");
+            temp = userRepository.save(temp);
+            userRepository.delete(temp);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("user_deleteUser", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(8)
     void user_authenticateUser() {
         UserEntity u = users.get(0);
-        Instant t0 = Instant.now();
-        UserEntity found = userRepository.findByName(u.getName());
-        boolean ok = found != null && found.getPasswordHash().equals(u.getPasswordHash());
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("user_authenticateUser", ms);
+        String name = u.getName();
+        String hash = u.getPasswordHash();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            UserEntity found = userRepository.findByName(name);
+            if (found == null || !found.getPasswordHash().equals(hash)) {
+                throw new RuntimeException("Auth failed in perf test");
+            }
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("user_authenticateUser", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(9)
     void function_createFunction() {
         UserEntity u = users.get(0);
-        FunctionEntity f = new FunctionEntity(u, FunctionEntity.FunctionType.analytic, "tmp", "x");
-        Instant t0 = Instant.now();
-        functionRepository.save(f);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        functionRepository.delete(f);
-        appendResult("function_createFunction", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            FunctionEntity f = new FunctionEntity(u, FunctionEntity.FunctionType.analytic, "tmp_" + i, "x");
+            f = functionRepository.save(f);
+            functionRepository.delete(f);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_createFunction", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(10)
     void function_findById() {
         FunctionEntity f = functions.get(0);
-        Instant t0 = Instant.now();
-        FunctionEntity found = functionRepository.findById(f.getId()).orElse(null);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_findById", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            functionRepository.findById(f.getId());
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_findById", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(11)
     void function_findByUserId() {
         Long userId = users.get(0).getId();
-        Instant t0 = Instant.now();
-        List<FunctionEntity> list = functionRepository.findByUser_Id(userId);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_findByUserId", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            functionRepository.findByUser_Id(userId);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_findByUserId", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(12)
     void function_findByName() {
-        // Используем findByUser_Id + фильтр по имени — так делает сервис
         FunctionEntity target = functions.get(0);
         Long userId = target.getUser().getId();
         String name = target.getFunctionName();
-
-        Instant t0 = Instant.now();
-        List<FunctionEntity> candidates = functionRepository.findByUser_Id(userId);
-        FunctionEntity match = candidates.stream()
-                .filter(f -> f.getFunctionName().equals(name))
-                .findFirst()
-                .orElse(null);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_findByName", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            List<FunctionEntity> candidates = functionRepository.findByUser_Id(userId);
+            candidates.stream()
+                    .filter(f -> f.getFunctionName().equals(name))
+                    .findFirst();
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_findByName", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(13)
     void function_findByType() {
-        Instant t0 = Instant.now();
-        List<FunctionEntity> all = functionRepository.findAll(); // для нагрузки
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_findByType", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            functionRepository.findAll(); // эмуляция поиска по типу через фильтрацию в Java
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_findByType", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(14)
     void function_search() {
-        // Поиск по шаблону — эмулируем через Java
-        Instant t0 = Instant.now();
-        List<FunctionEntity> all = functionRepository.findAll();
-        List<FunctionEntity> matches = all.stream()
-                .filter(f -> f.getFunctionName().contains("5"))
-                .limit(100)
-                .toList();
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_search", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            List<FunctionEntity> all = functionRepository.findAll();
+            all.stream().filter(f -> f.getFunctionName().contains("5")).limit(100).toList();
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_search", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(15)
     void function_updateFunction() {
         FunctionEntity f = functions.get(0);
-        f.setFunctionName(f.getFunctionName() + "_upd");
-        Instant t0 = Instant.now();
+        String baseName = f.getFunctionName();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            f.setFunctionName(baseName + "_upd_" + i);
+            functionRepository.save(f);
+        }
+        f.setFunctionName(baseName);
         functionRepository.save(f);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_updateFunction", ms);
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_updateFunction", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(16)
     void function_deleteFunction() {
-        FunctionEntity f = new FunctionEntity(users.get(0), FunctionEntity.FunctionType.analytic, "to_del", "x");
-        f = functionRepository.save(f);
-        Instant t0 = Instant.now();
-        functionRepository.delete(f);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("function_deleteFunction", ms);
+        UserEntity u = users.get(0);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            FunctionEntity f = new FunctionEntity(u, FunctionEntity.FunctionType.analytic, "del_" + i, "x");
+            f = functionRepository.save(f);
+            functionRepository.delete(f);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("function_deleteFunction", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(17)
     void tabulated_createTabulatedFunction() {
         FunctionEntity tabFunc = functions.stream()
-                .filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.tabular)
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.tabular)
                 .findFirst().orElseThrow();
-        TabulatedFunctionEntity p = new TabulatedFunctionEntity(tabFunc, 999.0, 888.0);
-        Instant t0 = Instant.now();
-        tabulatedFunctionRepository.save(p);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        tabulatedFunctionRepository.delete(p);
-        appendResult("tabulated_createTabulatedFunction", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            TabulatedFunctionEntity p = new TabulatedFunctionEntity(tabFunc, (double) i, (double) i * 2);
+            p = tabulatedFunctionRepository.save(p);
+            tabulatedFunctionRepository.delete(p);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_createTabulatedFunction", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(18)
     void tabulated_findAllByFunctionId() {
         FunctionEntity tabFunc = functions.stream()
-                .filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.tabular)
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.tabular)
                 .findFirst().orElseThrow();
-        Instant t0 = Instant.now();
-        List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(tabFunc.getId());
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("tabulated_findAllByFunctionId", ms);
+        Long fid = tabFunc.getId();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            tabulatedFunctionRepository.findByFunction_Id(fid);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_findAllByFunctionId", (double) ms / ITERATIONS);
     }
 
     @Test
@@ -309,15 +346,13 @@ public class PerformanceTest {
         TabulatedFunctionEntity p = tabulatedFunctionRepository.findAll().stream().findFirst().orElseThrow();
         Long fid = p.getFunction().getId();
         Double x = p.getXVal();
-
-        Instant t0 = Instant.now();
-        List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(fid);
-        TabulatedFunctionEntity match = points.stream()
-                .filter(pt -> pt.getXVal().equals(x))
-                .findFirst()
-                .orElse(null);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("tabulated_findByXValue", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(fid);
+            points.stream().filter(pt -> pt.getXVal().equals(x)).findFirst();
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_findByXValue", (double) ms / ITERATIONS);
     }
 
     @Test
@@ -328,119 +363,145 @@ public class PerformanceTest {
         Double x = p.getXVal();
         Double min = x - 0.5;
         Double max = x + 0.5;
-
-        Instant t0 = Instant.now();
-        List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(fid);
-        List<TabulatedFunctionEntity> between = points.stream()
-                .filter(pt -> pt.getXVal() >= min && pt.getXVal() <= max)
-                .toList();
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("tabulated_findBetweenXValues", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(fid);
+            points.stream()
+                    .filter(pt -> pt.getXVal() >= min && pt.getXVal() <= max)
+                    .toList();
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_findBetweenXValues", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(21)
     void tabulated_updateTabulatedFunction() {
         TabulatedFunctionEntity p = tabulatedFunctionRepository.findAll().stream().findFirst().orElseThrow();
-        p.setYVal(p.getYVal() + 1000);
-        Instant t0 = Instant.now();
+        Double baseY = p.getYVal();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            p.setYVal(baseY + i);
+            tabulatedFunctionRepository.save(p);
+        }
+        p.setYVal(baseY);
         tabulatedFunctionRepository.save(p);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("tabulated_updateTabulatedFunction", ms);
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_updateTabulatedFunction", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(22)
     void tabulated_deleteTabulatedFunction() {
-        TabulatedFunctionEntity p = new TabulatedFunctionEntity(
-                functions.stream().filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.tabular).findFirst().orElseThrow(),
-                -999.0, -888.0
-        );
-        p = tabulatedFunctionRepository.save(p);
-        Instant t0 = Instant.now();
-        tabulatedFunctionRepository.delete(p);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("tabulated_deleteTabulatedFunction", ms);
+        FunctionEntity tabFunc = functions.stream()
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.tabular)
+                .findFirst().orElseThrow();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            TabulatedFunctionEntity p = new TabulatedFunctionEntity(tabFunc, -999.0 + i, -888.0);
+            p = tabulatedFunctionRepository.save(p);
+            tabulatedFunctionRepository.delete(p);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_deleteTabulatedFunction", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(23)
     void tabulated_deleteAllTabulatedFunctions() {
         FunctionEntity func = functions.stream()
-                .filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.tabular)
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.tabular)
                 .findFirst().orElseThrow();
-        List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(func.getId());
-        Instant t0 = Instant.now();
-        tabulatedFunctionRepository.deleteAll(points);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("tabulated_deleteAllTabulatedFunctions", ms);
-        // Восстановим одну точку
-        tabulatedFunctionRepository.save(new TabulatedFunctionEntity(func, 0.0, 0.0));
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            // Создаём 5 временных точек
+            List<TabulatedFunctionEntity> batch = new ArrayList<>();
+            for (int k = 0; k < 5; k++) {
+                batch.add(new TabulatedFunctionEntity(func, (double) k + i, (double) k));
+            }
+            batch = tabulatedFunctionRepository.saveAll(batch);
+            tabulatedFunctionRepository.deleteAll(batch);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("tabulated_deleteAllTabulatedFunctions", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(24)
     void operation_createOperation() {
         FunctionEntity analytic = functions.stream()
-                .filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.analytic)
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.analytic)
                 .findFirst().orElseThrow();
-        OperationEntity op = new OperationEntity(analytic, 99);
-        Instant t0 = Instant.now();
-        operationRepository.save(op);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        operationRepository.delete(op);
-        appendResult("operation_createOperation", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            OperationEntity op = new OperationEntity(analytic, 99 + i);
+            op = operationRepository.save(op);
+            operationRepository.delete(op);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("operation_createOperation", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(25)
     void operation_findById() {
         OperationEntity op = operationRepository.findAll().stream().findFirst().orElseThrow();
-        Instant t0 = Instant.now();
-        OperationEntity found = operationRepository.findById(op.getId()).orElse(null);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("operation_findById", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            operationRepository.findById(op.getId());
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("operation_findById", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(26)
     void operation_updateOperation() {
         OperationEntity op = operationRepository.findAll().stream().findFirst().orElseThrow();
-        op.setOperationsTypeId(999);
-        Instant t0 = Instant.now();
+        int baseType = op.getOperationsTypeId();
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            op.setOperationsTypeId(baseType + i);
+            operationRepository.save(op);
+        }
+        op.setOperationsTypeId(baseType);
         operationRepository.save(op);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("operation_updateOperation", ms);
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("operation_updateOperation", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(27)
     void operation_deleteOperation() {
         FunctionEntity analytic = functions.stream()
-                .filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.analytic)
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.analytic)
                 .findFirst().orElseThrow();
-        OperationEntity op = new OperationEntity(analytic, 88);
-        op = operationRepository.save(op);
-        Instant t0 = Instant.now();
-        operationRepository.delete(op);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("operation_deleteOperation", ms);
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            OperationEntity op = new OperationEntity(analytic, 88 + i);
+            op = operationRepository.save(op);
+            operationRepository.delete(op);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("operation_deleteOperation", (double) ms / ITERATIONS);
     }
 
     @Test
     @Order(28)
     void operation_deleteAllOperations() {
         FunctionEntity func = functions.stream()
-                .filter(f -> f.getTypeFunction() == FunctionEntity.FunctionType.analytic)
+                .filter(fn -> fn.getTypeFunction() == FunctionEntity.FunctionType.analytic)
                 .findFirst().orElseThrow();
-        List<OperationEntity> ops = operationRepository.findAll().stream()
-                .filter(o -> o.getFunction().getId().equals(func.getId()))
-                .toList();
-        if (ops.isEmpty()) return;
-        Instant t0 = Instant.now();
-        operationRepository.deleteAll(ops);
-        long ms = Duration.between(t0, Instant.now()).toMillis();
-        appendResult("operation_deleteAllOperations", ms);
-        operationRepository.save(new OperationEntity(func, 1));
+        Instant start = Instant.now();
+        for (int i = 0; i < ITERATIONS; i++) {
+            List<OperationEntity> batch = new ArrayList<>();
+            for (int k = 0; k < 3; k++) {
+                batch.add(new OperationEntity(func, 100 + i + k));
+            }
+            batch = operationRepository.saveAll(batch);
+            operationRepository.deleteAll(batch);
+        }
+        long ms = Duration.between(start, Instant.now()).toMillis();
+        appendResult("operation_deleteAllOperations", (double) ms / ITERATIONS);
     }
 }
