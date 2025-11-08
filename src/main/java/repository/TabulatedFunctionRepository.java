@@ -133,14 +133,13 @@ public class TabulatedFunctionRepository {
         }
     }
 
-    public boolean deleteTabulatedFunction(Long id, Long functionId) throws SQLException {
-        String sql = "DELETE FROM tabulated_functions WHERE id = ? AND function_id = ?";
+    public boolean deleteTabulatedFunction(Long id) throws SQLException {
+        String sql = SqlLoader.loadSql("tabulated_function/delete_tabulated_function.sql");
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, id);
-            stmt.setLong(2, functionId);
             int rowsAffected = stmt.executeUpdate();
             boolean success = rowsAffected > 0;
 
@@ -157,7 +156,8 @@ public class TabulatedFunctionRepository {
     }
 
     public boolean deleteAllTabulatedFunctions(Long functionId) throws SQLException {
-        String sql = "DELETE FROM tabulated_functions WHERE function_id = ?";
+        String sql = SqlLoader.loadSql("tabulated_function/delete_all_tabulated_function.sql");
+
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -185,5 +185,29 @@ public class TabulatedFunctionRepository {
         tf.setXVal(rs.getDouble("x_val"));
         tf.setYVal(rs.getDouble("y_val"));
         return tf;
+    }
+
+    public Optional<TabulatedFunction> findById(Long pointId) throws SQLException {
+        String sql = SqlLoader.loadSql("tabulated_function/find_by_id.sql");
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, pointId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                TabulatedFunction point = mapResultSetToTabulatedFunction(rs);
+                logger.info("Найдена точка с ID: " + pointId);
+                return Optional.of(point);
+            } else {
+                logger.info("Точка с ID " + pointId + " не найдена.");
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            logger.severe("Ошибка при поиске точки табулированной функции по ID: " + e.getMessage());
+            throw e;
+        }
     }
 }

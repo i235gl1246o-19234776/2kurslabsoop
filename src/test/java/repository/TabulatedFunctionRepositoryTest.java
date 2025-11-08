@@ -200,7 +200,7 @@ class TabulatedFunctionRepositoryTest extends BaseRepositoryTest {
         assertEquals(1, pointsBefore.size(), "Точка должна существовать до удаления");
 
         // Действие
-        boolean deleted = tabulatedFunctionRepository.deleteTabulatedFunction(pointId, testFunctionId);
+        boolean deleted = tabulatedFunctionRepository.deleteTabulatedFunction(pointId);
 
         // Проверка
         assertTrue(deleted, "Удаление должно быть успешным");
@@ -212,7 +212,7 @@ class TabulatedFunctionRepositoryTest extends BaseRepositoryTest {
     @Test
     void testDeleteTabulatedFunction_ShouldReturnFalse_WhenPointNotExists() throws SQLException {
         // Действие
-        boolean deleted = tabulatedFunctionRepository.deleteTabulatedFunction(999999L, testFunctionId);
+        boolean deleted = tabulatedFunctionRepository.deleteTabulatedFunction(999999L);
 
         // Проверка
         assertFalse(deleted, "Удаление несуществующей точки должно вернуть false");

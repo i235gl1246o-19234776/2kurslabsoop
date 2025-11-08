@@ -2,6 +2,8 @@ package repository;
 
 import model.User;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -173,5 +175,28 @@ public class UserRepository {
         user.setName(rs.getString("name"));
         user.setPasswordHash(rs.getString("password_hash"));
         return user;
+    }
+
+    public List<User> findAll() throws SQLException {
+        String sql = "SELECT id, name FROM users;"; // Загрузка SQL из файла
+        List<User> users = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection(); // Получение соединения
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getLong("id"));
+                user.setName(rs.getString("name"));
+                user.setPasswordHash(rs.getString("password_hash"));
+                users.add(user);
+            }
+            logger.info("Найдено " + users.size() + " пользователей");
+            return users;
+        } catch (SQLException e) {
+            logger.severe("Ошибка при поиске всех пользователей: " + e.getMessage());
+            throw e;
+        }
     }
 }

@@ -1,1 +1,1 @@
-DELETE FROM tabulated_functions WHERE id = ? AND function_id = ?;
+DELETE FROM tabulated_functions WHERE id = ?;

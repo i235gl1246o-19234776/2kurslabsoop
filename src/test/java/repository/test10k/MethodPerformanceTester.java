@@ -375,8 +375,7 @@ public class MethodPerformanceTester {
         long startTime = System.nanoTime();
         try {
             Long tfId = (long) (random.nextInt(1000) + 1);
-            Long functionId = (long) (random.nextInt(100) + 1);
-            tabulatedFunctionRepository.deleteTabulatedFunction(tfId, functionId);
+            tabulatedFunctionRepository.deleteTabulatedFunction(tfId);
             recordPerformance("tabulated_deleteTabulatedFunction", System.nanoTime() - startTime);
         } catch (SQLException e) {
             recordPerformance("tabulated_deleteTabulatedFunction", System.nanoTime() - startTime);

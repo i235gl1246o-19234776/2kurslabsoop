@@ -3,12 +3,8 @@ package repository.test10k;
 import model.dto.request.SearchFunctionRequestDTO;
 import model.dto.response.SearchFunctionResponseDTO;
 import repository.PerformanceLogger;
-import service.FunctionService;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.logging.Logger;
 
 public class PerformanceBenchmark {
