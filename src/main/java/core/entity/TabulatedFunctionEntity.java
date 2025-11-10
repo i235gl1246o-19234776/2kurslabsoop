@@ -21,17 +21,14 @@ public class TabulatedFunctionEntity {
     @Column(name = "y_val", nullable = false)
     private Double yVal;
 
-    // Пустой конструктор
     public TabulatedFunctionEntity() {}
 
-    // Конструктор с параметрами
     public TabulatedFunctionEntity(FunctionEntity function, Double xVal, Double yVal) {
         this.function = function;
         this.xVal = xVal;
         this.yVal = yVal;
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

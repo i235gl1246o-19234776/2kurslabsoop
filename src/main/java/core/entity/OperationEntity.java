@@ -18,10 +18,8 @@ public class OperationEntity {
     @Column(name = "operations_type_id", nullable = false)
     private Integer operationsTypeId;
 
-    // Пустой конструктор
     public OperationEntity() {}
 
-    // Конструктор с параметрами
     public OperationEntity(FunctionEntity function, Integer operationsTypeId) {
         this.function = function;
         this.operationsTypeId = operationsTypeId;

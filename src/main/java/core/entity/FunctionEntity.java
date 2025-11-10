@@ -38,10 +38,8 @@ public class FunctionEntity {
         analytic
     }
 
-    // Пустой конструктор
     public FunctionEntity() {}
 
-    // Удобный конструктор для тестов
     public FunctionEntity(UserEntity user, FunctionType typeFunction, String functionName, String functionExpression) {
         this.user = user;
         this.typeFunction = typeFunction;
@@ -49,7 +47,6 @@ public class FunctionEntity {
         this.functionExpression = functionExpression;
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

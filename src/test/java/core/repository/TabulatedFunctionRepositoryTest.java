@@ -32,14 +32,12 @@ class TabulatedFunctionRepositoryTest {
 
     @Test
     void testSaveFindDeleteTabulatedFunction() {
-        // Подготовка зависимостей
         UserEntity user = new UserEntity("tester", "hash123");
         UserEntity savedUser = userRepository.save(user);
 
         FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.tabular, "data", null);
         FunctionEntity savedFunction = functionRepository.save(function);
 
-        // Создаём табулированное значение
         TabulatedFunctionEntity point = new TabulatedFunctionEntity(savedFunction, 1.0, 2.5);
 
         TabulatedFunctionEntity saved = tabulatedFunctionRepository.save(point);

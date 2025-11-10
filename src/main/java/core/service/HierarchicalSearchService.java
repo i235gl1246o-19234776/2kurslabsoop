@@ -31,9 +31,6 @@ public class HierarchicalSearchService {
     @Autowired
     private OperationRepository operationRepository;
 
-    /**
-     * Эмуляция поиска в глубину (DFS): загружает полную иерархию для одного пользователя.
-     */
     public Optional<UserHierarchy> findUserWithFullHierarchy(String username) {
         log.info("Иерархический поиск (DFS-стиль): полная загрузка для пользователя '{}'", username);
         UserEntity user = userRepository.findByName(username);
@@ -47,9 +44,6 @@ public class HierarchicalSearchService {
         return Optional.of(new UserHierarchy(user, functions));
     }
 
-    /**
-     * Эмуляция поиска в ширину (BFS): загружает N пользователей со всеми их данными.
-     */
     public List<UserHierarchy> findAllUsersWithHierarchy(int limit) {
         log.info("Иерархический поиск (BFS-стиль): загрузка первых {} пользователей", limit);
         List<UserEntity> users = userRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
@@ -72,7 +66,6 @@ public class HierarchicalSearchService {
         });
     }
 
-    // ——— DTO ———
     public static class UserHierarchy {
         private final UserEntity user;
         private final List<FunctionEntity> functions;

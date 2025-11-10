@@ -32,14 +32,12 @@ class OperationRepositoryTest {
 
     @Test
     void testSaveFindDeleteOperation() {
-        // Подготовка зависимостей
         UserEntity user = new UserEntity("testuser", "hash123");
         UserEntity savedUser = userRepository.save(user);
 
         FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.analytic, "f(x)", "x^2");
         FunctionEntity savedFunction = functionRepository.save(function);
 
-        // Создаём операцию (например, операция с ID = 1 = "дифференцирование")
         OperationEntity operation = new OperationEntity(savedFunction, 1);
 
         OperationEntity saved = operationRepository.save(operation);

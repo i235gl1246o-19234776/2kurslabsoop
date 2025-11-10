@@ -22,7 +22,7 @@ import java.util.Locale;
 public class PerformanceTest {
 
     private static final int ITERATIONS = 1000;
-    private static final String CSV_FILE = "framework-test-perfomance.csv";
+    private static final String CSV_FILE = "framework-test-performance.csv";
 
     @Autowired
     private UserRepository userRepository;
@@ -53,9 +53,7 @@ public class PerformanceTest {
             w.newLine();
         } catch (IOException ignore) {}
     }
-    // ————————————————————————
-    // 1. Наполнение и очистка БД
-    // ————————————————————————
+
     @Test
     @Order(1)
     void populateDatabase() {
@@ -66,13 +64,11 @@ public class PerformanceTest {
         userRepository.deleteAllInBatch();
         userRepository.flush();
 
-        // Теперь будем создавать 10 000 пользователей
         for (int i = 0; i < 10_000; i++) {
             UserEntity user = new UserEntity("user_" + i, "hash_" + i);
             UserEntity savedUser = userRepository.save(user);
             users.add(savedUser);
 
-            // Для каждого пользователя создаём по одной функции (чтобы не перегружать БД миллионами записей)
             boolean isTabular = (i % 2 == 0);
             FunctionEntity.FunctionType type = isTabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic;
             FunctionEntity func = new FunctionEntity(
@@ -84,9 +80,8 @@ public class PerformanceTest {
             FunctionEntity savedFunc = functionRepository.save(func);
             functions.add(savedFunc);
 
-            // Для табулированных функций добавим несколько точек
             if (isTabular) {
-                for (int k = 0; k < 2; k++) { // Меньше точек, чтобы не создавать 20к+ записей
+                for (int k = 0; k < 2; k++) {
                     tabulatedFunctionRepository.save(new TabulatedFunctionEntity(
                             savedFunc,
                             (double) k,
@@ -94,15 +89,10 @@ public class PerformanceTest {
                     ));
                 }
             } else {
-                // Для аналитических добавим одну операцию
                 operationRepository.save(new OperationEntity(savedFunc, i % 5 + 1));
             }
         }
     }
-
-    // ————————————————————————
-    // 2. Замеры (по 1000 итераций каждый)
-    // ————————————————————————
 
     @Test
     @Order(2)

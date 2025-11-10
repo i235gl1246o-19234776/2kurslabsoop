@@ -28,11 +28,9 @@ class FunctionRepositoryTest {
 
     @Test
     void testSaveFindDeleteFunction() {
-        // Создаём пользователя
-        UserEntity user = new UserEntity("testuser", "hash123");
+        UserEntity user = new UserEntity("tester", "hash123");
         UserEntity savedUser = userRepository.save(user);
 
-        // Создаём функцию
         FunctionEntity function = new FunctionEntity(
                 savedUser,
                 FunctionEntity.FunctionType.analytic,

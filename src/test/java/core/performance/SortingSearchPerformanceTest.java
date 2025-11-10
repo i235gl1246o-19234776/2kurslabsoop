@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class SortingSearchPerformanceTest {
 
     private static final int ITERATIONS = 100;
-    private static final String CSV_FILE = "sort-perfomance.csv";
+    private static final String CSV_FILE = "sort-performance.csv";
 
     @Autowired
     private UserRepository userRepository;
@@ -65,15 +65,13 @@ public class SortingSearchPerformanceTest {
     private void prepareDataOnce() {
         if (dataPrepared) return;
 
-        // Очистка
         operationRepository.deleteAllInBatch();
         tabulatedFunctionRepository.deleteAllInBatch();
         functionRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
 
-        // Создаём 500 пользователей
         Random rand = new Random(42); // фиксированный seed для воспроизводимости
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < 10_000; i++) { // Изменено с 500 на 10_000
             UserEntity user = new UserEntity("user_sort_" + i, "hash_" + i);
             user = userRepository.save(user);
 
@@ -89,7 +87,6 @@ public class SortingSearchPerformanceTest {
                 func = functionRepository.save(func);
 
                 if (isTabular) {
-                    // 10 точек
                     for (int k = 0; k < 10; k++) {
                         double x = rand.nextDouble() * 1000;
                         double y = x * x;
@@ -116,10 +113,6 @@ public class SortingSearchPerformanceTest {
 
         dataPrepared = true;
     }
-
-    // ————————————————————————
-    // Тесты в порядке вашего файла
-    // ————————————————————————
 
     @Test
     @Order(1)

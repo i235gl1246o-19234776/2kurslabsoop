@@ -22,7 +22,6 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<FunctionEntity> functions = new ArrayList<>();
 
-    // JPA требует пустой конструктор
     public UserEntity() {}
 
     public UserEntity(String name, String passwordHash) {
@@ -30,7 +29,6 @@ public class UserEntity {
         this.passwordHash = passwordHash;
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
