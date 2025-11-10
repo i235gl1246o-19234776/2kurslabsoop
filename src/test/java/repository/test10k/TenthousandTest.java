@@ -1,9 +1,9 @@
 package repository.test10k;
 
-import model.Function;
-import model.Operation;
-import model.TabulatedFunction;
-import model.User;
+import model.entity.Function;
+import model.entity.Operation;
+import model.entity.TabulatedFunction;
+import model.entity.User;
 import repository.*;
 
 import java.sql.*;
@@ -31,7 +31,7 @@ public class TenthousandTest {
 
     public static void main(String[] args) {
         try {
-            System.out.println("=== ЗАПОЛНЕНИЕ " + TOTAL_RECORDS + " ЗАПИСЯМИ ===");
+            System.out.println("=== БД " + TOTAL_RECORDS + " ЗАПИСЯМИ ===");
 
             System.out.println("Тестовая БД не найдена. Создаем новую...");
             setupTestEnvironment();
@@ -46,6 +46,17 @@ public class TenthousandTest {
         }
     }
 
+
+    private static boolean isTestDatabaseExists() throws SQLException {
+        try (Connection conn = DriverManager.getConnection(ADMIN_URL, USER, PASSWORD);
+             Statement stmt = conn.createStatement()) {
+
+            ResultSet rs = stmt.executeQuery(
+                    "SELECT 1 FROM pg_database WHERE datname = '" + TEST_DB_NAME + "'"
+            );
+            return rs.next();
+        }
+    }
 
     private static void setupTestEnvironment() throws SQLException {
         System.out.println("=== НАСТРОЙКА ИЗОЛИРОВАННОЙ ТЕСТОВОЙ СРЕДЫ ===");
@@ -242,6 +253,31 @@ public class TenthousandTest {
 
         long endTime = System.currentTimeMillis();
         return endTime - startTime;
+    }
+
+    private static void loadExistingIds() throws SQLException {
+        System.out.println("Загрузка существующих ID из базы данных...");
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            ResultSet rs = stmt.executeQuery("SELECT id FROM users ORDER BY id");
+            while (rs.next()) {
+                userIds.add(rs.getLong("id"));
+            }
+
+            rs = stmt.executeQuery("SELECT id FROM functions ORDER BY id");
+            while (rs.next()) {
+                functionIds.add(rs.getLong("id"));
+            }
+
+            rs = stmt.executeQuery("SELECT id FROM operations ORDER BY id");
+            while (rs.next()) {
+                operationIds.add(rs.getLong("id"));
+            }
+
+            System.out.printf("Загружено: %,d пользователей, %,d функций, %,d операций%n",
+                    userIds.size(), functionIds.size(), operationIds.size());
+        }
     }
 
 }

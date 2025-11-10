@@ -1,6 +1,6 @@
 package service;
 
-import model.User;
+import model.entity.User;
 import repository.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 

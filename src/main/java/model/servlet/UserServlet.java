@@ -1,12 +1,12 @@
 package model.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.dto.request.CreateUserRequest; // Предполагается, что CreateUserRequest также используется для Update
+import model.dto.request.CreateUserRequest;
 import model.dto.response.UserResponseDTO;
-import model.User;
+import model.entity.User;
 import repository.UserRepository;
 import service.AuthenticationService;
-import service.DTOTransformService; // Добавляем импорт
+import model.dto.DTOTransformService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -30,7 +30,7 @@ public class UserServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(UserServlet.class.getName());
     private UserRepository userRepository;
     private AuthenticationService authService;
-    private DTOTransformService transformService; // Добавляем поле для сервиса преобразований
+    private DTOTransformService transformService;
     private ObjectMapper objectMapper;
     private Validator validator;
 
@@ -39,11 +39,75 @@ public class UserServlet extends HttpServlet {
         super.init();
         this.userRepository = new UserRepository();
         this.authService = new AuthenticationService(userRepository);
-        this.transformService = new DTOTransformService(); // Инициализируем сервис преобразований
+        this.transformService = new DTOTransformService();
         this.objectMapper = new ObjectMapper();
         this.validator = Validation.buildDefaultValidatorFactory().getValidator();
         logger.info("UserServlet инициализирован с JSON поддержкой и DTOTransformService");
     }
+
+    // ==================== УТИЛИТНЫЕ МЕТОДЫ ДЛЯ ФОРМИРОВАНИЯ ОТВЕТОВ ====================
+
+    /**
+     * ✅ ХОРОШИЙ ОТВЕТ - Успешная операция с данными
+     */
+    private String createSuccessResponse(Object data) {
+        return convertToJson(Map.of("success", true, "data", data));
+    }
+
+    /**
+     * ✅ ХОРОШИЙ ОТВЕТ - Успешная операция без данных
+     */
+    private String createSuccessResponse(String message) {
+        return convertToJson(Map.of("success", true, "message", message));
+    }
+
+    /**
+     * ❌ ПЛОХОЙ ОТВЕТ - Ошибка клиента (4xx)
+     */
+    private String createErrorResponse(int status, String errorMessage) {
+        return convertToJson(Map.of(
+                "success", false,
+                "error", errorMessage,
+                "status", status
+        ));
+    }
+
+    /**
+     * ❌ ПЛОХОЙ ОТВЕТ - Ошибка валидации
+     */
+    private String createValidationErrorResponse(Set<ConstraintViolation<CreateUserRequest>> violations) {
+        String errorMessage = violations.stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+        return createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, errorMessage);
+    }
+
+    /**
+     * Безопасное преобразование в JSON
+     */
+    private String convertToJson(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (Exception e) {
+            logger.severe("Ошибка преобразования в JSON: " + e.getMessage());
+            return "{\"success\":false,\"error\":\"Ошибка сервера при формировании ответа\",\"status\":500}";
+        }
+    }
+
+    /**
+     * Вспомогательный метод для преобразования User в JSON
+     */
+    private Optional<String> userToJsonResponse(User user) {
+        try {
+            UserResponseDTO responseDto = transformService.toResponseDTO(user);
+            return Optional.of(convertToJson(responseDto));
+        } catch (Exception e) {
+            logger.severe("Ошибка при сериализации пользователя в JSON: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    // ==================== ОБРАБОТКА GET ЗАПРОСОВ ====================
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -57,73 +121,104 @@ public class UserServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
 
             String pathInfo = request.getPathInfo();
-            String responseData = null;
-            int httpStatus = HttpServletResponse.SC_OK;
+            String responseData;
+            int httpStatus;
 
             if (pathInfo == null || pathInfo.equals("/")) {
-                // GET /api/users
+                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/users - получить всех пользователей
+                // ❌ ПЛОХОЙ ЗАПРОС: Ошибка БД при получении списка
                 try {
                     List<User> users = userRepository.findAll();
-                    // Используем transformService для пакетного преобразования
                     List<UserResponseDTO> responseDtos = transformService.toUserResponseDTOs(users);
-                    responseData = objectMapper.writeValueAsString(responseDtos);
+
+                    if (users.isEmpty()) {
+                        // ✅ ХОРОШИЙ ОТВЕТ: Пустой список - это нормально
+                        responseData = createSuccessResponse("Пользователи не найдены");
+                        httpStatus = HttpServletResponse.SC_OK;
+                    } else {
+                        // ✅ ХОРОШИЙ ОТВЕТ: Список пользователей
+                        responseData = createSuccessResponse(responseDtos);
+                        httpStatus = HttpServletResponse.SC_OK;
+                    }
                     logger.info("Получено " + users.size() + " пользователей");
                 } catch (SQLException e) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Ошибка базы данных
                     logger.severe("Ошибка БД при получении списка пользователей: " + e.getMessage());
                     httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка базы данных"));
+                    responseData = createErrorResponse(httpStatus, "Ошибка базы данных");
                 }
             } else if (pathInfo.matches("/\\d+")) {
-                // GET /api/users/{id}
+                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/users/1 - получить пользователя по ID
+                // ❌ ПЛОХОЙ ЗАПРОС: GET /api/users/999 - несуществующий ID
+                // ❌ ПЛОХОЙ ЗАПРОС: GET /api/users/abc - неверный формат ID
                 String idStr = pathInfo.substring(1);
                 Optional<String> userJsonOpt = getUserByIdOpt(idStr);
                 if (userJsonOpt.isPresent()) {
+                    // ✅ ХОРОШИЙ ОТВЕТ: Пользователь найден
                     responseData = userJsonOpt.get();
                     httpStatus = HttpServletResponse.SC_OK;
                 } else {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Пользователь не найден
                     httpStatus = HttpServletResponse.SC_NOT_FOUND;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Пользователь не найден"));
+                    responseData = createErrorResponse(httpStatus, "Пользователь не найден");
                 }
             } else if (pathInfo.startsWith("/name/")) {
-                // GET /api/users/name/{name}
-                String name = pathInfo.substring(6); // "/name/".length()
-                Optional<String> userJsonOpt = getUserByNameOpt(name);
-                if (userJsonOpt.isPresent()) {
-                    responseData = userJsonOpt.get();
-                    httpStatus = HttpServletResponse.SC_OK;
+                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/users/name/ivan - получить по имени
+                // ❌ ПЛОХОЙ ЗАПРОС: GET /api/users/name/nonexistent - несуществующее имя
+                String name = pathInfo.substring(6);
+                if (name == null || name.trim().isEmpty()) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Пустое имя
+                    httpStatus = HttpServletResponse.SC_BAD_REQUEST;
+                    responseData = createErrorResponse(httpStatus, "Имя пользователя не может быть пустым");
                 } else {
-                    httpStatus = HttpServletResponse.SC_NOT_FOUND;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Пользователь не найден"));
+                    Optional<String> userJsonOpt = getUserByNameOpt(name);
+                    if (userJsonOpt.isPresent()) {
+                        // ✅ ХОРОШИЙ ОТВЕТ: Пользователь найден
+                        responseData = userJsonOpt.get();
+                        httpStatus = HttpServletResponse.SC_OK;
+                    } else {
+                        // ❌ ПЛОХОЙ ОТВЕТ: Пользователь не найден
+                        httpStatus = HttpServletResponse.SC_NOT_FOUND;
+                        responseData = createErrorResponse(httpStatus, "Пользователь не найден");
+                    }
                 }
             } else if (pathInfo.startsWith("/exist/")) {
-                // GET /api/users/exist/{name}
-                String name = pathInfo.substring(7); // "/exist/".length()
+                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/users/exist/ivan - проверить существование
+                String name = pathInfo.substring(7);
                 Optional<Boolean> existsOpt = checkUserExistsByNameOpt(name);
                 if (existsOpt.isPresent()) {
-                    responseData = objectMapper.writeValueAsString(Map.of("exists", existsOpt.get()));
+                    // ✅ ХОРОШИЙ ОТВЕТ: Результат проверки
+                    responseData = createSuccessResponse(Map.of("exists", existsOpt.get()));
                     httpStatus = HttpServletResponse.SC_OK;
                 } else {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Ошибка БД
                     httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка базы данных"));
+                    responseData = createErrorResponse(httpStatus, "Ошибка базы данных");
                 }
             } else {
+                // ❌ ПЛОХОЙ ЗАПРОС: GET /api/users/invalid-path - неверный URL
                 httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                responseData = objectMapper.writeValueAsString(Map.of("error", "Неверный формат URL"));
+                responseData = createErrorResponse(httpStatus, "Неверный формат URL");
             }
 
-            // Устанавливаем статус ПЕРЕД записью данных
             response.setStatus(httpStatus);
             response.getWriter().write(responseData);
 
         } catch (Exception e) {
-            logger.severe("Ошибка в GET запросе: " + e.getMessage());
+            // ❌ ПЛОХОЙ ОТВЕТ: Неожиданная ошибка сервера
+            logger.severe("Неожиданная ошибка в GET запросе: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write(objectMapper.writeValueAsString(Map.of("error", "Внутренняя ошибка сервера")));
+            response.getWriter().write(createErrorResponse(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Внутренняя ошибка сервера"
+            ));
         }
 
         long endTime = System.currentTimeMillis();
         logger.info("GET запрос обработан за " + (endTime - startTime) + " мс");
     }
+
+    // ==================== ОБРАБОТКА POST ЗАПРОСОВ ====================
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -138,7 +233,8 @@ public class UserServlet extends HttpServlet {
 
         try {
             if (pathInfo != null && pathInfo.equals("/authenticate")) {
-                // POST /api/users/authenticate
+                // ✅ ХОРОШИЙ ЗАПРОС: POST /api/users/authenticate с правильными данными
+                // ❌ ПЛОХОЙ ЗАПРОС: POST /api/users/authenticate без пароля
                 String body = request.getReader().lines().collect(Collectors.joining());
                 logger.fine("Получено тело запроса аутентификации: " + body);
 
@@ -147,33 +243,37 @@ public class UserServlet extends HttpServlet {
                 String password = authRequest.get("password");
 
                 if (name == null || password == null) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Отсутствуют обязательные поля
                     httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Поля 'name' и 'password' обязательны"));
+                    responseData = createErrorResponse(httpStatus, "Поля 'name' и 'password' обязательны");
                 } else {
                     boolean authenticated = authService.authenticateUser(name, password);
 
                     if (authenticated) {
                         Optional<User> userOpt = userRepository.findByName(name);
                         if (userOpt.isPresent()) {
-                            // Используем transformService для преобразования
+                            // ✅ ХОРОШИЙ ОТВЕТ: Успешная аутентификация
                             UserResponseDTO userResponse = transformService.toResponseDTO(userOpt.get());
                             httpStatus = HttpServletResponse.SC_OK;
-                            responseData = objectMapper.writeValueAsString(userResponse);
+                            responseData = createSuccessResponse(userResponse);
                             logger.info("Успешная аутентификация пользователя: " + name);
                         } else {
-                            // Неожиданная ситуация: аутентификация прошла, но пользователь не найден в БД
+                            // ❌ ПЛОХОЙ ОТВЕТ: Несоответствие данных
                             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-                            responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка аутентификации: пользователь не найден"));
+                            responseData = createErrorResponse(httpStatus, "Ошибка аутентификации: пользователь не найден");
                             logger.severe("Пользователь " + name + " аутентифицирован, но не найден в БД");
                         }
                     } else {
-                        httpStatus = HttpServletResponse.SC_UNAUTHORIZED; // 401 Unauthorized
-                        responseData = objectMapper.writeValueAsString(Map.of("error", "Неверные имя пользователя или пароль"));
+                        // ❌ ПЛОХОЙ ОТВЕТ: Неверные учетные данные
+                        httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+                        responseData = createErrorResponse(httpStatus, "Неверные имя пользователя или пароль");
                         logger.warning("Неудачная аутентификация для пользователя: " + name);
                     }
                 }
             } else if (pathInfo == null || pathInfo.equals("/")) {
-                // POST /api/users (создание)
+                // ✅ ХОРОШИЙ ЗАПРОС: POST /api/users с корректными данными
+                // ❌ ПЛОХОЙ ЗАПРОС: POST /api/users с существующим именем
+                // ❌ ПЛОХОЙ ЗАПРОС: POST /api/users с невалидными данными
                 String body = request.getReader().lines().collect(Collectors.joining());
                 logger.fine("Получено тело запроса: " + body);
 
@@ -182,37 +282,37 @@ public class UserServlet extends HttpServlet {
                     userRequest = objectMapper.readValue(body, CreateUserRequest.class);
                     logger.info("JSON успешно преобразован в CreateUserRequest: " + userRequest);
                 } catch (Exception e) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Неверный JSON
                     logger.warning("Ошибка парсинга JSON: " + e.getMessage());
                     httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Неверный формат JSON"));
+                    responseData = createErrorResponse(httpStatus, "Неверный формат JSON");
                 }
 
                 if (userRequest != null) {
                     Set<ConstraintViolation<CreateUserRequest>> violations = validator.validate(userRequest);
                     if (!violations.isEmpty()) {
-                        String errorMessage = violations.stream()
-                                .map(ConstraintViolation::getMessage)
-                                .collect(Collectors.joining(", "));
-                        logger.warning("Ошибки валидации: " + errorMessage);
+                        // ❌ ПЛОХОЙ ОТВЕТ: Ошибки валидации
                         httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                        responseData = objectMapper.writeValueAsString(Map.of("error", errorMessage));
+                        responseData = createValidationErrorResponse(violations);
+                        logger.warning("Ошибки валидации: " + responseData);
                     } else {
                         String name = userRequest.getName();
                         String password = userRequest.getPassword();
 
                         if (userRepository.userNameExists(name)) {
+                            // ❌ ПЛОХОЙ ОТВЕТ: Конфликт имен
                             httpStatus = HttpServletResponse.SC_CONFLICT;
-                            responseData = objectMapper.writeValueAsString(Map.of("error", "Пользователь с таким именем уже существует"));
+                            responseData = createErrorResponse(httpStatus, "Пользователь с таким именем уже существует");
                             logger.warning("Попытка создания пользователя с существующим именем: " + name);
                         } else {
+                            // ✅ ХОРОШИЙ ОТВЕТ: Успешное создание
                             authService.registerUser(name, password);
                             Optional<User> createdUser = userRepository.findByName(name);
 
                             if (createdUser.isPresent()) {
-                                // Используем transformService для преобразования
                                 UserResponseDTO userResponse = transformService.toResponseDTO(createdUser.get());
                                 httpStatus = HttpServletResponse.SC_CREATED;
-                                responseData = objectMapper.writeValueAsString(userResponse);
+                                responseData = createSuccessResponse(userResponse);
                                 logger.info("Создан новый пользователь: " + name + " с ID: " + createdUser.get().getId());
                             } else {
                                 throw new SQLException("Пользователь не найден после создания");
@@ -221,20 +321,22 @@ public class UserServlet extends HttpServlet {
                     }
                 }
             } else {
+                // ❌ ПЛОХОЙ ЗАПРОС: POST /api/users/invalid-path
                 httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                responseData = objectMapper.writeValueAsString(Map.of("error", "Неверный формат URL"));
+                responseData = createErrorResponse(httpStatus, "Неверный формат URL");
             }
         } catch (SQLException e) {
+            // ❌ ПЛОХОЙ ОТВЕТ: Ошибка БД
             logger.severe("Ошибка при работе с БД: " + e.getMessage());
             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка при работе с базой данных"));
+            responseData = createErrorResponse(httpStatus, "Ошибка при работе с базой данных");
         } catch (Exception e) {
+            // ❌ ПЛОХОЙ ОТВЕТ: Неожиданная ошибка
             logger.severe("Неожиданная ошибка: " + e.getMessage());
             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            responseData = objectMapper.writeValueAsString(Map.of("error", "Внутренняя ошибка сервера"));
+            responseData = createErrorResponse(httpStatus, "Внутренняя ошибка сервера");
         }
 
-        // Устанавливаем статус ПЕРЕД записью данных
         response.setStatus(httpStatus);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -243,6 +345,8 @@ public class UserServlet extends HttpServlet {
         long endTime = System.currentTimeMillis();
         logger.info("POST запрос обработан за " + (endTime - startTime) + " мс");
     }
+
+    // ==================== ОБРАБОТКА PUT ЗАПРОСОВ ====================
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response)
@@ -256,16 +360,18 @@ public class UserServlet extends HttpServlet {
         try {
             String pathInfo = request.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
+                // ❌ ПЛОХОЙ ЗАПРОС: PUT /api/users без ID
                 httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                responseData = objectMapper.writeValueAsString(Map.of("error", "ID пользователя обязателен"));
+                responseData = createErrorResponse(httpStatus, "ID пользователя обязателен");
             } else {
                 String idStr = pathInfo.substring(1);
                 Long id;
                 try {
                     id = Long.parseLong(idStr);
                 } catch (NumberFormatException e) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Неверный формат ID
                     httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Неверный формат ID"));
+                    responseData = createErrorResponse(httpStatus, "Неверный формат ID");
                     response.setStatus(httpStatus);
                     response.setContentType("application/json");
                     response.setCharacterEncoding("UTF-8");
@@ -281,25 +387,25 @@ public class UserServlet extends HttpServlet {
                     updateRequest = objectMapper.readValue(body, CreateUserRequest.class);
                     logger.info("JSON успешно преобразован для обновления: " + updateRequest);
                 } catch (Exception e) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Неверный JSON
                     logger.warning("Ошибка парсинга JSON для обновления: " + e.getMessage());
                     httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Неверный формат JSON"));
+                    responseData = createErrorResponse(httpStatus, "Неверный формат JSON");
                 }
 
                 if (updateRequest != null) {
                     Set<ConstraintViolation<CreateUserRequest>> violations = validator.validate(updateRequest);
                     if (!violations.isEmpty()) {
-                        String errorMessage = violations.stream()
-                                .map(ConstraintViolation::getMessage)
-                                .collect(Collectors.joining(", "));
-                        logger.warning("Ошибки валидации при обновлении: " + errorMessage);
+                        // ❌ ПЛОХОЙ ОТВЕТ: Ошибки валидации
                         httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                        responseData = objectMapper.writeValueAsString(Map.of("error", errorMessage));
+                        responseData = createValidationErrorResponse(violations);
+                        logger.warning("Ошибки валидации при обновлении: " + responseData);
                     } else {
                         Optional<User> existingUserOpt = userRepository.findById(id);
                         if (existingUserOpt.isEmpty()) {
+                            // ❌ ПЛОХОЙ ОТВЕТ: Пользователь не найден
                             httpStatus = HttpServletResponse.SC_NOT_FOUND;
-                            responseData = objectMapper.writeValueAsString(Map.of("error", "Пользователь не найден"));
+                            responseData = createErrorResponse(httpStatus, "Пользователь не найден");
                             logger.warning("Попытка обновления несуществующего пользователя с ID: " + id);
                         } else {
                             User userToUpdate = existingUserOpt.get();
@@ -307,8 +413,9 @@ public class UserServlet extends HttpServlet {
                             if (updateRequest.getName() != null && !updateRequest.getName().trim().isEmpty()) {
                                 String newName = updateRequest.getName().trim();
                                 if (!userToUpdate.getName().equals(newName) && userRepository.userNameExists(newName)) {
+                                    // ❌ ПЛОХОЙ ОТВЕТ: Конфликт имен
                                     httpStatus = HttpServletResponse.SC_CONFLICT;
-                                    responseData = objectMapper.writeValueAsString(Map.of("error", "Пользователь с таким именем уже существует"));
+                                    responseData = createErrorResponse(httpStatus, "Пользователь с таким именем уже существует");
                                 } else {
                                     userToUpdate.setName(newName);
                                 }
@@ -319,17 +426,18 @@ public class UserServlet extends HttpServlet {
                                 userToUpdate.setPasswordHash(hashedPassword);
                             }
 
-                            if (httpStatus == HttpServletResponse.SC_OK) { // Только если предыдущие проверки прошли успешно
+                            if (httpStatus == HttpServletResponse.SC_OK) {
                                 boolean updated = userRepository.updateUser(userToUpdate);
 
                                 if (updated) {
-                                    // Используем transformService для преобразования
+                                    // ✅ ХОРОШИЙ ОТВЕТ: Успешное обновление
                                     UserResponseDTO responseDto = transformService.toResponseDTO(userToUpdate);
-                                    responseData = objectMapper.writeValueAsString(responseDto);
+                                    responseData = createSuccessResponse(responseDto);
                                     logger.info("Пользователь обновлен: " + userToUpdate.getId());
                                 } else {
+                                    // ❌ ПЛОХОЙ ОТВЕТ: Ошибка обновления
                                     httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-                                    responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка при обновлении пользователя"));
+                                    responseData = createErrorResponse(httpStatus, "Ошибка при обновлении пользователя");
                                     logger.warning("Ошибка при обновлении пользователя с ID: " + id);
                                 }
                             }
@@ -338,16 +446,17 @@ public class UserServlet extends HttpServlet {
                 }
             }
         } catch (SQLException e) {
+            // ❌ ПЛОХОЙ ОТВЕТ: Ошибка БД
             logger.severe("Ошибка при обновлении пользователя: " + e.getMessage());
             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка при обновлении пользователя"));
+            responseData = createErrorResponse(httpStatus, "Ошибка при обновлении пользователя");
         } catch (Exception e) {
+            // ❌ ПЛОХОЙ ОТВЕТ: Неожиданная ошибка
             logger.severe("Неожиданная ошибка: " + e.getMessage());
             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            responseData = objectMapper.writeValueAsString(Map.of("error", "Внутренняя ошибка сервера"));
+            responseData = createErrorResponse(httpStatus, "Внутренняя ошибка сервера");
         }
 
-        // Устанавливаем статус ПЕРЕД записью данных
         response.setStatus(httpStatus);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -356,6 +465,8 @@ public class UserServlet extends HttpServlet {
         long endTime = System.currentTimeMillis();
         logger.info("PUT запрос обработан за " + (endTime - startTime) + " мс");
     }
+
+    // ==================== ОБРАБОТКА DELETE ЗАПРОСОВ ====================
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
@@ -369,16 +480,18 @@ public class UserServlet extends HttpServlet {
         try {
             String pathInfo = request.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
+                // ❌ ПЛОХОЙ ЗАПРОС: DELETE /api/users без ID
                 httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                responseData = objectMapper.writeValueAsString(Map.of("error", "ID пользователя обязателен"));
+                responseData = createErrorResponse(httpStatus, "ID пользователя обязателен");
             } else {
                 String idStr = pathInfo.substring(1);
                 Long id;
                 try {
                     id = Long.parseLong(idStr);
                 } catch (NumberFormatException e) {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Неверный формат ID
                     httpStatus = HttpServletResponse.SC_BAD_REQUEST;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Неверный формат ID"));
+                    responseData = createErrorResponse(httpStatus, "Неверный формат ID");
                     response.setStatus(httpStatus);
                     response.setContentType("application/json");
                     response.setCharacterEncoding("UTF-8");
@@ -389,25 +502,28 @@ public class UserServlet extends HttpServlet {
                 boolean deleted = userRepository.deleteUser(id);
 
                 if (deleted) {
-                    responseData = objectMapper.writeValueAsString(Map.of("message", "Пользователь удален"));
+                    // ✅ ХОРОШИЙ ОТВЕТ: Успешное удаление
+                    responseData = createSuccessResponse("Пользователь удален");
                     logger.info("Удален пользователь с ID: " + id);
                 } else {
+                    // ❌ ПЛОХОЙ ОТВЕТ: Пользователь не найден
                     httpStatus = HttpServletResponse.SC_NOT_FOUND;
-                    responseData = objectMapper.writeValueAsString(Map.of("error", "Пользователь не найден"));
+                    responseData = createErrorResponse(httpStatus, "Пользователь не найден");
                     logger.warning("Попытка удаления несуществующего пользователя с ID: " + id);
                 }
             }
         } catch (SQLException e) {
+            // ❌ ПЛОХОЙ ОТВЕТ: Ошибка БД
             logger.severe("Ошибка при удалении пользователя: " + e.getMessage());
             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            responseData = objectMapper.writeValueAsString(Map.of("error", "Ошибка при удалении пользователя"));
+            responseData = createErrorResponse(httpStatus, "Ошибка при удалении пользователя");
         } catch (Exception e) {
+            // ❌ ПЛОХОЙ ОТВЕТ: Неожиданная ошибка
             logger.severe("Неожиданная ошибка: " + e.getMessage());
             httpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            responseData = objectMapper.writeValueAsString(Map.of("error", "Внутренняя ошибка сервера"));
+            responseData = createErrorResponse(httpStatus, "Внутренняя ошибка сервера");
         }
 
-        // Устанавливаем статус ПЕРЕД записью данных
         response.setStatus(httpStatus);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -417,8 +533,7 @@ public class UserServlet extends HttpServlet {
         logger.info("DELETE запрос обработан за " + (endTime - startTime) + " мс");
     }
 
-    // --- Вспомогательные методы для получения данных ---
-    // Эти методы возвращают Optional, чтобы вызывающий код мог определить статус
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private Optional<String> getUserByIdOpt(String idStr) {
         try {
@@ -426,10 +541,10 @@ public class UserServlet extends HttpServlet {
             Optional<User> userOpt = userRepository.findById(id);
 
             if (userOpt.isPresent()) {
-                // Используем transformService для преобразования
                 UserResponseDTO responseDto = transformService.toResponseDTO(userOpt.get());
                 logger.info("Найден пользователь по ID: " + id);
-                return Optional.of(objectMapper.writeValueAsString(responseDto));
+                // ✅ ХОРОШИЙ ОТВЕТ: Используем стандартный формат успеха
+                return Optional.of(createSuccessResponse(responseDto));
             } else {
                 logger.warning("Пользователь не найден по ID: " + id);
                 return Optional.empty();
@@ -451,10 +566,7 @@ public class UserServlet extends HttpServlet {
             Optional<User> userOpt = userRepository.findByName(name);
 
             if (userOpt.isPresent()) {
-                // Используем transformService для преобразования
-                UserResponseDTO responseDto = transformService.toResponseDTO(userOpt.get());
-                logger.info("Найден пользователь по имени: " + name);
-                return Optional.of(objectMapper.writeValueAsString(responseDto));
+                return userToJsonResponse(userOpt.get());
             } else {
                 logger.warning("Пользователь не найден по имени: " + name);
                 return Optional.empty();

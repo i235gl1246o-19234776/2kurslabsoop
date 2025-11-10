@@ -21,10 +21,10 @@ public class PerformanceLogger {
             stmt.setInt(4, resultCount);
 
             stmt.executeUpdate();
-            logger.info("✅ Производительность сохранена: " + testName + " (" + executionTimeMs + " мс)");
+            logger.info("Производительность сохранена: " + testName + " (" + executionTimeMs + " мс)");
 
         } catch (SQLException e) {
-            logger.severe("❌ Ошибка логирования производительности: " + e.getMessage());
+            logger.severe("Ошибка логирования производительности: " + e.getMessage());
         }
     }
 }

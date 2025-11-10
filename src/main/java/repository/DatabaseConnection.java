@@ -5,11 +5,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 
-public class DatabaseConnection {
+public class DatabaseConnection{
     private static final Logger logger = Logger.getLogger(DatabaseConnection.class.getName());
 
-    // Убираем статические переменные - используем ThreadLocal для изоляции
-    private static final ThreadLocal<String> url = ThreadLocal.withInitial(() -> "jdbc:postgresql://localhost:5432/test_10k_db"); //functions_database
+    private static final ThreadLocal<String> url = ThreadLocal.withInitial(() -> "jdbc:postgresql://localhost:5432/functions_database");
     private static final ThreadLocal<String> user = ThreadLocal.withInitial(() -> "postgres");
     private static final ThreadLocal<String> password = ThreadLocal.withInitial(() -> "1234");
     private static final ThreadLocal<Boolean> isTestMode = ThreadLocal.withInitial(() -> false);
@@ -22,13 +21,6 @@ public class DatabaseConnection {
         logger.info("Установлены тестовые параметры подключения: " + testUrl + " для потока: " + Thread.currentThread().getName());
     }
 
-    public static void resetToDefaultConnection() {
-        url.set("jdbc:postgresql://localhost:5432/test_10k_db");
-        user.set("postgres");
-        password.set("1234");
-        isTestMode.set(false);
-        logger.info("Параметры подключения сброшены к рабочим настройкам для потока: " + Thread.currentThread().getName());
-    }
 
     public static Connection getConnection() throws SQLException {
         try {
@@ -48,23 +40,27 @@ public class DatabaseConnection {
         }
     }
 
-    public static boolean isTestMode() {
+    public boolean isTestMode() {
         return isTestMode.get();
     }
 
-    public static String getConnectionInfo() {
+    public String getConnectionInfo() {
         return String.format("URL: %s, User: %s, Mode: %s, Thread: %s",
                 url.get(), user.get(), isTestMode.get() ? "test" : "production",
                 Thread.currentThread().getName());
     }
 
-    /**
-     * Очистка ThreadLocal переменных (важно вызывать после тестов)
-     */
-    public static void cleanup() {
-        url.remove();
-        user.remove();
-        password.remove();
-        isTestMode.remove();
+
+    public static void setConnectionParams(String connectionUrl, String connectionUser, String connectionPassword, boolean testMode) {
+        url.set(connectionUrl);
+        user.set(connectionUser);
+        password.set(connectionPassword);
+        isTestMode.set(testMode);
+        logger.info("Установлены параметры подключения: " + connectionUrl + " (mode: " + (testMode ? "test" : "production") + ") для потока: " + Thread.currentThread().getName());
     }
+
+    protected static void cleanup() {
+    }
+
+
 }

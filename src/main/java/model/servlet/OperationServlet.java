@@ -1,10 +1,11 @@
 package model.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.Operation;
+import model.entity.Operation;
 import model.dto.request.OperationRequestDTO;
 import model.dto.response.OperationResponseDTO;
 import repository.OperationRepository;
+import model.dto.DTOTransformService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -13,308 +14,397 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @WebServlet("/api/operations/*")
 public class OperationServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(OperationServlet.class.getName());
     private OperationRepository operationRepository;
+    private DTOTransformService transformService;
     private ObjectMapper objectMapper;
 
     @Override
     public void init() throws ServletException {
         try {
             this.operationRepository = new OperationRepository();
+            this.transformService = new DTOTransformService();
             this.objectMapper = new ObjectMapper();
-            logger.info("OperationServlet инициализирован");
+            logger.info("OperationServlet инициализирован с DTOTransformService");
         } catch (Exception e) {
             logger.severe("Ошибка инициализации OperationServlet: " + e.getMessage());
             throw new ServletException("Не удалось инициализировать OperationServlet", e);
         }
     }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
+    // ==================== УТИЛИТНЫЕ МЕТОДЫ ====================
 
+    private String createSuccessResponse(Object data) {
+        return convertToJson(Map.of("success", true, "data", data));
+    }
+
+    private String createSuccessResponse(String message) {
+        return convertToJson(Map.of("success", true, "message", message));
+    }
+
+    private String createErrorResponse(int status, String errorMessage) {
+        return convertToJson(Map.of(
+                "success", false,
+                "error", errorMessage,
+                "status", status
+        ));
+    }
+
+    private String convertToJson(Object object) {
         try {
-            if (pathInfo != null && pathInfo.matches("/\\d+")) {
-                // GET /api/operations/{id} - получить операцию по ID
-                getOperationById(req, resp, pathInfo);
-            } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден. Используйте /api/operations/{id}");
-            }
-        } catch (SQLException e) {
-            logger.severe("Ошибка базы данных: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных");
+            return objectMapper.writeValueAsString(object);
         } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера");
+            logger.severe("Ошибка преобразования в JSON: " + e.getMessage());
+            return "{\"success\":false,\"error\":\"Ошибка сервера\",\"status\":500}";
         }
     }
+
+    private void sendJsonResponse(HttpServletResponse response, int status, String jsonData) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(jsonData);
+    }
+
+    private Optional<Long> parseLongParameter(HttpServletRequest req, String paramName) {
+        String value = req.getParameter(paramName);
+        if (value != null && !value.trim().isEmpty()) {
+            try {
+                return Optional.of(Long.parseLong(value.trim()));
+            } catch (NumberFormatException e) {
+                logger.warning("Неверный формат параметра " + paramName + ": " + value);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Long> parseIdFromPath(String pathInfo) {
+        try {
+            return Optional.of(Long.parseLong(pathInfo.substring(1)));
+        } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
+            return Optional.empty();
+        }
+    }
+
+    private <T> T parseJsonBody(String body, Class<T> valueType) {
+        try {
+            return objectMapper.readValue(body, valueType);
+        } catch (Exception e) {
+            logger.warning("Ошибка парсинга JSON: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // ==================== ОБРАБОТКА GET ЗАПРОСОВ ====================
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        long startTime = System.currentTimeMillis();
+        logger.info("GET операция: " + req.getRequestURI());
+
+        try {
+            String pathInfo = req.getPathInfo();
+
+            if (pathInfo != null && pathInfo.matches("/\\d+")) {
+                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/operations/1?functionId=1
+                // ❌ ПЛОХОЙ ЗАПРОС: GET /api/operations/abc?functionId=1
+                getOperationById(req, resp, pathInfo);
+            } else {
+                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND,
+                                "Ресурс не найден. Используйте /api/operations/{id}"));
+            }
+        } catch (SQLException e) {
+            logger.severe("Ошибка БД при получении операции: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
+        } catch (Exception e) {
+            logger.severe("Неожиданная ошибка: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
+        }
+
+        logger.info("GET операция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
+    }
+
+    private void getOperationById(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
+            throws IOException, SQLException {
+
+        Optional<Long> functionIdOpt = parseLongParameter(req, "functionId");
+        if (functionIdOpt.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен"));
+            return;
+        }
+
+        Optional<Long> idOpt = parseIdFromPath(pathInfo);
+        if (idOpt.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID операции"));
+            return;
+        }
+
+        Long id = idOpt.get();
+        Long functionId = functionIdOpt.get();
+
+        Optional<Operation> operation = operationRepository.findById(id, functionId);
+        if (operation.isPresent()) {
+            // ✅ Используем transformService для преобразования Entity в DTO
+            OperationResponseDTO responseDTO = transformService.toResponseDTO(operation.get());
+            sendJsonResponse(resp, HttpServletResponse.SC_OK, createSuccessResponse(responseDTO));
+            logger.info("Возвращена операция с ID: " + id);
+        } else {
+            sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                    createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Операция не найдена"));
+        }
+    }
+
+    // ==================== ОБРАБОТКА POST ЗАПРОСОВ ====================
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
+        long startTime = System.currentTimeMillis();
+        logger.info("POST создание операции");
 
         try {
+            String pathInfo = req.getPathInfo();
+
             if (pathInfo == null || pathInfo.equals("/")) {
-                // POST /api/operations - создать новую операцию
+                // ✅ ХОРОШИЙ ЗАПРОС: POST /api/operations с корректным JSON
+                // ❌ ПЛОХОЙ ЗАПРОС: POST /api/operations с невалидным JSON
                 createOperation(req, resp);
             } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден");
+                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
             }
         } catch (SQLException e) {
-            logger.severe("Ошибка базы данных: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных");
+            logger.severe("Ошибка БД при создании операции: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
         } catch (Exception e) {
             logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера");
-        }
-    }
-
-    @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
-
-        try {
-            if (pathInfo != null && pathInfo.matches("/\\d+")) {
-                // PUT /api/operations/{id} - обновить операцию
-                updateOperation(req, resp, pathInfo);
-            } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден");
-            }
-        } catch (SQLException e) {
-            logger.severe("Ошибка базы данных: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных");
-        } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера");
-        }
-    }
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
-
-        try {
-            if (pathInfo != null && pathInfo.matches("/\\d+")) {
-                // DELETE /api/operations/{id} - удалить операцию
-                deleteOperation(req, resp, pathInfo);
-            } else if (pathInfo != null && pathInfo.equals("/function")) {
-                // DELETE /api/operations/function?functionId=123 - удалить все операции функции
-                deleteAllOperationsForFunction(req, resp);
-            } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден");
-            }
-        } catch (SQLException e) {
-            logger.severe("Ошибка базы данных: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных");
-        } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера");
-        }
-    }
-
-    private void getOperationById(HttpServletRequest req, HttpServletResponse resp, String pathInfo) throws IOException, SQLException {
-        String functionIdParam = req.getParameter("functionId");
-
-        if (functionIdParam == null) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен");
-            return;
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
         }
 
-        try {
-            Long id = Long.parseLong(pathInfo.substring(1));
-            Long functionId = Long.parseLong(functionIdParam);
-
-            Optional<Operation> operation = operationRepository.findById(id, functionId);
-            if (operation.isPresent()) {
-                OperationResponseDTO responseDTO = convertToResponseDTO(operation.get());
-                String jsonResponse = objectMapper.writeValueAsString(responseDTO);
-                resp.getWriter().write(jsonResponse);
-                logger.info("Возвращена операция с ID: " + id);
-            } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Операция не найдена");
-            }
-
-        } catch (NumberFormatException e) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID или functionId");
-        }
+        logger.info("POST операция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
     }
 
     private void createOperation(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        try {
-            OperationRequestDTO requestDTO = objectMapper.readValue(req.getReader(), OperationRequestDTO.class);
+        String body = req.getReader().lines().collect(Collectors.joining());
+        logger.fine("Тело запроса создания: " + body);
 
-            // Валидация
-            if (requestDTO.getFunctionId() == null) {
-                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "functionId обязателен");
-                return;
-            }
-            if (requestDTO.getOperationsTypeId() == null) {
-                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "operationsTypeId обязателен");
-                return;
-            }
+        OperationRequestDTO requestDTO = parseJsonBody(body, OperationRequestDTO.class);
+        if (requestDTO == null) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат JSON"));
+            return;
+        }
 
-            Operation operation = convertToEntity(requestDTO);
-            Long operationId = operationRepository.createOperation(operation);
+        // Валидация обязательных полей
+        if (requestDTO.getFunctionId() == null) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "functionId обязателен"));
+            return;
+        }
+        if (requestDTO.getOperationsTypeId() == null) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "operationsTypeId обязателен"));
+            return;
+        }
 
-            ApiResponse<Long> apiResponse = new ApiResponse<>(true, "Операция успешно создана", operationId);
-            String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().write(jsonResponse);
+        // ✅ Используем transformService для преобразования DTO в Entity
+        Operation operation = transformService.toEntity(requestDTO);
+        Long operationId = operationRepository.createOperation(operation);
+
+        if (operationId != null) {
+            sendJsonResponse(resp, HttpServletResponse.SC_CREATED,
+                    createSuccessResponse(Map.of("id", operationId, "message", "Операция успешно создана")));
             logger.info("Создана новая операция с ID: " + operationId);
-
-        } catch (Exception e) {
-            logger.severe("Ошибка при создании операции: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат данных");
+        } else {
+            throw new SQLException("Не удалось создать операцию");
         }
     }
 
-    private void updateOperation(HttpServletRequest req, HttpServletResponse resp, String pathInfo) throws IOException, SQLException {
+    // ==================== ОБРАБОТКА PUT ЗАПРОСОВ ====================
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        long startTime = System.currentTimeMillis();
+        logger.info("PUT обновление операции");
+
         try {
-            Long id = Long.parseLong(pathInfo.substring(1));
-            OperationRequestDTO requestDTO = objectMapper.readValue(req.getReader(), OperationRequestDTO.class);
+            String pathInfo = req.getPathInfo();
 
-            if (requestDTO.getFunctionId() == null) {
-                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "functionId обязателен");
-                return;
-            }
-
-            // Проверяем существование операции
-            Optional<Operation> existingOperation = operationRepository.findById(id, requestDTO.getFunctionId());
-            if (!existingOperation.isPresent()) {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Операция не найдена");
-                return;
-            }
-
-            Operation operation = convertToEntity(requestDTO);
-            operation.setId(id);
-
-            boolean updated = operationRepository.updateOperation(operation);
-            if (updated) {
-                ApiResponse<String> apiResponse = new ApiResponse<>(true, "Операция успешно обновлена", null);
-                String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-                resp.getWriter().write(jsonResponse);
-                logger.info("Обновлена операция с ID: " + id);
+            if (pathInfo != null && pathInfo.matches("/\\d+")) {
+                // ✅ ХОРОШИЙ ЗАПРОС: PUT /api/operations/1 с корректным JSON
+                // ❌ ПЛОХОЙ ЗАПРОС: PUT /api/operations/999 (несуществующий ID)
+                updateOperation(req, resp, pathInfo);
             } else {
-                sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Не удалось обновить операцию");
+                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
             }
-
-        } catch (NumberFormatException e) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID");
+        } catch (SQLException e) {
+            logger.severe("Ошибка БД при обновлении операции: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
         } catch (Exception e) {
-            logger.severe("Ошибка при обновлении операции: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат данных");
+            logger.severe("Неожиданная ошибка: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
         }
+
+        logger.info("PUT операция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
     }
 
-    private void deleteOperation(HttpServletRequest req, HttpServletResponse resp, String pathInfo) throws IOException, SQLException {
-        String functionIdParam = req.getParameter("functionId");
+    private void updateOperation(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
+            throws IOException, SQLException {
 
-        if (functionIdParam == null) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен");
+        Optional<Long> idOpt = parseIdFromPath(pathInfo);
+        if (idOpt.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID операции"));
             return;
         }
 
-        try {
-            Long id = Long.parseLong(pathInfo.substring(1));
-            Long functionId = Long.parseLong(functionIdParam);
+        Long id = idOpt.get();
+        String body = req.getReader().lines().collect(Collectors.joining());
+        logger.fine("Тело запроса обновления: " + body);
 
-            boolean deleted = operationRepository.deleteOperation(id, functionId);
-            if (deleted) {
-                ApiResponse<String> apiResponse = new ApiResponse<>(true, "Операция успешно удалена", null);
-                String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-                resp.getWriter().write(jsonResponse);
-                logger.info("Удалена операция с ID: " + id);
-            } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Операция не найдена");
-            }
-
-        } catch (NumberFormatException e) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID или functionId");
-        }
-    }
-
-    private void deleteAllOperationsForFunction(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        String functionIdParam = req.getParameter("functionId");
-
-        if (functionIdParam == null) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен");
+        OperationRequestDTO requestDTO = parseJsonBody(body, OperationRequestDTO.class);
+        if (requestDTO == null) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат JSON"));
             return;
         }
 
+        if (requestDTO.getFunctionId() == null) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "functionId обязателен"));
+            return;
+        }
+
+        // Проверяем существование операции
+        Optional<Operation> existingOperation = operationRepository.findById(id, requestDTO.getFunctionId());
+        if (existingOperation.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                    createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Операция не найдена"));
+            return;
+        }
+
+        // ✅ Используем transformService для преобразования DTO в Entity
+        Operation operation = transformService.toEntity(requestDTO);
+        operation.setId(id);
+
+        boolean updated = operationRepository.updateOperation(operation);
+        if (updated) {
+            OperationResponseDTO responseDTO = transformService.toResponseDTO(operation);
+            sendJsonResponse(resp, HttpServletResponse.SC_OK, createSuccessResponse(responseDTO));
+            logger.info("Обновлена операция с ID: " + id);
+        } else {
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Не удалось обновить операцию"));
+        }
+    }
+
+    // ==================== ОБРАБОТКА DELETE ЗАПРОСОВ ====================
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        long startTime = System.currentTimeMillis();
+        logger.info("DELETE операция: " + req.getRequestURI());
+
         try {
-            Long functionId = Long.parseLong(functionIdParam);
+            String pathInfo = req.getPathInfo();
 
-            boolean deleted = operationRepository.deleteAllOperations(functionId);
-            if (deleted) {
-                ApiResponse<String> apiResponse = new ApiResponse<>(true, "Все операции для функции успешно удалены", null);
-                String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-                resp.getWriter().write(jsonResponse);
-                logger.info("Удалены все операции для функции с ID: " + functionId);
+            if (pathInfo != null && pathInfo.matches("/\\d+")) {
+                // ✅ ХОРОШИЙ ЗАПРОС: DELETE /api/operations/1?functionId=1
+                deleteOperation(req, resp, pathInfo);
+            } else if (pathInfo != null && pathInfo.equals("/function")) {
+                // ✅ ХОРОШИЙ ЗАПРОС: DELETE /api/operations/function?functionId=1
+                // ❌ ПЛОХОЙ ЗАПРОС: DELETE /api/operations/function (без functionId)
+                deleteAllOperationsForFunction(req, resp);
             } else {
-                ApiResponse<String> apiResponse = new ApiResponse<>(true, "Операции для функции не найдены", null);
-                String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-                resp.getWriter().write(jsonResponse);
+                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
             }
+        } catch (SQLException e) {
+            logger.severe("Ошибка БД при удалении: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
+        } catch (Exception e) {
+            logger.severe("Неожиданная ошибка: " + e.getMessage());
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
+        }
 
-        } catch (NumberFormatException e) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат functionId");
+        logger.info("DELETE операция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
+    }
+
+    private void deleteOperation(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
+            throws IOException, SQLException {
+
+        Optional<Long> functionIdOpt = parseLongParameter(req, "functionId");
+        if (functionIdOpt.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен"));
+            return;
+        }
+
+        Optional<Long> idOpt = parseIdFromPath(pathInfo);
+        if (idOpt.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID операции"));
+            return;
+        }
+
+        Long id = idOpt.get();
+        Long functionId = functionIdOpt.get();
+
+        boolean deleted = operationRepository.deleteOperation(id, functionId);
+        if (deleted) {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK,
+                    createSuccessResponse("Операция успешно удалена"));
+            logger.info("Удалена операция с ID: " + id);
+        } else {
+            sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
+                    createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Операция не найдена"));
         }
     }
 
-    // Вспомогательные методы
-    private Operation convertToEntity(OperationRequestDTO dto) {
-        Operation operation = new Operation();
-        operation.setFunctionId(dto.getFunctionId());
-        operation.setOperationsTypeId(dto.getOperationsTypeId());
-        return operation;
-    }
+    private void deleteAllOperationsForFunction(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, SQLException {
 
-    private OperationResponseDTO convertToResponseDTO(Operation operation) {
-        return new OperationResponseDTO(
-                operation.getId(),
-                operation.getFunctionId(),
-                operation.getOperationsTypeId()
-        );
-    }
-
-    private void sendError(HttpServletResponse resp, int statusCode, String message) throws IOException {
-        resp.setStatus(statusCode);
-        ApiResponse<String> errorResponse = new ApiResponse<>(false, message, null);
-        String jsonResponse = objectMapper.writeValueAsString(errorResponse);
-        resp.getWriter().write(jsonResponse);
-    }
-
-    // Внутренний класс для стандартизированного ответа
-    public static class ApiResponse<T> {
-        private boolean success;
-        private String message;
-        private T data;
-
-        public ApiResponse(boolean success, String message, T data) {
-            this.success = success;
-            this.message = message;
-            this.data = data;
+        Optional<Long> functionIdOpt = parseLongParameter(req, "functionId");
+        if (functionIdOpt.isEmpty()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен"));
+            return;
         }
 
-        // геттеры и сеттеры
-        public boolean isSuccess() { return success; }
-        public void setSuccess(boolean success) { this.success = success; }
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-        public T getData() { return data; }
-        public void setData(T data) { this.data = data; }
+        Long functionId = functionIdOpt.get();
+        boolean deleted = operationRepository.deleteAllOperations(functionId);
+
+        if (deleted) {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK,
+                    createSuccessResponse("Все операции для функции успешно удалены"));
+            logger.info("Удалены все операции для функции с ID: " + functionId);
+        } else {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK,
+                    createSuccessResponse("Операции для функции не найдены"));
+        }
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("OperationServlet уничтожается");
+        super.destroy();
     }
 }

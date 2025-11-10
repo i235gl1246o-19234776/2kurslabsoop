@@ -1,8 +1,8 @@
 package repository;
 
-import model.Function;
-import model.TabulatedFunction;
-import model.User;
+import model.entity.Function;
+import model.entity.TabulatedFunction;
+import model.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +22,10 @@ class TabulatedFunctionRepositoryTest extends BaseRepositoryTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        userRepository = new UserRepository();
-        functionRepository = new FunctionRepository();
-        tabulatedFunctionRepository = new TabulatedFunctionRepository();
+        DatabaseConnection dbt = new DatabaseTestConnection();
+        userRepository = new UserRepository(dbt);
+        functionRepository = new FunctionRepository(dbt);
+        tabulatedFunctionRepository = new TabulatedFunctionRepository(dbt);
 
         // Создание тестового пользователя и функции
         User user = new User("tabulated_test_user", "test_password");

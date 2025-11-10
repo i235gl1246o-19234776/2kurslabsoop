@@ -1,6 +1,6 @@
 package repository;
 
-import model.TabulatedFunction;
+import model.entity.TabulatedFunction;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,11 +9,27 @@ import java.util.logging.Logger;
 
 public class TabulatedFunctionRepository {
     private static final Logger logger = Logger.getLogger(TabulatedFunctionRepository.class.getName());
+    private final DatabaseConnection databaseConnection;
 
+    public TabulatedFunctionRepository() {
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+        this.databaseConnection = databaseConnection;
+    }
+
+    public TabulatedFunctionRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        if (databaseConnection != null) {
+            return databaseConnection.getConnection();
+        }
+        return DatabaseConnection.getConnection();
+    }
     public Long createTabulatedFunction(TabulatedFunction tf) throws SQLException {
         String sql = SqlLoader.loadSql("tabulated_function/insert_tabulated_function.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setLong(1, tf.getFunctionId());
@@ -44,7 +60,7 @@ public class TabulatedFunctionRepository {
         String sql = SqlLoader.loadSql("tabulated_function/find_all_tabulated_function.sql");
         List<TabulatedFunction> points = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, functionId);
@@ -64,7 +80,7 @@ public class TabulatedFunctionRepository {
     public Optional<TabulatedFunction> findByXValue(Long functionId, Double xVal) throws SQLException {
         String sql = SqlLoader.loadSql("tabulated_function/find_point_x_tabulated_function.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, functionId);
@@ -88,7 +104,7 @@ public class TabulatedFunctionRepository {
         String sql = SqlLoader.loadSql("tabulated_function/find_tabulated_functions_between.sql");
         List<TabulatedFunction> points = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, functionId);
@@ -110,7 +126,7 @@ public class TabulatedFunctionRepository {
     public boolean updateTabulatedFunction(TabulatedFunction tf) throws SQLException {
         String sql = SqlLoader.loadSql("tabulated_function/update_tabulated_functions.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, tf.getXVal());
@@ -136,7 +152,7 @@ public class TabulatedFunctionRepository {
     public boolean deleteTabulatedFunction(Long id) throws SQLException {
         String sql = SqlLoader.loadSql("tabulated_function/delete_tabulated_function.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, id);
@@ -159,7 +175,7 @@ public class TabulatedFunctionRepository {
         String sql = SqlLoader.loadSql("tabulated_function/delete_all_tabulated_function.sql");
 
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, functionId);
@@ -190,7 +206,7 @@ public class TabulatedFunctionRepository {
     public Optional<TabulatedFunction> findById(Long pointId) throws SQLException {
         String sql = SqlLoader.loadSql("tabulated_function/find_by_id.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, pointId);

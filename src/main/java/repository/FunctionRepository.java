@@ -1,6 +1,6 @@
 package repository;
 
-import model.Function;
+import model.entity.Function;
 import model.SearchFunctionResult;
 
 import java.sql.*;
@@ -11,6 +11,24 @@ import java.util.logging.Logger;
 
 public class FunctionRepository {
     private static final Logger logger = Logger.getLogger(FunctionRepository.class.getName());
+
+    private final DatabaseConnection databaseConnection;
+
+    public FunctionRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+    public FunctionRepository() {
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+        this.databaseConnection = databaseConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        if (databaseConnection != null) {
+            return databaseConnection.getConnection();
+        }
+        DatabaseConnection defaultConnection = new DatabaseConnection();
+        return defaultConnection.getConnection();
+    }
 
     public void createPerformanceTable() throws SQLException {
         String sql = """
@@ -31,27 +49,6 @@ public class FunctionRepository {
         }
     }
 
-    private void savePerformanceMetric(String methodName, long durationNanos, String parameters, boolean success) {
-        String sql = "INSERT INTO method_performance (method_name, execution_time_ms, parameters, success) VALUES (?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            double durationMs = durationNanos / 1_000_000.0;
-            stmt.setString(1, methodName);
-            stmt.setDouble(2, durationMs);
-            stmt.setString(3, parameters);
-            stmt.setBoolean(4, success);
-
-            stmt.executeUpdate();
-            logger.fine("Метрика производительности сохранена для метода: " + methodName);
-
-        } catch (SQLException e) {
-            logger.warning("Ошибка при сохранении метрики производительности: " + e.getMessage());
-        }
-    }
-
-
     public Long createFunction(Function function) throws SQLException {
         long startTime = System.nanoTime();
         boolean success = false;
@@ -60,7 +57,7 @@ public class FunctionRepository {
         try {
             String sql = SqlLoader.loadSql("functions/insert_function.sql");
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
                 stmt.setLong(1, function.getUserId());
@@ -89,7 +86,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("createFunction", duration, params, success);
+            //savePerformanceMetric("createFunction", duration, params, success);
         }
     }
 
@@ -101,7 +98,7 @@ public class FunctionRepository {
         try {
             String sql = SqlLoader.loadSql("functions/find_id_functions.sql");
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
                 stmt.setLong(1, id);
@@ -123,7 +120,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("findById", duration, params, success);
+            //savePerformanceMetric("findById", duration, params, success);
         }
     }
 
@@ -136,7 +133,7 @@ public class FunctionRepository {
             String sql = SqlLoader.loadSql("functions/find_user_functions.sql");
             List<Function> functions = new ArrayList<>();
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
                 stmt.setLong(1, userId);
@@ -154,7 +151,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("findByUserId", duration, params, success);
+            //savePerformanceMetric("findByUserId", duration, params, success);
         }
     }
 
@@ -167,7 +164,7 @@ public class FunctionRepository {
             String sql = SqlLoader.loadSql("functions/find_name_functions.sql");
             List<Function> functions = new ArrayList<>();
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
                 stmt.setLong(1, userId);
@@ -186,7 +183,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("findByName", duration, params, success);
+            //savePerformanceMetric("findByName", duration, params, success);
         }
     }
 
@@ -199,7 +196,7 @@ public class FunctionRepository {
             String sql = SqlLoader.loadSql("functions/find_type_functions.sql");
             List<Function> functions = new ArrayList<>();
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
                 stmt.setLong(1, userId);
@@ -218,7 +215,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("findByType", duration, params, success);
+            //savePerformanceMetric("findByType", duration, params, success);
         }
     }
 
@@ -230,7 +227,7 @@ public class FunctionRepository {
         try {
             String sql = SqlLoader.loadSql("functions/update_function.sql");
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
                 stmt.setString(1, function.getTypeFunction());
@@ -254,7 +251,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("updateFunction", duration, params, success);
+            //savePerformanceMetric("updateFunction", duration, params, success);
         }
     }
 
@@ -266,7 +263,7 @@ public class FunctionRepository {
         try {
             String sql = SqlLoader.loadSql("functions/delete_function.sql");
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
                 stmt.setLong(1, id);
@@ -286,7 +283,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("deleteFunction", duration, params, success);
+            //savePerformanceMetric("deleteFunction", duration, params, success);
         }
     }
 
@@ -388,7 +385,7 @@ public class FunctionRepository {
 
             List<SearchFunctionResult> results = new ArrayList<>();
 
-            try (Connection conn = DatabaseConnection.getConnection();
+            try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
                 for (int i = 0; i < paramsList.size(); i++) {
@@ -417,7 +414,7 @@ public class FunctionRepository {
             throw e;
         } finally {
             long duration = System.nanoTime() - startTime;
-            savePerformanceMetric("search", duration, params, success);
+            //savePerformanceMetric("search", duration, params, success);
         }
     }
 
@@ -435,7 +432,7 @@ public class FunctionRepository {
             ORDER BY avg_time_ms DESC
             """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 

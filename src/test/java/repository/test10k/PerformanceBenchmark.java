@@ -3,6 +3,7 @@ package repository.test10k;
 import model.dto.request.SearchFunctionRequestDTO;
 import model.dto.response.SearchFunctionResponseDTO;
 import repository.PerformanceLogger;
+import service.FunctionService;
 
 import java.sql.SQLException;
 import java.util.logging.Logger;
@@ -78,11 +79,10 @@ public class PerformanceBenchmark {
 
         try {
             long start = System.currentTimeMillis();
-            SearchFunctionResponseDTO result = service.searchFunctions(request);
+            int count = service.searchFunctions(request);
             long end = System.currentTimeMillis();
 
             long timeMs = end - start;
-            int count = result.getTotal();
 
             logger.logPerformance(testName, description, timeMs, count);
             System.out.printf("[%s] %d мс, найдено: %d записей%n", testName, timeMs, count);

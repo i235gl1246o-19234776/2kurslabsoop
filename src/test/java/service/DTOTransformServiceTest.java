@@ -1,8 +1,12 @@
 package service;
 
+import model.dto.DTOTransformService;
 import model.dto.request.*;
 import model.dto.response.*;
-import model.*;
+import model.entity.Function;
+import model.entity.Operation;
+import model.entity.TabulatedFunction;
+import model.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,26 +35,21 @@ class DTOTransformServiceTest {
 
     @Test
     void testUserRequestToEntity() {
-        // When
         User user = dtoTransformService.toEntity(userRequestDTO);
 
-        // Then
         assertNotNull(user);
         assertEquals("testuser", user.getName());
         assertEquals("password123", user.getPasswordHash());
-        assertNull(user.getId()); // ID должен быть null для новой entity
+        assertNull(user.getId());
     }
 
     @Test
     void testUserEntityToResponseDTO() {
-        // Given
         User user = new User("testuser", "password123");
         user.setId(1L);
 
-        // When
         UserResponseDTO responseDTO = dtoTransformService.toResponseDTO(user);
 
-        // Then
         assertNotNull(responseDTO);
         assertEquals(1L, responseDTO.getId());
         assertEquals("testuser", responseDTO.getName());
@@ -58,10 +57,8 @@ class DTOTransformServiceTest {
 
     @Test
     void testFunctionRequestToEntity() {
-        // When
         Function function = dtoTransformService.toEntity(functionRequestDTO);
 
-        // Then
         assertNotNull(function);
         assertEquals(1L, function.getUserId());
         assertEquals("analytic", function.getTypeFunction());
@@ -71,14 +68,11 @@ class DTOTransformServiceTest {
 
     @Test
     void testFunctionEntityToResponseDTO() {
-        // Given
         Function function = new Function(1L, "analytic", "test_function", "x^2");
         function.setId(1L);
 
-        // When
         FunctionResponseDTO responseDTO = dtoTransformService.toResponseDTO(function);
 
-        // Then
         assertNotNull(responseDTO);
         assertEquals(1L, responseDTO.getId());
         assertEquals(1L, responseDTO.getUserId());
@@ -89,10 +83,8 @@ class DTOTransformServiceTest {
 
     @Test
     void testTabulatedFunctionRequestToEntity() {
-        // When
         TabulatedFunction tabulatedFunction = dtoTransformService.toEntity(tabulatedFunctionRequestDTO);
 
-        // Then
         assertNotNull(tabulatedFunction);
         assertEquals(1L, tabulatedFunction.getFunctionId());
         assertEquals(1.0, tabulatedFunction.getXVal());
@@ -101,14 +93,11 @@ class DTOTransformServiceTest {
 
     @Test
     void testTabulatedFunctionEntityToResponseDTO() {
-        // Given
         TabulatedFunction tabulatedFunction = new TabulatedFunction(1L, 1.0, 2.0);
         tabulatedFunction.setId(1L);
 
-        // When
         TabulatedFunctionResponseDTO responseDTO = dtoTransformService.toResponseDTO(tabulatedFunction);
 
-        // Then
         assertNotNull(responseDTO);
         assertEquals(1L, responseDTO.getId());
         assertEquals(1L, responseDTO.getFunctionId());
@@ -118,10 +107,8 @@ class DTOTransformServiceTest {
 
     @Test
     void testOperationRequestToEntity() {
-        // When
         Operation operation = dtoTransformService.toEntity(operationRequestDTO);
 
-        // Then
         assertNotNull(operation);
         assertEquals(1L, operation.getFunctionId());
         assertEquals(1, operation.getOperationsTypeId());
@@ -129,14 +116,11 @@ class DTOTransformServiceTest {
 
     @Test
     void testOperationEntityToResponseDTO() {
-        // Given
         Operation operation = new Operation(1L, 1);
         operation.setId(1L);
 
-        // When
         OperationResponseDTO responseDTO = dtoTransformService.toResponseDTO(operation);
 
-        // Then
         assertNotNull(responseDTO);
         assertEquals(1L, responseDTO.getId());
         assertEquals(1L, responseDTO.getFunctionId());
@@ -145,33 +129,27 @@ class DTOTransformServiceTest {
 
     @Test
     void testBatchTabulatedFunctionTransformations() {
-        // Given
         List<TabulatedFunctionRequestDTO> requestDTOs = Arrays.asList(
                 new TabulatedFunctionRequestDTO(1L, 1.0, 2.0),
                 new TabulatedFunctionRequestDTO(1L, 2.0, 4.0),
                 new TabulatedFunctionRequestDTO(1L, 3.0, 6.0)
         );
 
-        // When
         List<TabulatedFunction> entities = dtoTransformService.toEntities(requestDTOs);
 
-        // Then
         assertNotNull(entities);
         assertEquals(3, entities.size());
         assertEquals(1L, entities.get(0).getFunctionId());
         assertEquals(4.0, entities.get(1).getYVal());
 
-        // When преобразуем обратно в ResponseDTO
         List<TabulatedFunctionResponseDTO> responseDTOs = dtoTransformService.toResponseDTOs(entities);
 
-        // Then
         assertNotNull(responseDTOs);
         assertEquals(3, responseDTOs.size());
     }
 
     @Test
     void testBatchUserTransformations() {
-        // Given
         List<User> users = Arrays.asList(
                 new User("user1", "pass1"),
                 new User("user2", "pass2"),
@@ -181,10 +159,8 @@ class DTOTransformServiceTest {
         users.get(1).setId(2L);
         users.get(2).setId(3L);
 
-        // When
         List<UserResponseDTO> responseDTOs = dtoTransformService.toUserResponseDTOs(users);
 
-        // Then
         assertNotNull(responseDTOs);
         assertEquals(3, responseDTOs.size());
         assertEquals("user1", responseDTOs.get(0).getName());
@@ -194,7 +170,6 @@ class DTOTransformServiceTest {
 
     @Test
     void testBatchFunctionTransformations() {
-        // Given
         List<Function> functions = Arrays.asList(
                 new Function(1L, "analytic", "func1", "x^2"),
                 new Function(1L, "tabular", "func2", null),
@@ -204,10 +179,8 @@ class DTOTransformServiceTest {
         functions.get(1).setId(2L);
         functions.get(2).setId(3L);
 
-        // When
         List<FunctionResponseDTO> responseDTOs = dtoTransformService.toFunctionResponseDTOs(functions);
 
-        // Then
         assertNotNull(responseDTOs);
         assertEquals(3, responseDTOs.size());
         assertEquals("func1", responseDTOs.get(0).getFunctionName());
@@ -218,10 +191,8 @@ class DTOTransformServiceTest {
 
     @Test
     void testDTOToString() {
-        // When
         String toString = userRequestDTO.toString();
 
-        // Then
         assertNotNull(toString);
         assertTrue(toString.contains("UserRequestDTO"));
         assertTrue(toString.contains("testuser"));
@@ -229,10 +200,8 @@ class DTOTransformServiceTest {
 
     @Test
     void testUserResponseDTOWithoutCreatedAt() {
-        // Given
         UserResponseDTO responseDTO = new UserResponseDTO(1L, "testuser");
 
-        // Then
         assertNotNull(responseDTO);
         assertEquals(1L, responseDTO.getId());
         assertEquals("testuser", responseDTO.getName());

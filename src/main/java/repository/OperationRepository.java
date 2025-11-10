@@ -1,17 +1,32 @@
 package repository;
 
-import model.Operation;
+import model.entity.Operation;
 import java.sql.*;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 public class OperationRepository {
     private static final Logger logger = Logger.getLogger(OperationRepository.class.getName());
+    private final DatabaseConnection databaseConnection;
 
+    public OperationRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+    public OperationRepository() {
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+        this.databaseConnection = databaseConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        if (databaseConnection != null) {
+            return databaseConnection.getConnection();
+        }
+        return DatabaseConnection.getConnection();
+    }
     public Long createOperation(Operation operation) throws SQLException {
         String sql = SqlLoader.loadSql("operations/insert_operations.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setLong(1, operation.getFunctionId());
@@ -40,7 +55,7 @@ public class OperationRepository {
     public Optional<Operation> findById(Long id, Long functionId) throws SQLException {
         String sql = SqlLoader.loadSql("operations/find_operation.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, id);
@@ -63,7 +78,7 @@ public class OperationRepository {
     public boolean updateOperation(Operation operation) throws SQLException {
         String sql = SqlLoader.loadSql("operations/update_operations.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, operation.getOperationsTypeId());
@@ -88,7 +103,7 @@ public class OperationRepository {
     public boolean deleteOperation(Long id, Long functionId) throws SQLException {
         String sql = "DELETE FROM operations WHERE id = ? AND function_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, id);
@@ -111,7 +126,7 @@ public class OperationRepository {
     public boolean deleteAllOperations(Long functionId) throws SQLException {
         String sql = "DELETE FROM operations WHERE function_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, functionId);

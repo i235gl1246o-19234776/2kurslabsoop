@@ -1,8 +1,8 @@
 package repository;
 
-import model.Function;
-import model.Operation;
-import model.User;
+import model.entity.Function;
+import model.entity.Operation;
+import model.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,11 +21,11 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        userRepository = new UserRepository();
-        functionRepository = new FunctionRepository();
-        operationRepository = new OperationRepository();
+        DatabaseConnection dbt = new DatabaseTestConnection();
+        userRepository = new UserRepository(dbt);
+        functionRepository = new FunctionRepository(dbt);
+        operationRepository = new OperationRepository(dbt);
 
-        // Создание тестового пользователя и функции
         User user = new User("operation_test_user", "test_password");
         testUserId = userRepository.createUser(user);
 
@@ -35,13 +35,10 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void testCreateOperation_ShouldCreateNewOperation() throws SQLException {
-        // Подготовка
         Operation operation = new Operation(testFunctionId, 1);
 
-        // Действие
         Long operationId = operationRepository.createOperation(operation);
 
-        // Проверка
         assertNotNull(operationId, "ID операции не должен быть null");
         assertTrue(operationId > 0, "ID операции должен быть положительным числом");
 
@@ -53,17 +50,13 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void testCreateMultipleOperations_ShouldStoreAllOperations() throws SQLException {
-        // Подготовка
         Operation op1 = new Operation(testFunctionId, 1);
         Operation op2 = new Operation(testFunctionId, 2);
         Operation op3 = new Operation(testFunctionId, 3);
-
-        // Действие
         Long id1 = operationRepository.createOperation(op1);
         Long id2 = operationRepository.createOperation(op2);
         Long id3 = operationRepository.createOperation(op3);
 
-        // Проверка
         assertNotNull(id1, "Первая операция должна быть создана");
         assertNotNull(id2, "Вторая операция должна быть создана");
         assertNotNull(id3, "Третья операция должна быть создана");
@@ -75,14 +68,11 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void testFindById_ShouldReturnOperation_WhenOperationExists() throws SQLException {
-        // Подготовка
         Operation operation = new Operation(testFunctionId, 5);
         Long operationId = operationRepository.createOperation(operation);
 
-        // Действие
         Optional<Operation> foundOperation = operationRepository.findById(operationId, testFunctionId);
 
-        // Проверка
         assertTrue(foundOperation.isPresent(), "Операция должна быть найдена");
         assertEquals(operationId, foundOperation.get().getId(), "ID операции должен совпадать");
         assertEquals(5, foundOperation.get().getOperationsTypeId(), "Тип операции должен совпадать");
@@ -91,38 +81,30 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void testFindById_ShouldReturnEmpty_WhenOperationNotExists() throws SQLException {
-        // Действие
         Optional<Operation> foundOperation = operationRepository.findById(999999L, testFunctionId);
 
-        // Проверка
         assertFalse(foundOperation.isPresent(), "Операция не должна быть найдена");
     }
 
     @Test
     void testFindById_ShouldReturnEmpty_WhenWrongFunctionId() throws SQLException {
-        // Подготовка
         Operation operation = new Operation(testFunctionId, 1);
         Long operationId = operationRepository.createOperation(operation);
 
-        // Действие - ищем с неправильным function_id
         Optional<Operation> foundOperation = operationRepository.findById(operationId, 999999L);
 
-        // Проверка
         assertFalse(foundOperation.isPresent(), "Операция не должна быть найдена при неправильном function_id");
     }
 
     @Test
     void testUpdateOperation_ShouldUpdateOperationType() throws SQLException {
-        // Подготовка
         Operation operation = new Operation(testFunctionId, 1);
         Long operationId = operationRepository.createOperation(operation);
         operation.setId(operationId);
 
-        // Действие
         operation.setOperationsTypeId(2);
         boolean updated = operationRepository.updateOperation(operation);
 
-        // Проверка
         assertTrue(updated, "Обновление должно быть успешным");
 
         Optional<Operation> foundOperation = operationRepository.findById(operationId, testFunctionId);
@@ -132,31 +114,24 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void testUpdateOperation_ShouldReturnFalse_WhenOperationNotExists() throws SQLException {
-        // Подготовка
         Operation nonExistentOperation = new Operation(testFunctionId, 1);
         nonExistentOperation.setId(999999L);
 
-        // Действие
         boolean updated = operationRepository.updateOperation(nonExistentOperation);
 
-        // Проверка
         assertFalse(updated, "Обновление несуществующей операции должно вернуть false");
     }
 
     @Test
     void testDeleteOperation_ShouldDeleteOperation() throws SQLException {
-        // Подготовка
         Operation operation = new Operation(testFunctionId, 1);
         Long operationId = operationRepository.createOperation(operation);
 
-        // Проверка что операция создана
         assertTrue(operationRepository.findById(operationId, testFunctionId).isPresent(),
                 "Операция должна существовать до удаления");
 
-        // Действие
         boolean deleted = operationRepository.deleteOperation(operationId, testFunctionId);
 
-        // Проверка
         assertTrue(deleted, "Удаление должно быть успешным");
         assertFalse(operationRepository.findById(operationId, testFunctionId).isPresent(),
                 "Операция не должна существовать после удаления");
@@ -164,65 +139,49 @@ class OperationRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void testDeleteOperation_ShouldReturnFalse_WhenOperationNotExists() throws SQLException {
-        // Действие
         boolean deleted = operationRepository.deleteOperation(999999L, testFunctionId);
 
-        // Проверка
         assertFalse(deleted, "Удаление несуществующей операции должно вернуть false");
     }
 
     @Test
     void testDeleteOperation_ShouldReturnFalse_WhenWrongFunctionId() throws SQLException {
-        // Подготовка
         Operation operation = new Operation(testFunctionId, 1);
         Long operationId = operationRepository.createOperation(operation);
 
-        // Действие - пытаемся удалить с неправильным function_id
         boolean deleted = operationRepository.deleteOperation(operationId, 999999L);
 
-        // Проверка
         assertFalse(deleted, "Удаление с неправильным function_id должно вернуть false");
-        // Проверяем что операция все еще существует
         assertTrue(operationRepository.findById(operationId, testFunctionId).isPresent(),
                 "Операция должна все еще существовать после неудачного удаления");
     }
 
     @Test
     void testDeleteAllOperations_ShouldDeleteAllOperationsForFunction() throws SQLException {
-        // Подготовка
         operationRepository.createOperation(new Operation(testFunctionId, 1));
         operationRepository.createOperation(new Operation(testFunctionId, 2));
         operationRepository.createOperation(new Operation(testFunctionId, 3));
 
-        // Создаем другую функцию и операции для нее
         Function anotherFunction = new Function(testUserId, "analytic", "another_func", "sin(x)");
         Long anotherFunctionId = functionRepository.createFunction(anotherFunction);
         operationRepository.createOperation(new Operation(anotherFunctionId, 4));
 
-        // Действие - удаляем операции только для testFunctionId
         boolean deleted = operationRepository.deleteAllOperations(testFunctionId);
 
-        // Проверка
         assertTrue(deleted, "Удаление всех операций должно быть успешным");
-
-        // Проверяем что операции для anotherFunctionId все еще существуют
-        // (нужно создать метод findOperationsByFunctionId или использовать другой способ проверки)
     }
 
 
     @Test
     void testOperationWithDifferentTypes() throws SQLException {
-        // Подготовка
-        Operation op1 = new Operation(testFunctionId, 1); // тип 1
-        Operation op2 = new Operation(testFunctionId, 2); // тип 2
-        Operation op3 = new Operation(testFunctionId, 999); // произвольный тип
+        Operation op1 = new Operation(testFunctionId, 1);
+        Operation op2 = new Operation(testFunctionId, 2);
+        Operation op3 = new Operation(testFunctionId, 999);
 
-        // Действие
         Long id1 = operationRepository.createOperation(op1);
         Long id2 = operationRepository.createOperation(op2);
         Long id3 = operationRepository.createOperation(op3);
 
-        // Проверка
         assertNotNull(id1, "Операция с типом 1 должна быть создана");
         assertNotNull(id2, "Операция с типом 2 должна быть создана");
         assertNotNull(id3, "Операция с произвольным типом должна быть создана");

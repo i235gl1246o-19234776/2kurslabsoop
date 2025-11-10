@@ -13,11 +13,13 @@ import java.sql.Statement;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class BaseRepositoryTest {
 
-    private static final String TEST_DB_NAME = "functions_test_db";
+    private static final String TEST_DB_NAME = "test_functions_database";
     private static final String TEST_URL = "jdbc:postgresql://localhost:5432/" + TEST_DB_NAME;
     private static final String MAIN_URL = "jdbc:postgresql://localhost:5432/postgres";
     private static final String USER = "postgres";
     private static final String PASSWORD = "1234";
+
+    private static boolean databaseCreated = false;
 
     @BeforeAll
     void setUp() throws SQLException {
@@ -25,29 +27,30 @@ public abstract class BaseRepositoryTest {
 
         createTestDatabaseIfNeeded();
         createTables();
-        DatabaseConnection.setTestConnection(TEST_URL, USER, PASSWORD);
+        DatabaseTestConnection.setTestConnection(TEST_URL, USER, PASSWORD);
 
         System.out.println("Тестовая база данных готова: " + TEST_URL);
-        System.out.println("Режим подключения: " + DatabaseConnection.getConnectionInfo());
     }
 
     private void createTestDatabaseIfNeeded() throws SQLException {
         try (Connection conn = DriverManager.getConnection(MAIN_URL, USER, PASSWORD);
              Statement stmt = conn.createStatement()) {
+
             boolean dbExists = false;
             try {
-                stmt.executeQuery("SELECT 1 FROM pg_database WHERE datname = '" + TEST_DB_NAME + "'").next();
-                dbExists = true;
-                System.out.println("Тестовая база данных уже существует: " + TEST_DB_NAME);
+                var rs = stmt.executeQuery("SELECT 1 FROM pg_database WHERE datname = '" + TEST_DB_NAME + "'");
+                dbExists = rs.next();
             } catch (SQLException e) {
-                // База не существует - создаем
-                System.out.println("Создание тестовой базы данных: " + TEST_DB_NAME);
-                stmt.execute("CREATE DATABASE " + TEST_DB_NAME);
-                dbExists = true;
             }
 
             if (!dbExists) {
-                throw new SQLException("Не удалось создать тестовую базу данных: " + TEST_DB_NAME);
+                System.out.println("Создание тестовой базы данных: " + TEST_DB_NAME);
+                stmt.execute("CREATE DATABASE " + TEST_DB_NAME);
+                databaseCreated = true;
+                System.out.println("Тестовая база данных создана: " + TEST_DB_NAME);
+            } else {
+                System.out.println("Тестовая база данных уже существует: " + TEST_DB_NAME);
+                databaseCreated = false;
             }
 
         } catch (SQLException e) {
@@ -57,9 +60,8 @@ public abstract class BaseRepositoryTest {
     }
 
     private void createTables() throws SQLException {
-        try (Connection conn = DriverManager.getConnection(TEST_URL, USER, PASSWORD);
+        try (Connection conn = DatabaseTestConnection.getConnection();
              Statement stmt = conn.createStatement()) {
-            stmt.execute("SET session_replication_role = 'replica'");
 
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS users (
@@ -96,9 +98,7 @@ public abstract class BaseRepositoryTest {
                 )
             """);
 
-            stmt.execute("SET session_replication_role = 'origin'");
-
-            System.out.println("Все таблицы успешно созданы в тестовой базе данных");
+            System.out.println("Все таблицы успешно созданы/проверены в тестовой базе данных");
 
         } catch (SQLException e) {
             System.err.println("Ошибка при создании таблиц: " + e.getMessage());
@@ -108,10 +108,10 @@ public abstract class BaseRepositoryTest {
 
     @AfterEach
     void cleanUp() throws SQLException {
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DatabaseTestConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            stmt.execute("SET session_replication_role = 'replica'");
+            System.out.println("Очистка тестовых данных...");
 
             stmt.execute("DELETE FROM operations");
             stmt.execute("DELETE FROM tabulated_functions");
@@ -123,7 +123,7 @@ public abstract class BaseRepositoryTest {
             stmt.execute("ALTER SEQUENCE IF EXISTS tabulated_functions_id_seq RESTART WITH 1");
             stmt.execute("ALTER SEQUENCE IF EXISTS operations_id_seq RESTART WITH 1");
 
-            stmt.execute("SET session_replication_role = 'origin'");
+            System.out.println("Тестовые данные очищены");
 
         } catch (SQLException e) {
             System.err.println("Ошибка при очистке тестовых данных: " + e.getMessage());
@@ -133,9 +133,30 @@ public abstract class BaseRepositoryTest {
 
     @AfterAll
     void tearDown() {
-        DatabaseConnection.resetToDefaultConnection();
-        System.out.println("=== ТЕСТОВАЯ СРЕДА ЗАВЕРШЕНА ===");
-        System.out.println("Подключение сброшено к рабочим настройкам");
+        try {
+            cleanDatabase();
+        } catch (SQLException e) {
+            System.err.println("Ошибка при завершении тестовой среды: " + e.getMessage());
+        } finally {
+            DatabaseTestConnection.cleanup();
+            System.out.println("=== ТЕСТОВАЯ СРЕДА ЗАВЕРШЕНА ===");
+        }
+    }
+
+    private void cleanDatabase() throws SQLException {
+        try (Connection conn = DatabaseTestConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            System.out.println("Полная очистка тестовой базы данных...");
+
+            stmt.execute("TRUNCATE TABLE operations, tabulated_functions, functions, users RESTART IDENTITY CASCADE");
+
+            System.out.println("База данных полностью очищена через DatabaseTestConnection");
+
+        } catch (SQLException e) {
+            System.err.println("Ошибка при очистке базы данных: " + e.getMessage());
+            throw e;
+        }
     }
 
     protected Long getLastInsertedId(Connection conn, String tableName) throws SQLException {
@@ -143,5 +164,9 @@ public abstract class BaseRepositoryTest {
              var rs = stmt.executeQuery("SELECT id FROM " + tableName + " ORDER BY id DESC LIMIT 1")) {
             return rs.next() ? rs.getLong("id") : null;
         }
+    }
+
+    protected Connection getTestConnection() throws SQLException {
+        return DatabaseTestConnection.getConnection();
     }
 }

@@ -1,6 +1,6 @@
 package repository;
 
-import model.User;
+import model.entity.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,10 +9,29 @@ import java.util.logging.Logger;
 
 public class UserRepository {
     private static final Logger logger = Logger.getLogger(UserRepository.class.getName());
+
+    private final DatabaseConnection databaseConnection;
+
+    public UserRepository() {
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+        this.databaseConnection = databaseConnection;
+    }
+
+    public UserRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        if (databaseConnection != null) {
+            return databaseConnection.getConnection();
+        }
+        return DatabaseConnection.getConnection();
+    }
+
     public Long createUser(User user) throws SQLException {
         String sql = SqlLoader.loadSql("user/insert_user.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, user.getName());
@@ -41,7 +60,7 @@ public class UserRepository {
     public Optional<User> findById(Long id) throws SQLException {
         String sql = SqlLoader.loadSql("user/find_user_id.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, id);
@@ -63,7 +82,7 @@ public class UserRepository {
     public Optional<User> findByName(String name) throws SQLException {
         String sql = SqlLoader.loadSql("user/find_user_name.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, name);
@@ -85,7 +104,7 @@ public class UserRepository {
     public boolean updateUser(User user) throws SQLException {
         String sql = SqlLoader.loadSql("user/update_user.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, user.getName());
@@ -110,7 +129,7 @@ public class UserRepository {
     public boolean authenticateUser(String name, String passwordHash) throws SQLException {
         String sql = SqlLoader.loadSql("user/user_autentification.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, name);
@@ -129,7 +148,7 @@ public class UserRepository {
     public boolean userNameExists(String name) throws SQLException {
         String sql = SqlLoader.loadSql("user/user_name_is_exist.sql");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, name);
@@ -150,7 +169,7 @@ public class UserRepository {
     public boolean deleteUser(Long id) throws SQLException {
         String sql = "DELETE FROM users WHERE id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, id);
@@ -178,10 +197,10 @@ public class UserRepository {
     }
 
     public List<User> findAll() throws SQLException {
-        String sql = "SELECT id, name FROM users;"; // Загрузка SQL из файла
+        String sql = "SELECT id, name FROM users;";
         List<User> users = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.getConnection(); // Получение соединения
+        try (Connection conn =getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 

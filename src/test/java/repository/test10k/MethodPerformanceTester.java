@@ -4,10 +4,10 @@ import repository.FunctionRepository;
 import repository.OperationRepository;
 import repository.TabulatedFunctionRepository;
 import repository.UserRepository;
-import model.Function;
-import model.Operation;
-import model.TabulatedFunction;
-import model.User;
+import model.entity.Function;
+import model.entity.Operation;
+import model.entity.TabulatedFunction;
+import model.entity.User;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
