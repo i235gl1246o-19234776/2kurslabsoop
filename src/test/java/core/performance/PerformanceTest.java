@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 @SpringBootTest
-@ActiveProfiles("test")
+@ActiveProfiles("test_10k")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PerformanceTest {
 

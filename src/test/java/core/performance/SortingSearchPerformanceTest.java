@@ -21,7 +21,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 @SpringBootTest
-@ActiveProfiles("test")
+@ActiveProfiles("test_10k")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SortingSearchPerformanceTest {
 
