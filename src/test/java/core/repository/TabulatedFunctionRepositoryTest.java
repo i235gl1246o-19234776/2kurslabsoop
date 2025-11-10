@@ -33,7 +33,7 @@ class TabulatedFunctionRepositoryTest {
     @Test
     void testSaveFindDeleteTabulatedFunction() {
         // Подготовка зависимостей
-        UserEntity user = new UserEntity("testuser", "hash123");
+        UserEntity user = new UserEntity("tester", "hash123");
         UserEntity savedUser = userRepository.save(user);
 
         FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.tabular, "data", null);

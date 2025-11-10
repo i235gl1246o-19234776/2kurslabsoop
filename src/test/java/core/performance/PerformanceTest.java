@@ -21,8 +21,6 @@ import java.util.Locale;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PerformanceTest {
 
-    private static final int USER_COUNT = 100;
-    private static final int FUNCTIONS_PER_USER = 100; // ~10k функций
     private static final int ITERATIONS = 1000;
     private static final String CSV_FILE = "framework-test-perfomance.csv";
 
@@ -68,34 +66,36 @@ public class PerformanceTest {
         userRepository.deleteAllInBatch();
         userRepository.flush();
 
-        for (int i = 0; i < USER_COUNT; i++) {
-            UserEntity user = new UserEntity("user" + i, "hash" + i);
+        // Теперь будем создавать 10 000 пользователей
+        for (int i = 0; i < 10_000; i++) {
+            UserEntity user = new UserEntity("user_" + i, "hash_" + i);
             UserEntity savedUser = userRepository.save(user);
             users.add(savedUser);
 
-            for (int j = 0; j < FUNCTIONS_PER_USER; j++) {
-                boolean istabular = (j % 2 == 0);
-                FunctionEntity.FunctionType type = istabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic;
-                FunctionEntity func = new FunctionEntity(
-                        savedUser,
-                        type,
-                        "func_" + i + "_" + j,
-                        istabular ? null : "x^2 + " + j
-                );
-                FunctionEntity savedFunc = functionRepository.save(func);
-                functions.add(savedFunc);
+            // Для каждого пользователя создаём по одной функции (чтобы не перегружать БД миллионами записей)
+            boolean isTabular = (i % 2 == 0);
+            FunctionEntity.FunctionType type = isTabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic;
+            FunctionEntity func = new FunctionEntity(
+                    savedUser,
+                    type,
+                    "func_for_user_" + i,
+                    isTabular ? null : "x^2 + " + i
+            );
+            FunctionEntity savedFunc = functionRepository.save(func);
+            functions.add(savedFunc);
 
-                if (istabular) {
-                    for (int k = 0; k < 5; k++) {
-                        tabulatedFunctionRepository.save(new TabulatedFunctionEntity(
-                                savedFunc,
-                                (double) k,
-                                (double) (k * k + i)
-                        ));
-                    }
-                } else {
-                    operationRepository.save(new OperationEntity(savedFunc, j % 5 + 1));
+            // Для табулированных функций добавим несколько точек
+            if (isTabular) {
+                for (int k = 0; k < 2; k++) { // Меньше точек, чтобы не создавать 20к+ записей
+                    tabulatedFunctionRepository.save(new TabulatedFunctionEntity(
+                            savedFunc,
+                            (double) k,
+                            (double) (k * k + i)
+                    ));
                 }
+            } else {
+                // Для аналитических добавим одну операцию
+                operationRepository.save(new OperationEntity(savedFunc, i % 5 + 1));
             }
         }
     }
