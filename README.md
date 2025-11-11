@@ -38,5 +38,21 @@
 ⣈⡙⠿⢿⣽⣷⣄⣀⣴⣢⠤⠖⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠏⠛⠻⠿⡿⣿⡟⢺⣿⣿⡿⠛⠛⢃⣘⠛⠛⠟⠛⠛⠻⢿⢿⠏⠙⠿⣷⢾⠂⠀⠀⠂⠀⠤⠀⠀⠀⠀⠀⠀
 ⠟⢿⣶⣤⡈⠉⣉⣉⢉⠉⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠆⠀⠀⠀⠁⠈⠁⢨⠭⣉⠀⠀⠀⢈⠁⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
-[table-762a53e1-a164-49f0-9032-82d267153b9e.xlsx](https://github.com/user-attachments/files/23476260/table-762a53e1-a164-49f0-9032-82d267153b9e.xlsx)
+
+[sort-performance.csv](https://github.com/user-attachments/files/23476281/sort-performance.csv)
+```
+Метод,"Время, мс"
+full_scan,51.00
+search_by_name_exact,2.00
+search_by_name_pattern,13.00
+search_by_type_analytic,41.00
+search_by_user_existing,2.00
+search_by_user_not_found,1.00
+sort_by_name_asc,11.00
+sort_by_id_desc,10.00
+search_by_x_val,5.00
+search_by_y_val,4.00
+search_by_operations_type,10.00
+search_combined_user_type_x,6.00
+```
 
