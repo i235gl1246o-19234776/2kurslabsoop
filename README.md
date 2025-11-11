@@ -40,7 +40,7 @@
 
 
 
-| Метод | Sort Performance v1 (мс) | Sort Performance v2 (мс) |
+| Метод | Manual (мс) | Framework v2 (мс) |
 |:--------------------------------|--------------------------:|--------------------------:|
 | full_scan | 326 | 51.0 |
 | search_by_name_exact | 181 | 2.0 |
@@ -66,6 +66,8 @@
 
 </details>
 
----
+---![photo_2025-11-11_15-01-50](https://github.com/user-attachments/assets/b4aa87f7-9e10-4ca0-95a7-541734eb29a3)
+
+
 
 
