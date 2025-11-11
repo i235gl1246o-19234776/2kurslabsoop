@@ -4,7 +4,7 @@ import model.entity.TabulatedFunction;
 import model.dto.request.TabulatedFunctionRequestDTO;
 import model.dto.response.TabulatedFunctionResponseDTO;
 import model.dto.DTOTransformService;
-import repository.TabulatedFunctionRepository;
+import repository.dao.TabulatedFunctionRepository;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;

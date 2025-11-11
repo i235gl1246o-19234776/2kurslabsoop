@@ -1,7 +1,9 @@
-package repository;
+package repository.dao;
 
 import model.entity.Function;
-import model.SearchFunctionResult;
+import model.entity.SearchFunctionResult;
+import repository.DatabaseConnection;
+import repository.SqlLoader;
 
 import java.sql.*;
 import java.util.ArrayList;

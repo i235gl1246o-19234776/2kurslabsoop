@@ -1,6 +1,9 @@
-package repository;
+package repository.dao;
 
 import model.entity.User;
+import repository.DatabaseConnection;
+import repository.SqlLoader;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

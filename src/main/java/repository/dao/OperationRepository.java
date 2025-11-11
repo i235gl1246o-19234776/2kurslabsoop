@@ -1,6 +1,9 @@
-package repository;
+package repository.dao;
 
 import model.entity.Operation;
+import repository.DatabaseConnection;
+import repository.SqlLoader;
+
 import java.sql.*;
 import java.util.Optional;
 import java.util.logging.Logger;

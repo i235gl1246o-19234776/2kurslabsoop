@@ -45,13 +45,12 @@ public class DTOTransformService {
 
     public FunctionResponseDTO toResponseDTO(Function function) {
         logger.info("Преобразование Function entity в FunctionResponseDTO: " + function.getFunctionName());
-        FunctionResponseDTO responseDTO = new FunctionResponseDTO(
-                function.getId(),
-                function.getUserId(),
-                function.getTypeFunction(),
-                function.getFunctionName(),
-                function.getFunctionExpression()
-        );
+
+        FunctionResponseDTO responseDTO = new FunctionResponseDTO();
+        responseDTO.setFunctionId(function.getId());
+        responseDTO.setFunctionName(function.getFunctionName());
+        responseDTO.setTypeFunction(function.getTypeFunction());
+
         logger.fine("FunctionResponseDTO создан для функции: " + function.getFunctionName());
         return responseDTO;
     }

@@ -1,9 +1,9 @@
 package repository.test10k;
 
-import repository.FunctionRepository;
-import repository.OperationRepository;
-import repository.TabulatedFunctionRepository;
-import repository.UserRepository;
+import repository.dao.FunctionRepository;
+import repository.dao.OperationRepository;
+import repository.dao.TabulatedFunctionRepository;
+import repository.dao.UserRepository;
 import model.entity.Function;
 import model.entity.Operation;
 import model.entity.TabulatedFunction;

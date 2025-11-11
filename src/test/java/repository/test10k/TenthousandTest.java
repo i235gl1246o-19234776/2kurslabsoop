@@ -5,6 +5,10 @@ import model.entity.Operation;
 import model.entity.TabulatedFunction;
 import model.entity.User;
 import repository.*;
+import repository.dao.FunctionRepository;
+import repository.dao.OperationRepository;
+import repository.dao.TabulatedFunctionRepository;
+import repository.dao.UserRepository;
 
 import java.sql.*;
 import java.util.ArrayList;

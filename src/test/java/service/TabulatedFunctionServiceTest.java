@@ -4,7 +4,7 @@ import model.entity.TabulatedFunction;
 import model.dto.request.TabulatedFunctionRequestDTO;
 import model.dto.response.TabulatedFunctionResponseDTO;
 import model.dto.DTOTransformService;
-import repository.TabulatedFunctionRepository;
+import repository.dao.TabulatedFunctionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import model.entity.TabulatedFunction;
 import model.dto.request.TabulatedFunctionRequestDTO;
 import model.dto.response.TabulatedFunctionResponseDTO;
-import repository.TabulatedFunctionRepository;
+import repository.dao.TabulatedFunctionRepository;
 import model.dto.DTOTransformService;
 
 import javax.servlet.ServletException;

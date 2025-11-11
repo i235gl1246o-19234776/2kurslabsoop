@@ -1,13 +1,14 @@
 package service;
 
 import model.dto.request.SearchFunctionRequestDTO;
+import model.dto.response.SearchFunctionResponseDTO;
 import model.entity.Function;
 import model.dto.request.FunctionRequestDTO;
 import model.dto.response.FunctionResponseDTO;
 import model.dto.DTOTransformService;
-import model.SearchFunctionResult;
+import model.entity.SearchFunctionResult;
 import repository.DatabaseConnection;
-import repository.FunctionRepository;
+import repository.dao.FunctionRepository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -117,54 +118,166 @@ public class FunctionService {
     private Connection getConnection() throws SQLException {
         throw new UnsupportedOperationException("getConnection() должен быть реализован");
     }
+    public SearchFunctionResponseDTO searchFunctions(SearchFunctionRequestDTO request) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+        SELECT 
+            f.function_id,
+            f.function_name,
+            f.type_function,
+            f.x_val,
+            f.y_val,
+            f.user_name,
+            f.operations_type_id,
+            ot.type_name as operation_type_name,
+            u.email as user_email
+        FROM functions f
+        LEFT JOIN operation_types ot ON f.operations_type_id = ot.id
+        LEFT JOIN users u ON f.user_name = u.username
+        WHERE 1=1
+        """);
 
-    public int searchFunctions(SearchFunctionRequestDTO request) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM functions WHERE 1=1");
         List<Object> parameters = new ArrayList<>();
+        List<FunctionResponseDTO> functions = new ArrayList<>();
 
+        // Добавляем условия фильтрации
         if (request.getUserName() != null && !request.getUserName().isEmpty()) {
-            sql.append(" AND user_name = ?");
+            sql.append(" AND f.user_name = ?");
             parameters.add(request.getUserName());
         }
         if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
-            sql.append(" AND function_name = ?");
-            parameters.add(request.getFunctionName());
+            sql.append(" AND f.function_name LIKE ?");
+            parameters.add(request.getFunctionName() + "%");
         }
         if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
-            sql.append(" AND type_function = ?");
+            sql.append(" AND f.type_function = ?");
             parameters.add(request.getTypeFunction());
         }
         if (request.getXVal() != null) {
-            sql.append(" AND x_val = ?");
+            sql.append(" AND f.x_val = ?");
             parameters.add(request.getXVal());
         }
         if (request.getYVal() != null) {
-            sql.append(" AND y_val = ?");
+            sql.append(" AND f.y_val = ?");
             parameters.add(request.getYVal());
         }
         if (request.getOperationsTypeId() != null) {
-            sql.append(" AND operations_type_id = ?");
+            sql.append(" AND f.operations_type_id = ?");
             parameters.add(request.getOperationsTypeId());
         }
 
-        System.out.println("Executing Count SQL: " + sql); // Логирование для отладки
-        System.out.println("Parameters: " + parameters); // Логирование параметров
+        // Добавляем сортировку
+        if (request.getSortBy() != null && !request.getSortBy().isEmpty()) {
+            String sortField = getSortField(request.getSortBy());
+            String sortOrder = "ASC".equalsIgnoreCase(request.getSortOrder()) ? "ASC" : "DESC";
+            sql.append(" ORDER BY ").append(sortField).append(" ").append(sortOrder);
+        }
+
+        // Добавляем пагинацию
+        if (request.getPage() != null && request.getSize() != null) {
+            int offset = (request.getPage() - 1) * request.getSize();
+            sql.append(" LIMIT ? OFFSET ?");
+            parameters.add(request.getSize());
+            parameters.add(offset);
+        }
+
+        System.out.println("Executing Search SQL: " + sql);
+        System.out.println("Parameters: " + parameters);
+
         DatabaseConnection dbconn = new DatabaseConnection();
         dbconn.setConnectionParams("jdbc:postgresql://localhost:5432/test_10k_db", "postgres", "1234", true);
-        try (Connection conn = dbconn.getConnection()){
-             PreparedStatement stmt = conn.prepareStatement(sql.toString());
 
+        try (Connection conn = dbconn.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            // Устанавливаем параметры
             for (int i = 0; i < parameters.size(); i++) {
                 stmt.setObject(i + 1, parameters.get(i));
+            }
+
+            // Выполняем запрос и маппим результаты
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    FunctionResponseDTO function = new FunctionResponseDTO();
+                    function.setFunctionId(rs.getLong("function_id"));
+                    function.setFunctionName(rs.getString("function_name"));
+                    function.setTypeFunction(rs.getString("type_function"));
+                    function.setXVal(rs.getDouble("x_val"));
+                    function.setYVal(rs.getDouble("y_val"));
+                    function.setUserName(rs.getString("user_name"));
+                    function.setOperationsTypeId(rs.getLong("operations_type_id"));
+                    function.setOperationTypeName(rs.getString("operation_type_name"));
+
+                    functions.add(function);
+                }
+            }
+
+            int total = getTotalCount(request);
+
+            return new SearchFunctionResponseDTO(functions, total);
+
+        }
+    }
+
+    // Вспомогательный метод для получения общего количества записей
+    private int getTotalCount(SearchFunctionRequestDTO request) throws SQLException {
+        StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM functions f WHERE 1=1");
+        List<Object> countParameters = new ArrayList<>();
+
+        // Те же условия что и в основном запросе
+        if (request.getUserName() != null && !request.getUserName().isEmpty()) {
+            countSql.append(" AND f.user_name = ?");
+            countParameters.add(request.getUserName());
+        }
+        if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
+            countSql.append(" AND f.function_name LIKE ?");
+            countParameters.add(request.getFunctionName() + "%");
+        }
+        if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
+            countSql.append(" AND f.type_function = ?");
+            countParameters.add(request.getTypeFunction());
+        }
+        if (request.getXVal() != null) {
+            countSql.append(" AND f.x_val = ?");
+            countParameters.add(request.getXVal());
+        }
+        if (request.getYVal() != null) {
+            countSql.append(" AND f.y_val = ?");
+            countParameters.add(request.getYVal());
+        }
+        if (request.getOperationsTypeId() != null) {
+            countSql.append(" AND f.operations_type_id = ?");
+            countParameters.add(request.getOperationsTypeId());
+        }
+
+        DatabaseConnection dbconn = new DatabaseConnection();
+        dbconn.setConnectionParams("jdbc:postgresql://localhost:5432/test_10k_db", "postgres", "1234", true);
+
+        try (Connection conn = dbconn.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(countSql.toString())) {
+
+            for (int i = 0; i < countParameters.size(); i++) {
+                stmt.setObject(i + 1, countParameters.get(i));
             }
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
-                } else {
-                    return 0;
                 }
             }
         }
+        return 0;
+    }
+
+    private String getSortField(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "function_id" -> "f.function_id";
+            case "function_name" -> "f.function_name";
+            case "type_function" -> "f.type_function";
+            case "user_name" -> "f.user_name";
+            case "x_val" -> "f.x_val";
+            case "y_val" -> "f.y_val";
+            case "operations_type_id" -> "f.operations_type_id";
+            default -> "f.function_id"; // поле по умолчанию
+        };
     }
 }

@@ -1,7 +1,7 @@
 package service;
 
 import model.entity.User;
-import repository.UserRepository;
+import repository.dao.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.SQLException;

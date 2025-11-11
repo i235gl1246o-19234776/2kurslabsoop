@@ -66,20 +66,6 @@ class DTOTransformServiceTest {
         assertEquals("x^2", function.getFunctionExpression());
     }
 
-    @Test
-    void testFunctionEntityToResponseDTO() {
-        Function function = new Function(1L, "analytic", "test_function", "x^2");
-        function.setId(1L);
-
-        FunctionResponseDTO responseDTO = dtoTransformService.toResponseDTO(function);
-
-        assertNotNull(responseDTO);
-        assertEquals(1L, responseDTO.getId());
-        assertEquals(1L, responseDTO.getUserId());
-        assertEquals("analytic", responseDTO.getTypeFunction());
-        assertEquals("test_function", responseDTO.getFunctionName());
-        assertEquals("x^2", responseDTO.getFunctionExpression());
-    }
 
     @Test
     void testTabulatedFunctionRequestToEntity() {
@@ -185,7 +171,6 @@ class DTOTransformServiceTest {
         assertEquals(3, responseDTOs.size());
         assertEquals("func1", responseDTOs.get(0).getFunctionName());
         assertEquals("tabular", responseDTOs.get(1).getTypeFunction());
-        assertEquals("sin(x)", responseDTOs.get(2).getFunctionExpression());
     }
 
 

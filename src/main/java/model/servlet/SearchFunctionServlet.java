@@ -1,12 +1,12 @@
-package model.servlet;
+/*package model.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.SearchFunctionResult;
+import model.entity.SearchFunctionResult;
 import model.dto.request.SearchFunctionRequestDTO;
 import model.dto.response.FunctionResponseDTO;
 import model.dto.response.SearchFunctionResponseDTO;
 import repository.DatabaseConnection;
-import repository.FunctionRepository;
+import repository.dao.FunctionRepository;
 import model.dto.DTOTransformService;
 
 import javax.servlet.ServletException;
@@ -285,7 +285,7 @@ public class SearchFunctionServlet extends HttpServlet {
     /**
      * Преобразует результат поиска в ResponseDTO
      * Использует DTOTransformService для согласованности преобразований
-     */
+
     private FunctionResponseDTO convertSearchResultToResponseDTO(SearchFunctionResult result) {
         // Создаем DTO через transformService для единообразия
         // Если бы у нас была полная Function entity, мы бы использовали:
@@ -316,4 +316,4 @@ public class SearchFunctionServlet extends HttpServlet {
         logger.info("SearchFunctionServlet уничтожается");
         super.destroy();
     }
-}
+}*/

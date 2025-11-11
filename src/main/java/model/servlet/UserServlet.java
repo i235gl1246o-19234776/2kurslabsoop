@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import model.dto.request.CreateUserRequest;
 import model.dto.response.UserResponseDTO;
 import model.entity.User;
-import repository.UserRepository;
+import repository.dao.UserRepository;
 import service.AuthenticationService;
 import model.dto.DTOTransformService;
 

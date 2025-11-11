@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import model.entity.Operation;
 import model.dto.request.OperationRequestDTO;
 import model.dto.response.OperationResponseDTO;
-import repository.OperationRepository;
+import repository.dao.OperationRepository;
 import model.dto.DTOTransformService;
 
 import javax.servlet.ServletException;

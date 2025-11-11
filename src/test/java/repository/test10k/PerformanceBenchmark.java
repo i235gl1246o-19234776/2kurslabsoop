@@ -79,8 +79,9 @@ public class PerformanceBenchmark {
 
         try {
             long start = System.currentTimeMillis();
-            int count = service.searchFunctions(request);
+            SearchFunctionResponseDTO a = service.searchFunctions(request);
             long end = System.currentTimeMillis();
+            int count = a.getTotal();
 
             long timeMs = end - start;
 

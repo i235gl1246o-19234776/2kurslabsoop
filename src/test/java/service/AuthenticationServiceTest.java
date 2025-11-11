@@ -1,7 +1,7 @@
 package service;
 
 import model.entity.User;
-import repository.UserRepository;
+import repository.dao.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

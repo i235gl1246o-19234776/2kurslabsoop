@@ -3,6 +3,7 @@ package repository;
 import model.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import repository.dao.UserRepository;
 
 import java.sql.SQLException;
 import java.util.Optional;
