@@ -38,18 +38,5 @@
 ⣈⡙⠿⢿⣽⣷⣄⣀⣴⣢⠤⠖⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠏⠛⠻⠿⡿⣿⡟⢺⣿⣿⡿⠛⠛⢃⣘⠛⠛⠟⠛⠛⠻⢿⢿⠏⠙⠿⣷⢾⠂⠀⠀⠂⠀⠤⠀⠀⠀⠀⠀⠀
 ⠟⢿⣶⣤⡈⠉⣉⣉⢉⠉⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠆⠀⠀⠀⠁⠈⠁⢨⠭⣉⠀⠀⠀⢈⠁⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
+[table-762a53e1-a164-49f0-9032-82d267153b9e.xlsx](https://github.com/user-attachments/files/23476260/table-762a53e1-a164-49f0-9032-82d267153b9e.xlsx)
 
-[table-762a53e1-a164-49f0-9032-82d267153b9e-0 (1).csv](https://github.com/user-attachments/files/23476225/table-762a53e1-a164-49f0-9032-82d267153b9e-0.1.csv)
-Метод,Sort Performance v1 (мс),Sort Performance v2 (мс)
-full_scan,326,51
-search_by_name_exact,181,2
-search_by_name_pattern,85,13
-search_by_type_analytic,188,41
-search_by_user_existing,195,2
-search_by_user_not_found,80,1
-sort_by_name_asc,108,11
-sort_by_id_desc,80,10
-search_by_x_val,67,5
-search_by_y_val,66,4
-search_by_operations_type,66,10
-search_combined_user_type_x,66,6
