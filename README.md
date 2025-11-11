@@ -39,20 +39,33 @@
 ⠟⢿⣶⣤⡈⠉⣉⣉⢉⠉⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠆⠀⠀⠀⠁⠈⠁⢨⠭⣉⠀⠀⠀⢈⠁⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
 
-[sort-performance.csv](https://github.com/user-attachments/files/23476281/sort-performance.csv)
-```
-Метод,"Время, мс"
-full_scan,51.00
-search_by_name_exact,2.00
-search_by_name_pattern,13.00
-search_by_type_analytic,41.00
-search_by_user_existing,2.00
-search_by_user_not_found,1.00
-sort_by_name_asc,11.00
-sort_by_id_desc,10.00
-search_by_x_val,5.00
-search_by_y_val,4.00
-search_by_operations_type,10.00
-search_combined_user_type_x,6.00
-```
+
+| Метод | Sort Performance v1 (мс) | Sort Performance v2 (мс) |
+|:--------------------------------|--------------------------:|--------------------------:|
+| full_scan | 326 | 51.0 |
+| search_by_name_exact | 181 | 2.0 |
+| search_by_name_pattern | 85 | 13.0 |
+| search_by_type_analytic | 188 | 41.0 |
+| search_by_user_existing | 195 | 2.0 |
+
+> 📁 [Открыть sort.csv →](./sort.csv)
+
+
+
+---
+[sort.csv](https://github.com/user-attachments/files/23476533/sort.csv)[sql.csv](https://github.com/user-attachments/files/23476534/sql.csv)
+
+| Метод | Framework Test (мс) | Manual Test (мс) |
+|:---------------------------|-----------------:|----------------:|
+| user_createUser | 2.17 | 42.75 |
+| user_findById | 0.18 | 30.38 |
+| user_findByName | 0.53 | 30.59 |
+| user_userNameExists | 0.30 | 31.00 |
+| user_updateUser | 2.00 | 34.05 |
+
+> 📁 [Открыть sql.csv →](./sql.csv)
+
+</details>
+
+---
 
