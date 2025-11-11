@@ -53,7 +53,6 @@
 
 
 ---
-[sort.csv](https://github.com/user-attachments/files/23476533/sort.csv)[sql.csv](https://github.com/user-attachments/files/23476534/sql.csv)
 
 | Метод | Framework Test (мс) | Manual Test (мс) |
 |:---------------------------|-----------------:|----------------:|
@@ -68,4 +67,5 @@
 </details>
 
 ---
+
 
