@@ -1,0 +1,13 @@
+Метод,Sort Performance v1 (мс),Sort Performance v2 (мс)
+full_scan,326,51.00
+search_by_name_exact,181,2.00
+search_by_name_pattern,85,13.00
+search_by_type_analytic,188,41.00
+search_by_user_existing,195,2.00
+search_by_user_not_found,80,1.00
+sort_by_name_asc,108,11.00
+sort_by_id_desc,80,10.00
+search_by_x_val,67,5.00
+search_by_y_val,66,4.00
+search_by_operations_type,66,10.00
+search_combined_user_type_x,66,6.00
