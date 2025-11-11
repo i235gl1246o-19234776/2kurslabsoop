@@ -1,4 +1,4 @@
-[deepseek_csv_20251111_d24219.txt](https://github.com/user-attachments/files/23475028/deepseek_csv_20251111_d24219.txt)[deepseek_csv_20251111_07ab6c.txt](https://github.com/user-attachments/files/23475026/deepseek_csv_20251111_07ab6c.txt)лабубу для лабубы
+лабубу для лабубы
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⣤⣤⣼⣷⣤⣤⣤⣤⣤⣤⣤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠀⠀⠀⠀⠀⠀⡀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⣇⣿⣛⣹⣿⣬⣿⣿⣽⣯⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⢶⠖⢳⠀⠀⠀⠀⠀⠀⠡⠀⠀⠘⣇⠀⠀⠀⠀⠀⠀⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -38,51 +38,7 @@
 ⣈⡙⠿⢿⣽⣷⣄⣀⣴⣢⠤⠖⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠏⠛⠻⠿⡿⣿⡟⢺⣿⣿⡿⠛⠛⢃⣘⠛⠛⠟⠛⠛⠻⢿⢿⠏⠙⠿⣷⢾⠂⠀⠀⠂⠀⠤⠀⠀⠀⠀⠀⠀
 ⠟⢿⣶⣤⡈⠉⣉⣉⢉⠉⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠆⠀⠀⠀⠁⠈⠁⢨⠭⣉⠀⠀⠀⢈⠁⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
-
-[Метод,Framework Test (мс),Manual Test (мс)
-user_createUser,2.17,42.75
-user_findById,0.18,30.38
-user_findByName,0.53,30.59
-user_userNameExists,0.30,31.00
-user_updateUser,2.00,34.05
-user_deleteUser,1.46,37.31
-user_authenticateUser,0.18,53.00
-function_createFunction,2.00,70.28
-function_findById,0.10,64.48
-function_findByUserId,0.67,63.47
-function_findByName,0.69,87.80
-function_findByType,19.65,66.07
-function_search,19.18,89.50
-function_updateFunction,0.99,147.16
-function_deleteFunction,1.75,161.55
-tabulated_createTabulatedFunction,0.47,35.77
-tabulated_findAllByFunctionId,0.55,31.15
-tabulated_findByXValue,0.49,30.77
-tabulated_findBetweenXValues,0.47,30.86
-tabulated_updateTabulatedFunction,0.23,29.76
-tabulated_deleteTabulatedFunction,0.43,52.02
-tabulated_deleteAllTabulatedFunctions,1.30,62.29
-operation_createOperation,0.40,35.89
-operation_findById,0.09,51.26
-operation_updateOperation,0.24,53.47
-operation_deleteOperation,0.38,30.63
-operation_deleteAllOperations,0.73,35.11g c.txt…]()
-
-
-
-[Метод,Sort Performance v1 (мс),Sort Performance v2 (мс)
-full_scan,326,51.00
-search_by_name_exact,181,2.00
-search_by_name_pattern,85,13.00
-search_by_type_analytic,188,41.00
-search_by_user_existing,195,2.00
-search_by_user_not_found,80,1.00
-sort_by_name_asc,108,11.00
-sort_by_id_desc,80,10.00
-search_by_x_val,67,5.00
-search_by_y_val,66,4.00
-search_by_operations_type,66,10.00
-search_combined_user_type_x,66,6.009.txt…]()
+//
 
 
 
