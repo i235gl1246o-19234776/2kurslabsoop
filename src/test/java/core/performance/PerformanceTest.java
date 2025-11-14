@@ -57,7 +57,6 @@ public class PerformanceTest {
     @Test
     @Order(1)
     void populateDatabase() {
-        // Очистка в правильном порядке
         operationRepository.deleteAllInBatch();
         tabulatedFunctionRepository.deleteAllInBatch();
         functionRepository.deleteAllInBatch();
@@ -65,31 +64,35 @@ public class PerformanceTest {
         userRepository.flush();
 
         for (int i = 0; i < 10_000; i++) {
-            UserEntity user = new UserEntity("user_" + i, "hash_" + i);
+            UserEntity user = new UserEntity();
+            user.setName("user_" + i);
+            user.setPasswordHash("hash_" + i);
             UserEntity savedUser = userRepository.save(user);
             users.add(savedUser);
 
             boolean isTabular = (i % 2 == 0);
-            FunctionEntity.FunctionType type = isTabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic;
-            FunctionEntity func = new FunctionEntity(
-                    savedUser,
-                    type,
-                    "func_for_user_" + i,
-                    isTabular ? null : "x^2 + " + i
-            );
+            FunctionEntity func = new FunctionEntity();
+            func.setUser(savedUser);
+            func.setTypeFunction((i % 2 == 0) ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic);
+            func.setFunctionName("func_for_user_" + i);
+            func.setFunctionExpression((i % 2 == 0) ? null : "x^2 + " + i);
+
             FunctionEntity savedFunc = functionRepository.save(func);
             functions.add(savedFunc);
 
-            if (isTabular) {
+            if (func.getTypeFunction() == FunctionEntity.FunctionType.tabular) {
                 for (int k = 0; k < 2; k++) {
-                    tabulatedFunctionRepository.save(new TabulatedFunctionEntity(
-                            savedFunc,
-                            (double) k,
-                            (double) (k * k + i)
-                    ));
+                    TabulatedFunctionEntity point = new TabulatedFunctionEntity();
+                    point.setFunction(savedFunc);
+                    point.setXVal((double) k);
+                    point.setYVal((double) (k * k + i));
+                    tabulatedFunctionRepository.save(point);
                 }
             } else {
-                operationRepository.save(new OperationEntity(savedFunc, i % 5 + 1));
+                OperationEntity op = new OperationEntity();
+                op.setFunction(savedFunc);
+                op.setOperationsTypeId(i % 5 + 1);
+                operationRepository.save(op);
             }
         }
     }
@@ -99,7 +102,9 @@ public class PerformanceTest {
     void user_createUser() {
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            UserEntity u = new UserEntity("temp_create_" + i, "hash");
+            UserEntity u = new UserEntity();
+            u.setName("temp_create_" + i);
+            u.setPasswordHash("hash");
             userRepository.save(u);
             userRepository.delete(u);
         }
@@ -165,9 +170,11 @@ public class PerformanceTest {
     void user_deleteUser() {
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            UserEntity temp = new UserEntity("to_delete_" + i, "del");
-            temp = userRepository.save(temp);
-            userRepository.delete(temp);
+            UserEntity temp = new UserEntity();
+            temp.setName("to_delete_" + i);
+            temp.setPasswordHash("del");
+            UserEntity saved = userRepository.save(temp);
+            userRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("user_deleteUser", (double) ms / ITERATIONS);
@@ -196,9 +203,13 @@ public class PerformanceTest {
         UserEntity u = users.get(0);
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            FunctionEntity f = new FunctionEntity(u, FunctionEntity.FunctionType.analytic, "tmp_" + i, "x");
-            f = functionRepository.save(f);
-            functionRepository.delete(f);
+            FunctionEntity f = new FunctionEntity();
+            f.setUser(u);
+            f.setTypeFunction(FunctionEntity.FunctionType.analytic);
+            f.setFunctionName("tmp_" + i);
+            f.setFunctionExpression("x");
+            FunctionEntity saved = functionRepository.save(f);
+            functionRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("function_createFunction", (double) ms / ITERATIONS);
@@ -290,9 +301,13 @@ public class PerformanceTest {
         UserEntity u = users.get(0);
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            FunctionEntity f = new FunctionEntity(u, FunctionEntity.FunctionType.analytic, "del_" + i, "x");
-            f = functionRepository.save(f);
-            functionRepository.delete(f);
+            FunctionEntity f = new FunctionEntity();
+            f.setUser(u);
+            f.setTypeFunction(FunctionEntity.FunctionType.analytic);
+            f.setFunctionName("del_" + i);
+            f.setFunctionExpression("x");
+            FunctionEntity saved = functionRepository.save(f);
+            functionRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("function_deleteFunction", (double) ms / ITERATIONS);
@@ -306,9 +321,12 @@ public class PerformanceTest {
                 .findFirst().orElseThrow();
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            TabulatedFunctionEntity p = new TabulatedFunctionEntity(tabFunc, (double) i, (double) i * 2);
-            p = tabulatedFunctionRepository.save(p);
-            tabulatedFunctionRepository.delete(p);
+            TabulatedFunctionEntity p = new TabulatedFunctionEntity();
+            p.setFunction(tabFunc);
+            p.setXVal((double) i);
+            p.setYVal((double) i * 2);
+            TabulatedFunctionEntity saved = tabulatedFunctionRepository.save(p);
+            tabulatedFunctionRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("tabulated_createTabulatedFunction", (double) ms / ITERATIONS);
@@ -387,9 +405,12 @@ public class PerformanceTest {
                 .findFirst().orElseThrow();
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            TabulatedFunctionEntity p = new TabulatedFunctionEntity(tabFunc, -999.0 + i, -888.0);
-            p = tabulatedFunctionRepository.save(p);
-            tabulatedFunctionRepository.delete(p);
+            TabulatedFunctionEntity p = new TabulatedFunctionEntity();
+            p.setFunction(tabFunc);
+            p.setXVal(-999.0 + i);
+            p.setYVal(-888.0);
+            TabulatedFunctionEntity saved = tabulatedFunctionRepository.save(p);
+            tabulatedFunctionRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("tabulated_deleteTabulatedFunction", (double) ms / ITERATIONS);
@@ -403,10 +424,13 @@ public class PerformanceTest {
                 .findFirst().orElseThrow();
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            // Создаём 5 временных точек
             List<TabulatedFunctionEntity> batch = new ArrayList<>();
             for (int k = 0; k < 5; k++) {
-                batch.add(new TabulatedFunctionEntity(func, (double) k + i, (double) k));
+                TabulatedFunctionEntity point = new TabulatedFunctionEntity();
+                point.setFunction(func);
+                point.setXVal((double) k + i);
+                point.setYVal((double) k);
+                batch.add(point);
             }
             batch = tabulatedFunctionRepository.saveAll(batch);
             tabulatedFunctionRepository.deleteAll(batch);
@@ -423,9 +447,11 @@ public class PerformanceTest {
                 .findFirst().orElseThrow();
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            OperationEntity op = new OperationEntity(analytic, 99 + i);
-            op = operationRepository.save(op);
-            operationRepository.delete(op);
+            OperationEntity op = new OperationEntity();
+            op.setFunction(analytic);
+            op.setOperationsTypeId(99 + i);
+            OperationEntity saved = operationRepository.save(op);
+            operationRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("operation_createOperation", (double) ms / ITERATIONS);
@@ -467,9 +493,11 @@ public class PerformanceTest {
                 .findFirst().orElseThrow();
         Instant start = Instant.now();
         for (int i = 0; i < ITERATIONS; i++) {
-            OperationEntity op = new OperationEntity(analytic, 88 + i);
-            op = operationRepository.save(op);
-            operationRepository.delete(op);
+            OperationEntity op = new OperationEntity();
+            op.setFunction(analytic);
+            op.setOperationsTypeId(88 + i);
+            OperationEntity saved = operationRepository.save(op);
+            operationRepository.delete(saved);
         }
         long ms = Duration.between(start, Instant.now()).toMillis();
         appendResult("operation_deleteOperation", (double) ms / ITERATIONS);
@@ -485,7 +513,10 @@ public class PerformanceTest {
         for (int i = 0; i < ITERATIONS; i++) {
             List<OperationEntity> batch = new ArrayList<>();
             for (int k = 0; k < 3; k++) {
-                batch.add(new OperationEntity(func, 100 + i + k));
+                OperationEntity op = new OperationEntity();
+                op.setFunction(func);
+                op.setOperationsTypeId(100 + i + k);
+                batch.add(op);
             }
             batch = operationRepository.saveAll(batch);
             operationRepository.deleteAll(batch);

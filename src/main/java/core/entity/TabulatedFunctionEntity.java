@@ -1,10 +1,14 @@
 package core.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.util.Objects;
 
 @Entity
 @Table(name = "tabulated_functions")
+@Data
+@NoArgsConstructor
 public class TabulatedFunctionEntity {
 
     @Id
@@ -13,6 +17,7 @@ public class TabulatedFunctionEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "function_id", nullable = false)
+    @ToString.Exclude
     private FunctionEntity function;
 
     @Column(name = "x_val", nullable = false)
@@ -21,41 +26,15 @@ public class TabulatedFunctionEntity {
     @Column(name = "y_val", nullable = false)
     private Double yVal;
 
-    public TabulatedFunctionEntity() {}
-
-    public TabulatedFunctionEntity(FunctionEntity function, Double xVal, Double yVal) {
-        this.function = function;
-        this.xVal = xVal;
-        this.yVal = yVal;
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public FunctionEntity getFunction() { return function; }
-    public void setFunction(FunctionEntity function) { this.function = function; }
-
-    public Double getXVal() { return xVal; }
-    public void setXVal(Double xVal) { this.xVal = xVal; }
-
-    public Double getYVal() { return yVal; }
-    public void setYVal(Double yVal) { this.yVal = yVal; }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TabulatedFunctionEntity that)) return false;
-        return Objects.equals(xVal, that.xVal) &&
-                Objects.equals(yVal, that.yVal);
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(xVal, yVal);
-    }
-
-    @Override
-    public String toString() {
-        return "TabulatedFunctionEntity{id=" + id + ", x=" + xVal + ", y=" + yVal + "}";
+        return Objects.hash(getId());
     }
 }

@@ -32,13 +32,21 @@ class TabulatedFunctionRepositoryTest {
 
     @Test
     void testSaveFindDeleteTabulatedFunction() {
-        UserEntity user = new UserEntity("tester", "hash123");
+        UserEntity user = new UserEntity();
+        user.setName("tester");
+        user.setPasswordHash("hash123");
         UserEntity savedUser = userRepository.save(user);
 
-        FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.tabular, "data", null);
+        FunctionEntity function = new FunctionEntity();
+        function.setUser(savedUser);
+        function.setTypeFunction(FunctionEntity.FunctionType.tabular);
+        function.setFunctionName("data");
         FunctionEntity savedFunction = functionRepository.save(function);
 
-        TabulatedFunctionEntity point = new TabulatedFunctionEntity(savedFunction, 1.0, 2.5);
+        TabulatedFunctionEntity point = new TabulatedFunctionEntity();
+        point.setFunction(savedFunction);
+        point.setXVal(1.0);
+        point.setYVal(2.5);
 
         TabulatedFunctionEntity saved = tabulatedFunctionRepository.save(point);
         TabulatedFunctionEntity found = tabulatedFunctionRepository.findById(saved.getId()).orElse(null);

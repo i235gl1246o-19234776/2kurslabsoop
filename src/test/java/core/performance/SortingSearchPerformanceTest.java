@@ -72,21 +72,21 @@ public class SortingSearchPerformanceTest {
 
         Random rand = new Random(42); // фиксированный seed для воспроизводимости
         for (int i = 0; i < 10_000; i++) { // Изменено с 500 на 10_000
-            UserEntity user = new UserEntity("user_sort_" + i, "hash_" + i);
+            UserEntity user = new UserEntity();
+            user.setName("user_sort_" + i);
+            user.setPasswordHash("hash_" + i);
             user = userRepository.save(user);
 
             // 2 функции на пользователя
             for (int j = 0; j < 2; j++) {
-                boolean isTabular = (i + j) % 2 == 0;
-                FunctionEntity func = new FunctionEntity(
-                        user,
-                        isTabular ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic,
-                        "func_" + i + "_" + j,
-                        isTabular ? null : "x^2"
-                );
+                FunctionEntity func = new FunctionEntity();
+                func.setUser(user);
+                func.setTypeFunction((i + j) % 2 == 0 ? FunctionEntity.FunctionType.tabular : FunctionEntity.FunctionType.analytic);
+                func.setFunctionName("func_" + i + "_" + j);
+                func.setFunctionExpression((i + j) % 2 == 0 ? null : "x^2");
                 func = functionRepository.save(func);
 
-                if (isTabular) {
+                if (func.getTypeFunction() == FunctionEntity.FunctionType.tabular) {
                     for (int k = 0; k < 10; k++) {
                         double x = rand.nextDouble() * 1000;
                         double y = x * x;
@@ -94,10 +94,17 @@ public class SortingSearchPerformanceTest {
                             testXVal = x;
                             testYVal = y;
                         }
-                        tabulatedFunctionRepository.save(new TabulatedFunctionEntity(func, x, y));
+                        TabulatedFunctionEntity point = new TabulatedFunctionEntity();
+                        point.setFunction(func);
+                        point.setXVal(x);
+                        point.setYVal(y);
+                        tabulatedFunctionRepository.save(point);
                     }
                 } else {
-                    operationRepository.save(new OperationEntity(func, 1));
+                    OperationEntity op = new OperationEntity();
+                    op.setFunction(func);
+                    op.setOperationsTypeId(1);
+                    operationRepository.save(op);
                 }
 
                 if (i == 0 && j == 0) {

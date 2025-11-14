@@ -28,15 +28,16 @@ class FunctionRepositoryTest {
 
     @Test
     void testSaveFindDeleteFunction() {
-        UserEntity user = new UserEntity("tester", "hash123");
+        UserEntity user = new UserEntity();
+        user.setName("tester");
+        user.setPasswordHash("hash123");
         UserEntity savedUser = userRepository.save(user);
 
-        FunctionEntity function = new FunctionEntity(
-                savedUser,
-                FunctionEntity.FunctionType.analytic,
-                "f(x)",
-                "x^2 + 1"
-        );
+        FunctionEntity function = new FunctionEntity();
+        function.setUser(savedUser);
+        function.setTypeFunction(FunctionEntity.FunctionType.analytic);
+        function.setFunctionName("f(x)");
+        function.setFunctionExpression("x^2 + 1");
 
         FunctionEntity saved = functionRepository.save(function);
         FunctionEntity found = functionRepository.findById(saved.getId()).orElse(null);

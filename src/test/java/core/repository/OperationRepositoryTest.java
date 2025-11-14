@@ -32,13 +32,21 @@ class OperationRepositoryTest {
 
     @Test
     void testSaveFindDeleteOperation() {
-        UserEntity user = new UserEntity("testuser", "hash123");
+        UserEntity user = new UserEntity();
+        user.setName("tester");
+        user.setPasswordHash("hash123");
         UserEntity savedUser = userRepository.save(user);
 
-        FunctionEntity function = new FunctionEntity(savedUser, FunctionEntity.FunctionType.analytic, "f(x)", "x^2");
+        FunctionEntity function = new FunctionEntity();
+        function.setUser(savedUser);
+        function.setTypeFunction(FunctionEntity.FunctionType.analytic);
+        function.setFunctionName("f(x)");
+        function.setFunctionExpression("x^2");
         FunctionEntity savedFunction = functionRepository.save(function);
 
-        OperationEntity operation = new OperationEntity(savedFunction, 1);
+        OperationEntity operation = new OperationEntity();
+        operation.setFunction(savedFunction);
+        operation.setOperationsTypeId(1);
 
         OperationEntity saved = operationRepository.save(operation);
         OperationEntity found = operationRepository.findById(saved.getId()).orElse(null);
