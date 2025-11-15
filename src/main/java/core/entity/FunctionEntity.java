@@ -41,7 +41,12 @@ public class FunctionEntity {
     private List<OperationEntity> operations = new ArrayList<>();
 
     public enum FunctionType {
-        tabular, analytic
+        tabular, analytic;
+
+        @Override
+        public String toString() {
+            return name().toUpperCase(); // Преобразуем в верхний регистр
+        }
     }
 
     @Override
