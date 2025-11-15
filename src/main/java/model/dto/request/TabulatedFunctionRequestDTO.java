@@ -4,11 +4,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.java.Log;
+
 
 @Data
 @NoArgsConstructor
-@Log
 public class TabulatedFunctionRequestDTO {
 
     @NotNull(message = "ID функции обязателен")
@@ -21,15 +20,10 @@ public class TabulatedFunctionRequestDTO {
     @NotNull(message = "Значение Y обязательно")
     private Double yVal;
 
-    {
-        log.fine("Создан пустой TabulatedFunctionRequestDTO");
-    }
-
     public TabulatedFunctionRequestDTO(Long functionId, Double xVal, Double yVal) {
         this.functionId = functionId;
         this.xVal = xVal;
         this.yVal = yVal;
-        log.info("Создан TabulatedFunctionRequestDTO для функции: " + functionId + " (x=" + xVal + ", y=" + yVal + ")");
     }
 
     @Override

@@ -3,7 +3,7 @@ package repository.test10k;
 import model.dto.request.SearchFunctionRequestDTO;
 import model.dto.response.SearchFunctionResponseDTO;
 import repository.PerformanceLogger;
-import service.FunctionService;
+import model.service.FunctionService;
 
 import java.sql.SQLException;
 import java.util.logging.Logger;

@@ -1,462 +1,282 @@
 package model.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.entity.Function;
 import model.dto.request.FunctionRequestDTO;
 import model.dto.response.FunctionResponseDTO;
-import repository.dao.FunctionRepository;
-import model.dto.DTOTransformService;
+import model.entity.Function;
+import model.service.FunctionService;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @WebServlet("/api/functions/*")
 public class FunctionServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(FunctionServlet.class.getName());
-    private FunctionRepository functionRepository;
-    private DTOTransformService transformService;
-    private ObjectMapper objectMapper;
+    private final FunctionService functionService;
+    private final ObjectMapper objectMapper;
+
+    public FunctionServlet() {
+        this.functionService = new FunctionService();
+        this.objectMapper = new ObjectMapper();
+    }
+
+    // Конструктор для тестирования
+    public FunctionServlet(FunctionService functionService) {
+        this.functionService = functionService;
+        this.objectMapper = new ObjectMapper();
+    }
 
     @Override
-    public void init() throws ServletException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        logger.info("POST /api/functions вызван");
+
+        StringBuilder jsonBuffer = new StringBuilder();
+        try (BufferedReader reader = req.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonBuffer.append(line);
+            }
+        }
+
         try {
-            this.functionRepository = new FunctionRepository();
-            this.functionRepository.createPerformanceTable();
-            this.transformService = new DTOTransformService();
-            this.objectMapper = new ObjectMapper();
-            logger.info("FunctionServlet инициализирован с DTOTransformService");
+            FunctionRequestDTO functionRequest = objectMapper.readValue(jsonBuffer.toString(), FunctionRequestDTO.class);
+            FunctionResponseDTO response = functionService.createFunction(functionRequest);
+
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            resp.setContentType("application/json");
+            PrintWriter out = resp.getWriter();
+            out.print(objectMapper.writeValueAsString(response));
+            out.flush();
         } catch (SQLException e) {
-            logger.severe("Ошибка инициализации FunctionServlet: " + e.getMessage());
-            throw new ServletException("Не удалось инициализировать FunctionServlet", e);
+            logger.severe("Ошибка при создании функции: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"error\":\"Ошибка при создании функции\"}");
         }
     }
 
-    // ==================== УТИЛИТНЫЕ МЕТОДЫ ====================
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String pathInfo = req.getPathInfo();
+        String userIdParam = req.getParameter("userId");
 
-    private String createSuccessResponse(Object data) {
-        return convertToJson(Map.of("success", true, "data", data));
+        if (userIdParam == null || userIdParam.isEmpty()) {
+            logger.warning("Параметр userId обязателен для GET запросов");
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Параметр userId обязателен\"}");
+            return;
+        }
+
+        Long userId = Long.parseLong(userIdParam);
+
+        if (pathInfo == null || pathInfo.equals("/")) {
+            // GET /api/functions?userId=1
+            handleGetFunctionsByUserId(req, resp, userId);
+        } else {
+            // GET /api/functions/{id}?userId=1
+            String[] pathParts = pathInfo.split("/");
+            if (pathParts.length == 2) { // ['', 'id']
+                try {
+                    Long id = Long.parseLong(pathParts[1]);
+                    handleGetFunctionById(req, resp, id, userId);
+                } catch (NumberFormatException e) {
+                    logger.warning("Неверный формат ID функции: " + pathParts[1]);
+                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    resp.getWriter().write("{\"error\":\"Неверный формат ID функции\"}");
+                }
+            } else {
+                logger.warning("Неверный путь: " + pathInfo);
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"Неверный путь\"}");
+            }
+        }
     }
 
-    private String createSuccessResponse(String message) {
-        return convertToJson(Map.of("success", true, "message", message));
-    }
-
-    private String createErrorResponse(int status, String errorMessage) {
-        return convertToJson(Map.of(
-                "success", false,
-                "error", errorMessage,
-                "status", status
-        ));
-    }
-
-    private String convertToJson(Object object) {
+    private void handleGetFunctionById(HttpServletRequest req, HttpServletResponse resp, Long id, Long userId) throws IOException {
+        logger.info("GET /api/functions/" + id + " вызван для userId: " + userId);
         try {
-            return objectMapper.writeValueAsString(object);
-        } catch (Exception e) {
-            logger.severe("Ошибка преобразования в JSON: " + e.getMessage());
-            return "{\"success\":false,\"error\":\"Ошибка сервера\",\"status\":500}";
+            Optional<FunctionResponseDTO> response = functionService.getFunctionById(id, userId);
+            if (response.isPresent()) {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setContentType("application/json");
+                PrintWriter out = resp.getWriter();
+                out.print(objectMapper.writeValueAsString(response.get()));
+                out.flush();
+            } else {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("{\"error\":\"Функция не найдена\"}");
+            }
+        } catch (SQLException e) {
+            logger.severe("Ошибка при получении функции: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"error\":\"Ошибка при получении функции\"}");
         }
     }
 
-    private void sendJsonResponse(HttpServletResponse response, int status, String jsonData) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(jsonData);
-    }
+    private void handleGetFunctionsByUserId(HttpServletRequest req, HttpServletResponse resp, Long userId) throws IOException {
+        String nameParam = req.getParameter("name");
+        String typeParam = req.getParameter("type");
 
-    private Optional<Long> parseLongParameter(HttpServletRequest req, String paramName) {
-        String value = req.getParameter(paramName);
-        if (value != null && !value.trim().isEmpty()) {
+        if (nameParam != null) {
+            // GET /api/functions?userId=1&name=pattern
+            logger.info("Поиск функций по имени для userId: " + userId + ", шаблон: " + nameParam);
             try {
-                return Optional.of(Long.parseLong(value.trim()));
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат параметра " + paramName + ": " + value);
+                List<FunctionResponseDTO> functions = functionService.getFunctionsByName(userId, nameParam);
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setContentType("application/json");
+                PrintWriter out = resp.getWriter();
+                out.print(objectMapper.writeValueAsString(functions));
+                out.flush();
+            } catch (SQLException e) {
+                logger.severe("Ошибка при поиске функций по имени: " + e.getMessage());
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().write("{\"error\":\"Ошибка при поиске функций по имени\"}");
             }
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Double> parseDoubleParameter(HttpServletRequest req, String paramName) {
-        String value = req.getParameter(paramName);
-        if (value != null && !value.trim().isEmpty()) {
+        } else if (typeParam != null) {
+            // GET /api/functions?userId=1&type=math
+            logger.info("Получение функций по типу для userId: " + userId + ", тип: " + typeParam);
             try {
-                return Optional.of(Double.parseDouble(value.trim()));
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат параметра " + paramName + ": " + value);
+                List<FunctionResponseDTO> functions = functionService.getFunctionsByType(userId, typeParam);
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setContentType("application/json");
+                PrintWriter out = resp.getWriter();
+                out.print(objectMapper.writeValueAsString(functions));
+                out.flush();
+            } catch (SQLException e) {
+                logger.severe("Ошибка при получении функций по типу: " + e.getMessage());
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().write("{\"error\":\"Ошибка при получении функций по типу\"}");
+            }
+        } else {
+            // GET /api/functions?userId=1
+            logger.info("Получение всех функций для userId: " + userId);
+            try {
+                List<FunctionResponseDTO> functions = functionService.getFunctionsByUserId(userId);
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setContentType("application/json");
+                PrintWriter out = resp.getWriter();
+                out.print(objectMapper.writeValueAsString(functions));
+                out.flush();
+            } catch (SQLException e) {
+                logger.severe("Ошибка при получении функций пользователя: " + e.getMessage());
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().write("{\"error\":\"Ошибка при получении функций пользователя\"}");
             }
         }
-        return Optional.empty();
     }
-
-    private Optional<Long> parseIdFromPath(String pathInfo) {
-        try {
-            return Optional.of(Long.parseLong(pathInfo.substring(1)));
-        } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
-            return Optional.empty();
-        }
-    }
-
-    private <T> T parseJsonBody(String body, Class<T> valueType) {
-        try {
-            return objectMapper.readValue(body, valueType);
-        } catch (Exception e) {
-            logger.warning("Ошибка парсинга JSON: " + e.getMessage());
-            return null;
-        }
-    }
-
-    // ==================== ОБРАБОТКА GET ЗАПРОСОВ ====================
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        long startTime = System.currentTimeMillis();
-        logger.info("GET функции: " + req.getRequestURI());
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String pathInfo = req.getPathInfo();
+
+        if (pathInfo == null) {
+            logger.warning("Путь для PUT запроса отсутствует");
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Путь для PUT запроса отсутствует\"}");
+            return;
+        }
+
+        String[] pathParts = pathInfo.split("/");
+        if (pathParts.length != 2) { // ['', 'id']
+            logger.warning("Неверный путь для PUT: " + pathInfo);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Неверный путь для PUT\"}");
+            return;
+        }
 
         try {
-            String pathInfo = req.getPathInfo();
+            Long id = Long.parseLong(pathParts[1]);
 
-            if (pathInfo == null || pathInfo.equals("/")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/functions?userId=1
-                // ❌ ПЛОХОЙ ЗАПРОС: GET /api/functions (без userId)
-                getAllFunctions(req, resp);
-            } else if (pathInfo.matches("/\\d+")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/functions/1?userId=1
-                getFunctionById(req, resp, pathInfo);
-            } else if (pathInfo.equals("/search")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/functions/search?functionName=sin
-                searchFunctions(req, resp);
-            } else if (pathInfo.equals("/stats")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: GET /api/functions/stats
-                getPerformanceStats(req, resp);
+            StringBuilder jsonBuffer = new StringBuilder();
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonBuffer.append(line);
+                }
+            }
+
+            Function function = objectMapper.readValue(jsonBuffer.toString(), Function.class);
+            // Убедимся, что ID в сущности совпадает с URL
+
+            logger.info("PUT /api/functions/" + id + " вызван");
+
+            boolean updated = functionService.updateFunction(function);
+            if (updated) {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write("{\"message\":\"Функция обновлена\"}");
             } else {
-                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("{\"error\":\"Функция не найдена для обновления\"}");
             }
+        } catch (NumberFormatException e) {
+            logger.warning("Неверный формат ID функции: " + pathParts[1]);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Неверный формат ID функции\"}");
         } catch (SQLException e) {
-            logger.severe("Ошибка БД: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
-        } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
-        }
-
-        logger.info("GET функции обработан за " + (System.currentTimeMillis() - startTime) + " мс");
-    }
-
-    private void getAllFunctions(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        Optional<Long> userIdOpt = parseLongParameter(req, "userId");
-        if (userIdOpt.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Параметр userId обязателен"));
-            return;
-        }
-
-        Long userId = userIdOpt.get();
-        String namePattern = req.getParameter("name");
-        String type = req.getParameter("type");
-
-        List<Function> functions;
-
-        if (namePattern != null && !namePattern.trim().isEmpty()) {
-            functions = functionRepository.findByName(userId, namePattern.trim());
-        } else if (type != null && !type.trim().isEmpty()) {
-            functions = functionRepository.findByType(userId, type.trim());
-        } else {
-            functions = functionRepository.findByUserId(userId);
-        }
-
-        // ✅ Используем transformService для пакетного преобразования
-        List<FunctionResponseDTO> responseDTOs = transformService.toFunctionResponseDTOs(functions);
-        sendJsonResponse(resp, HttpServletResponse.SC_OK, createSuccessResponse(responseDTOs));
-        logger.info("Возвращено " + responseDTOs.size() + " функций для пользователя " + userId);
-    }
-
-    private void getFunctionById(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
-            throws IOException, SQLException {
-
-        Optional<Long> userIdOpt = parseLongParameter(req, "userId");
-        if (userIdOpt.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Параметр userId обязателен"));
-            return;
-        }
-
-        Optional<Long> idOpt = parseIdFromPath(pathInfo);
-        if (idOpt.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID функции"));
-            return;
-        }
-
-        Long id = idOpt.get();
-        Long userId = userIdOpt.get();
-
-        Optional<Function> function = functionRepository.findById(id, userId);
-        if (function.isPresent()) {
-            // ✅ Используем transformService для преобразования Entity в DTO
-            FunctionResponseDTO responseDTO = transformService.toResponseDTO(function.get());
-            sendJsonResponse(resp, HttpServletResponse.SC_OK, createSuccessResponse(responseDTO));
-            logger.info("Возвращена функция с ID: " + id);
-        } else {
-            sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                    createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Функция не найдена"));
+            logger.severe("Ошибка при обновлении функции: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"error\":\"Ошибка при обновлении функции\"}");
         }
     }
-
-    // ==================== ОБРАБОТКА POST ЗАПРОСОВ ====================
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        long startTime = System.currentTimeMillis();
-        logger.info("POST функция: " + req.getRequestURI());
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String pathInfo = req.getPathInfo();
+        String userIdParam = req.getParameter("userId");
+
+        if (userIdParam == null || userIdParam.isEmpty()) {
+            logger.warning("Параметр userId обязателен для DELETE запроса");
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Параметр userId обязателен\"}");
+            return;
+        }
+
+        Long userId = Long.parseLong(userIdParam);
+
+        if (pathInfo == null) {
+            logger.warning("Путь для DELETE запроса отсутствует");
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Путь для DELETE запроса отсутствует\"}");
+            return;
+        }
+
+        String[] pathParts = pathInfo.split("/");
+        if (pathParts.length != 2) { // ['', 'id']
+            logger.warning("Неверный путь для DELETE: " + pathInfo);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Неверный путь для DELETE\"}");
+            return;
+        }
 
         try {
-            String pathInfo = req.getPathInfo();
+            Long id = Long.parseLong(pathParts[1]);
+            logger.info("DELETE /api/functions/" + id + " вызван для userId: " + userId);
 
-            if (pathInfo == null || pathInfo.equals("/")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: POST /api/functions с корректным JSON
-                createFunction(req, resp);
-            } else if (pathInfo.equals("/search")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: POST /api/functions/search с телом запроса
-                searchFunctionsPost(req, resp);
+            boolean deleted = functionService.deleteFunction(id, userId);
+            if (deleted) {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write("{\"message\":\"Функция удалена\"}");
             } else {
-                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("{\"error\":\"Функция не найдена для удаления\"}");
             }
+        } catch (NumberFormatException e) {
+            logger.warning("Неверный формат ID функции: " + pathParts[1]);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Неверный формат ID функции\"}");
         } catch (SQLException e) {
-            logger.severe("Ошибка БД: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
-        } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
+            logger.severe("Ошибка при удалении функции: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"error\":\"Ошибка при удалении функции\"}");
         }
-
-        logger.info("POST функция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
-    }
-
-    private void createFunction(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        String body = req.getReader().lines().collect(Collectors.joining());
-        logger.fine("Тело запроса создания: " + body);
-
-        FunctionRequestDTO requestDTO = parseJsonBody(body, FunctionRequestDTO.class);
-        if (requestDTO == null) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат JSON"));
-            return;
-        }
-
-        // Валидация обязательных полей
-        if (requestDTO.getUserId() == null) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "userId обязателен"));
-            return;
-        }
-        if (requestDTO.getFunctionName() == null || requestDTO.getFunctionName().trim().isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "functionName обязателен"));
-            return;
-        }
-        if (requestDTO.getTypeFunction() == null || requestDTO.getTypeFunction().trim().isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "typeFunction обязателен"));
-            return;
-        }
-
-        // ✅ Используем transformService для преобразования DTO в Entity
-        Function function = transformService.toEntity(requestDTO);
-        Long functionId = functionRepository.createFunction(function);
-
-        if (functionId != null) {
-            sendJsonResponse(resp, HttpServletResponse.SC_CREATED,
-                    createSuccessResponse(Map.of("id", functionId, "message", "Функция успешно создана")));
-            logger.info("Создана новая функция с ID: " + functionId);
-        } else {
-            throw new SQLException("Не удалось создать функцию");
-        }
-    }
-
-    // ==================== ОБРАБОТКА PUT ЗАПРОСОВ ====================
-
-    @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        long startTime = System.currentTimeMillis();
-        logger.info("PUT функция: " + req.getRequestURI());
-
-        try {
-            String pathInfo = req.getPathInfo();
-
-            if (pathInfo != null && pathInfo.matches("/\\d+")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: PUT /api/functions/1 с корректным JSON
-                // ❌ ПЛОХОЙ ЗАПРОС: PUT /api/functions/999 (несуществующий)
-                updateFunction(req, resp, pathInfo);
-            } else {
-                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
-            }
-        } catch (SQLException e) {
-            logger.severe("Ошибка БД: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
-        } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
-        }
-
-        logger.info("PUT функция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
-    }
-
-    private void updateFunction(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
-            throws IOException, SQLException {
-
-        Optional<Long> idOpt = parseIdFromPath(pathInfo);
-        if (idOpt.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID функции"));
-            return;
-        }
-
-        Long id = idOpt.get();
-        String body = req.getReader().lines().collect(Collectors.joining());
-        logger.fine("Тело запроса обновления: " + body);
-
-        FunctionRequestDTO requestDTO = parseJsonBody(body, FunctionRequestDTO.class);
-        if (requestDTO == null) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат JSON"));
-            return;
-        }
-
-        if (requestDTO.getUserId() == null) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "userId обязателен"));
-            return;
-        }
-
-        // Проверяем существование функции
-        Optional<Function> existingFunction = functionRepository.findById(id, requestDTO.getUserId());
-        if (existingFunction.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                    createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Функция не найдена"));
-            return;
-        }
-
-        // ✅ Используем transformService для преобразования DTO в Entity
-        Function function = transformService.toEntity(requestDTO);
-        function.setId(id);
-
-        boolean updated = functionRepository.updateFunction(function);
-        if (updated) {
-            FunctionResponseDTO responseDTO = transformService.toResponseDTO(function);
-            sendJsonResponse(resp, HttpServletResponse.SC_OK, createSuccessResponse(responseDTO));
-            logger.info("Обновлена функция с ID: " + id);
-        } else {
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Не удалось обновить функцию"));
-        }
-    }
-
-    // ==================== ОБРАБОТКА DELETE ЗАПРОСОВ ====================
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        long startTime = System.currentTimeMillis();
-        logger.info("DELETE функция: " + req.getRequestURI());
-
-        try {
-            String pathInfo = req.getPathInfo();
-
-            if (pathInfo != null && pathInfo.matches("/\\d+")) {
-                // ✅ ХОРОШИЙ ЗАПРОС: DELETE /api/functions/1?userId=1
-                // ❌ ПЛОХОЙ ЗАПРОС: DELETE /api/functions/1 (без userId)
-                deleteFunction(req, resp, pathInfo);
-            } else {
-                sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                        createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Ресурс не найден"));
-            }
-        } catch (SQLException e) {
-            logger.severe("Ошибка БД: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных"));
-        } catch (Exception e) {
-            logger.severe("Неожиданная ошибка: " + e.getMessage());
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    createErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера"));
-        }
-
-        logger.info("DELETE функция обработан за " + (System.currentTimeMillis() - startTime) + " мс");
-    }
-
-    private void deleteFunction(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
-            throws IOException, SQLException {
-
-        Optional<Long> userIdOpt = parseLongParameter(req, "userId");
-        if (userIdOpt.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Параметр userId обязателен"));
-            return;
-        }
-
-        Optional<Long> idOpt = parseIdFromPath(pathInfo);
-        if (idOpt.isEmpty()) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    createErrorResponse(HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID функции"));
-            return;
-        }
-
-        Long id = idOpt.get();
-        Long userId = userIdOpt.get();
-
-        boolean deleted = functionRepository.deleteFunction(id, userId);
-        if (deleted) {
-            sendJsonResponse(resp, HttpServletResponse.SC_OK,
-                    createSuccessResponse("Функция успешно удалена"));
-            logger.info("Удалена функция с ID: " + id);
-        } else {
-            sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND,
-                    createErrorResponse(HttpServletResponse.SC_NOT_FOUND, "Функция не найдена"));
-        }
-    }
-
-    // ==================== МЕТОДЫ ПОИСКА И СТАТИСТИКИ ====================
-
-    private void searchFunctions(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        // Используем уже существующий SearchFunctionServlet для поиска
-        // Этот метод можно удалить, если поиск полностью перенесен в отдельный сервлет
-        sendJsonResponse(resp, HttpServletResponse.SC_OK,
-                createSuccessResponse("Используйте /api/search/functions для расширенного поиска"));
-    }
-
-    private void searchFunctionsPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        // Используем уже существующий SearchFunctionServlet для поиска
-        sendJsonResponse(resp, HttpServletResponse.SC_OK,
-                createSuccessResponse("Используйте POST /api/search/functions для расширенного поиска"));
-    }
-
-    private void getPerformanceStats(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        functionRepository.printPerformanceStats();
-        sendJsonResponse(resp, HttpServletResponse.SC_OK,
-                createSuccessResponse("Статистика производительности выведена в лог"));
-    }
-
-    @Override
-    public void destroy() {
-        logger.info("FunctionServlet уничтожается");
-        super.destroy();
     }
 }

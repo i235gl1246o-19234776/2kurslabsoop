@@ -1,1 +1,0 @@
-SELECT * FROM operations WHERE id = ? AND function_id = ?;

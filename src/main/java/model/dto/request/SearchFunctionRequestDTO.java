@@ -16,4 +16,5 @@ public class SearchFunctionRequestDTO {
     private String sortOrder;
     private Integer page;
     private Integer size;
+
 }

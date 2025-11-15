@@ -6,7 +6,6 @@ import lombok.extern.java.Log;
 
 @Data
 @NoArgsConstructor
-@Log
 public class TabulatedFunctionResponseDTO {
 
     private Long id;
@@ -14,16 +13,11 @@ public class TabulatedFunctionResponseDTO {
     private Double xVal;
     private Double yVal;
 
-    {
-        log.fine("Создан пустой TabulatedFunctionResponseDTO");
-    }
-
     public TabulatedFunctionResponseDTO(Long id, Long functionId, Double xVal, Double yVal) {
         this.id = id;
         this.functionId = functionId;
         this.xVal = xVal;
         this.yVal = yVal;
-        log.info("Создан TabulatedFunctionResponseDTO: id=" + id + " (functionId: " + functionId + ")");
     }
 
     @Override

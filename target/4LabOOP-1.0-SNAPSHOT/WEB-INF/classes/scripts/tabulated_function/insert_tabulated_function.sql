@@ -1,1 +1,0 @@
-INSERT INTO tabulated_functions (function_id, x_val, y_val) VALUES (?, ?, ?);

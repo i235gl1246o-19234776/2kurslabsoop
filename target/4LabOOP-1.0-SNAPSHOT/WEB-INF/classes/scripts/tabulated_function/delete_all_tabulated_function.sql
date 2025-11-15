@@ -1,1 +1,0 @@
-DELETE FROM tabulated_functions WHERE function_id = ?;

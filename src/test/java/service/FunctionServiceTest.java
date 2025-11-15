@@ -3,6 +3,7 @@ package service;
 import model.dto.request.FunctionRequestDTO;
 import model.dto.response.FunctionResponseDTO;
 import model.entity.Function;
+import model.service.FunctionService;
 import repository.dao.FunctionRepository;
 import model.dto.DTOTransformService;
 import org.junit.jupiter.api.Test;

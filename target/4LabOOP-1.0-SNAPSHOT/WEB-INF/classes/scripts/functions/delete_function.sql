@@ -1,1 +1,0 @@
-DELETE FROM functions WHERE id = ? AND user_id = ?;

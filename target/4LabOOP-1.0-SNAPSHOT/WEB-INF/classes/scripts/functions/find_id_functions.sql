@@ -1,1 +1,0 @@
-SELECT * FROM functions WHERE id = ? AND user_id = ?;

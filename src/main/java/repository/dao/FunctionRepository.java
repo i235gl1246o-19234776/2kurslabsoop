@@ -54,7 +54,7 @@ public class FunctionRepository {
     public Long createFunction(Function function) throws SQLException {
         long startTime = System.nanoTime();
         boolean success = false;
-        String params = "userId=" + function.getUserId() + ", type=" + function.getTypeFunction() + ", name=" + function.getFunctionName();
+        String params = "userId=" + function .getUserId() + ", type=" + function.getTypeFunction() + ", name=" + function.getFunctionName();
 
         try {
             String sql = SqlLoader.loadSql("functions/insert_function.sql");

@@ -4,6 +4,7 @@ import model.entity.Operation;
 import model.dto.request.OperationRequestDTO;
 import model.dto.response.OperationResponseDTO;
 import model.dto.DTOTransformService;
+import model.service.OperationService;
 import repository.dao.OperationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

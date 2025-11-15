@@ -1,6 +1,7 @@
 package service;
 
 import model.entity.User;
+import model.service.AuthenticationService;
 import repository.dao.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

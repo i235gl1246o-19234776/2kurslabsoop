@@ -6,11 +6,10 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.java.Log;
 
 @Data
 @NoArgsConstructor
-@Log
+
 public class FunctionRequestDTO {
 
     @NotNull(message = "ID пользователя обязателен")
@@ -26,15 +25,11 @@ public class FunctionRequestDTO {
 
     private String functionExpression;
 
-    {
-        log.fine("Создан пустой FunctionRequestDTO");
-    }
 
     public FunctionRequestDTO(Long userId, String typeFunction, String functionName, String functionExpression) {
         this.userId = userId;
         this.typeFunction = typeFunction;
         this.functionName = functionName;
         this.functionExpression = functionExpression;
-        log.info("Создан FunctionRequestDTO: " + functionName + " (тип: " + typeFunction + ")");
-    }
+        }
 }

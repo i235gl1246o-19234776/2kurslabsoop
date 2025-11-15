@@ -1,1 +1,0 @@
-INSERT INTO operations (function_id, operations_type_id) VALUES (?, ?);

@@ -1,1 +1,0 @@
-SELECT * FROM functions WHERE user_id = ? AND function_name LIKE ?;

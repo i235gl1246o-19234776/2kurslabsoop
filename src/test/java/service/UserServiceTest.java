@@ -4,6 +4,7 @@ import model.entity.User;
 import model.dto.request.CreateUserRequest;
 import model.dto.response.UserResponseDTO;
 import model.dto.DTOTransformService;
+import model.service.UserService;
 import repository.dao.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

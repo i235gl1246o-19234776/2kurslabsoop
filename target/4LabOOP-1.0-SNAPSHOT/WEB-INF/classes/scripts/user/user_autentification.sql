@@ -1,1 +1,0 @@
-SELECT * FROM users WHERE name = ? AND password_hash = ?;
