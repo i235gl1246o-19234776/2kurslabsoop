@@ -4,11 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
 
 public class FunctionRequestDTO {
 
@@ -25,11 +20,49 @@ public class FunctionRequestDTO {
 
     private String functionExpression;
 
+    // Пустой конструктор
+    public FunctionRequestDTO() {
+    }
 
+    // Конструктор с параметрами
     public FunctionRequestDTO(Long userId, String typeFunction, String functionName, String functionExpression) {
         this.userId = userId;
         this.typeFunction = typeFunction;
         this.functionName = functionName;
         this.functionExpression = functionExpression;
-        }
+    }
+
+    // Геттеры
+    public Long getUserId() {
+        return userId;
+    }
+
+    public String getTypeFunction() {
+        return typeFunction;
+    }
+
+    public String getFunctionName() {
+        return functionName;
+    }
+
+    public String getFunctionExpression() {
+        return functionExpression;
+    }
+
+    // Сеттеры
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public void setTypeFunction(String typeFunction) {
+        this.typeFunction = typeFunction;
+    }
+
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
+    }
+
+    public void setFunctionExpression(String functionExpression) {
+        this.functionExpression = functionExpression;
+    }
 }

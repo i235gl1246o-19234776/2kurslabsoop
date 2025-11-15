@@ -1,13 +1,7 @@
 package model.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class FunctionResponseDTO {
+
     private Long functionId;
     private String functionName;
     private String typeFunction;
@@ -17,6 +11,25 @@ public class FunctionResponseDTO {
     private Long operationsTypeId;
     private String operationTypeName;  // Из таблицы operation_types через JOIN
     private String userEmail;          // Из таблицы users через JOIN
+
+    // Пустой конструктор
+    public FunctionResponseDTO() {
+    }
+
+    // Конструктор с параметрами (все поля)
+    public FunctionResponseDTO(Long functionId, String functionName, String typeFunction,
+                               Double xVal, Double yVal, String userName, Long operationsTypeId,
+                               String operationTypeName, String userEmail) {
+        this.functionId = functionId;
+        this.functionName = functionName;
+        this.typeFunction = typeFunction;
+        this.xVal = xVal;
+        this.yVal = yVal;
+        this.userName = userName;
+        this.operationsTypeId = operationsTypeId;
+        this.operationTypeName = operationTypeName;
+        this.userEmail = userEmail;
+    }
 
     // Дополнительные конструкторы для удобства
     public FunctionResponseDTO(Long functionId, String functionName, String typeFunction,
@@ -41,5 +54,79 @@ public class FunctionResponseDTO {
         this.userName = userName;
         this.operationsTypeId = operationsTypeId;
         this.operationTypeName = operationTypeName;
+    }
+
+    // Геттеры
+    public Long getFunctionId() {
+        return functionId;
+    }
+
+    public String getFunctionName() {
+        return functionName;
+    }
+
+    public String getTypeFunction() {
+        return typeFunction;
+    }
+
+    public Double getXVal() {
+        return xVal;
+    }
+
+    public Double getYVal() {
+        return yVal;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public Long getOperationsTypeId() {
+        return operationsTypeId;
+    }
+
+    public String getOperationTypeName() {
+        return operationTypeName;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    // Сеттеры
+    public void setFunctionId(Long functionId) {
+        this.functionId = functionId;
+    }
+
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
+    }
+
+    public void setTypeFunction(String typeFunction) {
+        this.typeFunction = typeFunction;
+    }
+
+    public void setXVal(Double xVal) {
+        this.xVal = xVal;
+    }
+
+    public void setYVal(Double yVal) {
+        this.yVal = yVal;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void setOperationsTypeId(Long operationsTypeId) {
+        this.operationsTypeId = operationsTypeId;
+    }
+
+    public void setOperationTypeName(String operationTypeName) {
+        this.operationTypeName = operationTypeName;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 }

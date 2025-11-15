@@ -2,12 +2,7 @@ package model.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-
-@Data
-@NoArgsConstructor
 public class TabulatedFunctionRequestDTO {
 
     @NotNull(message = "ID функции обязателен")
@@ -20,9 +15,40 @@ public class TabulatedFunctionRequestDTO {
     @NotNull(message = "Значение Y обязательно")
     private Double yVal;
 
+    // Пустой конструктор
+    public TabulatedFunctionRequestDTO() {
+    }
+
+    // Конструктор с параметрами
     public TabulatedFunctionRequestDTO(Long functionId, Double xVal, Double yVal) {
         this.functionId = functionId;
         this.xVal = xVal;
+        this.yVal = yVal;
+    }
+
+    // Геттеры
+    public Long getFunctionId() {
+        return functionId;
+    }
+
+    public Double getXVal() {
+        return xVal;
+    }
+
+    public Double getYVal() {
+        return yVal;
+    }
+
+    // Сеттеры
+    public void setFunctionId(Long functionId) {
+        this.functionId = functionId;
+    }
+
+    public void setXVal(Double xVal) {
+        this.xVal = xVal;
+    }
+
+    public void setYVal(Double yVal) {
         this.yVal = yVal;
     }
 
