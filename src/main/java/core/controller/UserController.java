@@ -7,7 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +26,53 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @PutMapping("/{id}/role")
+    public ResponseEntity<UserDto> updateUserRole(@PathVariable Long id, @RequestParam String role) {
+        log.info("Запрос на обновление роли пользователя с ID: {} на роль: {}", id, role);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            log.warn("Попытка обновления роли пользователя без аутентификации пользователем с ID: {}", id);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String currentRole = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("");
+        if (!"ROLE_ADMIN".equals(currentRole)) {
+            log.warn("Пользователь '{}' (роль: {}) не имеет прав для обновления роли другого пользователя (ID: {})", auth.getName(), currentRole, id);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Optional<UserEntity> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
+            log.warn("Попытка обновить роль несуществующего пользователя с ID: {}", id);
+            return ResponseEntity.notFound().build(); // 404 Not Found
+        }
+
+        UserEntity user = userOpt.get();
+        if (!"USER".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
+            log.warn("Попытка установить недопустимую роль '{}' пользователю с ID: {}", role, id);
+            return ResponseEntity.badRequest().build(); // 400 Bad Request
+        }
+
+        user.setRole(role);
+
+        try {
+            UserEntity updatedEntity = userRepository.save(user);
+            UserDto updatedDto = convertToDto(updatedEntity);
+            log.info("Роль пользователя с ID {} обновлена на '{}' пользователем '{}'", id, role, auth.getName());
+            return ResponseEntity.ok(updatedDto);
+        } catch (Exception e) {
+            log.error("Ошибка при обновлении роли пользователя с ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers() {
@@ -81,8 +132,11 @@ public class UserController {
 
         UserEntity userEntity = new UserEntity();
         userEntity.setName(userDto.getName());
-        userEntity.setPasswordHash(userDto.getName());
+        String rawPassword = userDto.getName();
+        String hashedPassword = passwordEncoder.encode(rawPassword);
+        userEntity.setPasswordHash(hashedPassword);
 
+        userEntity.setRole("USER"); // Устанавливаем роль по умолчанию
         try {
             UserEntity savedEntity = userRepository.save(userEntity);
             UserDto savedDto = convertToDto(savedEntity);
@@ -98,7 +152,8 @@ public class UserController {
     public ResponseEntity<?> authenticateUser(@RequestBody AuthRequest authRequest) {
         log.info("Запрос на аутентификацию пользователя: {}", authRequest.getName());
         UserEntity user = userRepository.findByName(authRequest.getName());
-        if (user != null && user.getPasswordHash().equals(authRequest.getPassword())) { // Проверка хеша (в реальном коде - BCrypt)
+
+        if (user != null && passwordEncoder.matches(authRequest.getPassword(), user.getPasswordHash())) {
             UserDto userDto = convertToDto(user);
             log.info("Аутентификация успешна для пользователя: {}", user.getName());
             return ResponseEntity.ok(userDto);
@@ -115,7 +170,13 @@ public class UserController {
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
             user.setName(userDtoDetails.getName());
-            user.setPasswordHash(userDtoDetails.getName()); // В реальном приложении тут должна быть логика хеширования
+
+            if (userDtoDetails.getPassword() != null && !userDtoDetails.getPassword().isEmpty()) {
+                String hashedPassword = passwordEncoder.encode(userDtoDetails.getPassword());
+                user.setPasswordHash(hashedPassword);
+                log.debug("Пароль пользователя с ID {} обновлён", id);
+            }
+
             UserEntity updatedEntity = userRepository.save(user);
             UserDto updatedDto = convertToDto(updatedEntity);
             log.info("Пользователь с ID {} обновлён", id);
@@ -145,7 +206,7 @@ public class UserController {
                         .map(core.entity.FunctionEntity::getId)
                         .collect(Collectors.toList()) : new ArrayList<>();
 
-        return new UserDto(userEntity.getId(), userEntity.getName(), functionIds);
+        return new UserDto(userEntity.getId(), userEntity.getName(), userEntity.getPasswordHash(), userEntity.getRole(), functionIds); // Порядок полей в конструкторе UserDto
     }
 
     static class AuthRequest{

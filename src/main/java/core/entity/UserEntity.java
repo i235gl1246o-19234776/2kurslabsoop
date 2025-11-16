@@ -23,6 +23,10 @@ public class UserEntity {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(name = "role", nullable = false)
+    private String role = "USER";
+
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<FunctionEntity> functions = new ArrayList<>();
