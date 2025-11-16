@@ -1,0 +1,29 @@
+Method,Average Time (ms)
+Create User,3.00
+Create Function,3.56
+Create Tabulated Point,2.67
+Create Operation,2.67
+Get All Users,4200.00
+Get User By Id,6.50
+Get User By Name,2.67
+Check User Exists,1.83
+Authenticate User,3.00
+Update User,3.50
+Get Functions By User ID,4.17
+Get Function By ID,2.83
+Search Functions By Name Pattern,3.17
+Filter Functions By Type,3.33
+Update Function,3.83
+Get All Points By Function ID,2.50
+Get Point By Function ID And X Val,2.67
+Get Points In Range By Function ID,2.50
+Update Tabulated Point,2.83
+Get Operation By ID,2.00
+Update Operation,2.50
+Search Functions By UserId Name Pattern And Type,2.67
+Delete Tabulated Point,2.50
+Delete All Points By Function ID,2.50
+Delete Operation,2.17
+Delete All Operations By Function ID,7.83
+Delete Function,3.50
+Delete User,3.17

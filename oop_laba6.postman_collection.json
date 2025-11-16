@@ -1,0 +1,1554 @@
+{
+	"info": {
+		"_postman_id": "49108e29-6979-4c30-813e-090a889b163d",
+		"name": "oop_laba6",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50094366"
+	},
+	"item": [
+		{
+			"name": "Create",
+			"item": [
+				{
+					"name": "Create User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response has id and name\", function () {\r",
+									"    pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
+									"    pm.expect(responseJson).to.have.property('name').that.is.a('string');\r",
+									"});\r",
+									"\r",
+									"if (responseJson && responseJson.id) {\r",
+									"    pm.environment.set(\"createdUserId\", responseJson.id);\r",
+									"    pm.environment.set(\"createdUserName\", responseJson.name);\r",
+									"    console.log(\"Создан пользователь с ID:\", responseJson.id, \"и именем:\", responseJson.name);\r",
+									"} else {\r",
+									"    console.error(\"Не удалось получить ID пользователя из ответа:\", responseJson);\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"test_user_{{$randomInt}}\",\r\n  \"passwordHash\": \"hash_{{$randomInt}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Function",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response has id and functionName\", function () {\r",
+									"    pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
+									"    pm.expect(responseJson).to.have.property('functionName').that.is.a('string');\r",
+									"});\r",
+									"\r",
+									"if (responseJson && responseJson.id) {\r",
+									"    pm.environment.set(\"createdFunctionId\", responseJson.id);\r",
+									"    pm.environment.set(\"createdFunctionName\", responseJson.functionName);\r",
+									"    console.log(\"Создана функция с ID:\", responseJson.id, \"и именем:\", responseJson.functionName);\r",
+									"} else {\r",
+									"    console.error(\"Не удалось получить ID функции из ответа:\", responseJson);\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"\r",
+									"console.log(\"=== Prerequest для Create Function ===\");\r",
+									"\r",
+									"const userId = pm.environment.get(\"createdUserId\");\r",
+									"const userName = pm.environment.get(\"createdUserName\");\r",
+									"\r",
+									"console.log(\"createdUserId:\", userId);\r",
+									"console.log(\"createdUserName:\", userName);\r",
+									"\r",
+									"if (!userId || userId === \"null\" || userId === \"\") {\r",
+									"    console.error(\"ОШИБКА: createdUserId не установлен!\");\r",
+									"    console.log(\"Доступные переменные окружения:\", pm.environment.toObject());\r",
+									"} else {\r",
+									"    console.log(\"Пользователь найден: \" + userName + \" (ID: \" + userId + \")\");\r",
+									"}\r",
+									"\r",
+									"\r",
+									"pm.environment.unset(\"createdFunctionId\");\r",
+									"pm.environment.unset(\"createdFunctionName\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userId\": {{createdUserId}},\r\n  \"typeFunction\": \"tabular\",\r\n  \"functionName\": \"test_function_{{$randomInt}}\",\r\n  \"functionExpression\": \"x^2\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/functions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Tabulated Point",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response has id, xVal and yVal\", function () {\r",
+									"    pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
+									"    pm.expect(responseJson).to.have.property('xVal').that.is.a('number');\r",
+									"    pm.expect(responseJson).to.have.property('yVal').that.is.a('number');\r",
+									"});\r",
+									"\r",
+									"pm.environment.set(\"createdPointId\", responseJson.id);\r",
+									"\r",
+									"console.log(\"Создана точка с ID:\", responseJson.id, \"для функции с ID:\", responseJson.functionId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"functionId\": {{createdFunctionId}},\r\n  \"xVal\": 1.5,\r\n  \"yVal\": 2.25\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Operation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response has id and operationsTypeId\", function () {\r",
+									"    pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
+									"    pm.expect(responseJson).to.have.property('operationsTypeId').that.is.a('number');\r",
+									"});\r",
+									"\r",
+									"pm.environment.set(\"createdOperationId\", responseJson.id);\r",
+									"\r",
+									"console.log(\"Создана операция с ID:\", responseJson.id, \"для функции с ID:\", responseJson.functionId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"functionId\": {{createdFunctionId}},\r\n  \"operationsTypeId\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/operations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"operations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    const users = pm.response.json();\r",
+									"    pm.expect(Array.isArray(users)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"At least one user exists\", function () {\r",
+									"    const users = pm.response.json();\r",
+									"    pm.expect(users.length).to.be.at.least(1);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By Id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Name matches\", function () {\r",
+									"    pm.expect(responseJson.name).to.eql(pm.environment.get(\"createdUserName\"));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получен пользователь по ID:\", responseJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/{{createdUserId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"{{createdUserId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/users/name/{{createdUserName}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"name",
+								"{{createdUserName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check User Exists",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/users/exist/{{createdUserName}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"exist",
+								"{{createdUserName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Authenticate User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Authenticated user ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Authenticated user name matches\", function () {\r",
+									"    pm.expect(responseJson.name).to.eql(pm.environment.get(\"createdUserName\"));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Аутентификация прошла успешно для пользователя:\", responseJson.name);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"{{createdUserName}}\",\r\n  \"password\": \"{{createdUserName}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/authenticate",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"authenticate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Name updated\", function () {\r",
+									"    pm.expect(responseJson.name).to.eql(pm.environment.get(\"createdUserName\") + \"_updated\");\r",
+									"});\r",
+									"\r",
+									"// Обновляем переменную с именем\r",
+									"pm.environment.set(\"createdUserName\", responseJson.name);\r",
+									"\r",
+									"console.log(\"Пользователь обновлён. Новое имя:\", responseJson.name);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": {{createdUserId}},\r\n  \"name\": \"{{createdUserName}}_updated\",\r\n  \"passwordHash\": \"new_hash_{{$randomInt}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/{{createdUserId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"{{createdUserId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Functions",
+			"item": [
+				{
+					"name": "Get Functions By User ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const functions = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(Array.isArray(functions)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"At least one function exists for user\", function () {\r",
+									"    pm.expect(functions.length).to.be.at.least(1);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function belongs to user\", function () {\r",
+									"    const firstFunction = functions[0];\r",
+									"    pm.expect(firstFunction.userId).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получены функции пользователя с ID:\", pm.environment.get(\"createdUserId\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/functions?userId={{createdUserId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{createdUserId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Function By ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function name matches\", function () {\r",
+									"    pm.expect(responseJson.functionName).to.eql(pm.environment.get(\"createdFunctionName\"));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"User ID matches\", function () {\r",
+									"    pm.expect(responseJson.userId).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получена функция по ID:\", responseJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/functions/{{createdFunctionId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions",
+								"{{createdFunctionId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Functions By Name Pattern",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const functions = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(Array.isArray(functions)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions match pattern\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.functionName).to.include(\"func\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions belong to user\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.userId).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"console.log(\"Найдены функции по шаблону 'func' для пользователя:\", pm.environment.get(\"createdUserId\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/functions?userId={{createdUserId}}&functionName=func",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{createdUserId}}"
+								},
+								{
+									"key": "functionName",
+									"value": "func"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Functions By Type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const functions = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(Array.isArray(functions)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions have type tabular\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.typeFunction).to.eql(\"tabular\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions belong to user\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.userId).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"console.log(\"Фильтрация по типу 'tabular' прошла успешно.\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/functions?userId={{createdUserId}}&typeFunction=tabular",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{createdUserId}}"
+								},
+								{
+									"key": "typeFunction",
+									"value": "tabular"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Function",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function name updated\", function () {\r",
+									"    pm.expect(responseJson.functionName).to.eql(\"updated_api_function\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Type updated\", function () {\r",
+									"    pm.expect(responseJson.typeFunction).to.eql(\"analytic\");\r",
+									"});\r",
+									"\r",
+									"pm.environment.set(\"createdFunctionName\", responseJson.functionName);\r",
+									"\r",
+									"console.log(\"Функция обновлена. Новое имя:\", responseJson.functionName, \", Новый тип:\", responseJson.typeFunction);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": {{createdFunctionId}},\r\n  \"userId\": {{createdUserId}},\r\n  \"typeFunction\": \"analytic\",\r\n  \"functionName\": \"updated_api_function\",\r\n  \"functionExpression\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/functions/{{createdFunctionId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions",
+								"{{createdFunctionId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "TabulatedPoints",
+			"item": [
+				{
+					"name": "Get All Points By Function ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const points = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(Array.isArray(points)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"At least one point exists for function\", function () {\r",
+									"    pm.expect(points.length).to.be.at.least(1);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Point belongs to function\", function () {\r",
+									"    const firstPoint = points[0];\r",
+									"    pm.expect(firstPoint.functionId).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получены точки функции с ID:\", pm.environment.get(\"createdFunctionId\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points/function/{{createdFunctionId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points",
+								"function",
+								"{{createdFunctionId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Point By Function ID And X Val",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdPointId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"X value matches\", function () {\r",
+									"    pm.expect(responseJson.xVal).to.eql(1.5);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function ID matches\", function () {\r",
+									"    pm.expect(responseJson.functionId).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получена точка по X=1.5 для функции с ID:\", pm.environment.get(\"createdFunctionId\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points/function/{{createdFunctionId}}/x/1.5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points",
+								"function",
+								"{{createdFunctionId}}",
+								"x",
+								"1.5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Points In Range By Function ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const points = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(Array.isArray(points)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All points are in range [0, 10]\", function () {\r",
+									"    points.forEach(point => {\r",
+									"        pm.expect(point.xVal).to.be.at.least(0);\r",
+									"        pm.expect(point.xVal).to.be.at.most(10);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All points belong to function\", function () {\r",
+									"    points.forEach(point => {\r",
+									"        pm.expect(point.functionId).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получены точки в диапазоне [0, 10] для функции с ID:\", pm.environment.get(\"createdFunctionId\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points/function/{{createdFunctionId}}/range?fromX=0&toX=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points",
+								"function",
+								"{{createdFunctionId}}",
+								"range"
+							],
+							"query": [
+								{
+									"key": "fromX",
+									"value": "0"
+								},
+								{
+									"key": "toX",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Tabulated Point",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdPointId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"X value updated\", function () {\r",
+									"    pm.expect(responseJson.xVal).to.eql(2.0);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Y value updated\", function () {\r",
+									"    pm.expect(responseJson.yVal).to.eql(4.0);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function ID matches\", function () {\r",
+									"    pm.expect(responseJson.functionId).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"console.log(\"Точка обновлена. Новые значения: X=\", responseJson.xVal, \", Y=\", responseJson.yVal);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": {{createdPointId}},\r\n  \"functionId\": {{createdFunctionId}},\r\n  \"xVal\": 2.0,\r\n  \"yVal\": 4.0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points/{{createdPointId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points",
+								"{{createdPointId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Operations",
+			"item": [
+				{
+					"name": "Get Operation By ID (with function check)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdOperationId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function ID matches\", function () {\r",
+									"    pm.expect(responseJson.functionId).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Operations type ID is number\", function () {\r",
+									"    pm.expect(responseJson.operationsTypeId).to.be.a('number');\r",
+									"});\r",
+									"\r",
+									"console.log(\"Получена операция по ID:\", responseJson.id, \"для функции с ID:\", responseJson.functionId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/operations/{{createdOperationId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"operations",
+								"{{createdOperationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Operation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"pm.test(\"ID matches\", function () {\r",
+									"    pm.expect(responseJson.id).to.eql(parseInt(pm.environment.get(\"createdOperationId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Function ID matches\", function () {\r",
+									"    pm.expect(responseJson.functionId).to.eql(parseInt(pm.environment.get(\"createdFunctionId\")));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Operations type ID updated\", function () {\r",
+									"    pm.expect(responseJson.operationsTypeId).to.eql(2);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Операция обновлена. Новый тип:\", responseJson.operationsTypeId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": {{createdOperationId}},\r\n  \"functionId\": {{createdFunctionId}},\r\n  \"operationsTypeId\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/operations/{{createdOperationId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"operations",
+								"{{createdOperationId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Search",
+			"item": [
+				{
+					"name": "Search Functions By UserId, Name Pattern, And Type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const functions = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(Array.isArray(functions)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions match name pattern\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.functionName).to.include(\"func\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions have type tabular\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.typeFunction).to.eql(\"tabular\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All functions belong to user\", function () {\r",
+									"    functions.forEach(func => {\r",
+									"        pm.expect(func.userId).to.eql(parseInt(pm.environment.get(\"createdUserId\")));\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"console.log(\"Расширенный поиск прошёл успешно. Найдено функций:\", functions.length);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/functions/search?userId={{createdUserId}}&functionName=func&typeFunction=tabular",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions",
+								"search"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{createdUserId}}"
+								},
+								{
+									"key": "functionName",
+									"value": "func"
+								},
+								{
+									"key": "typeFunction",
+									"value": "tabular"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delete",
+			"item": [
+				{
+					"name": "Delete Tabulated Point",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Точка с ID\", pm.environment.get(\"createdPointId\"), \"удалена.\");\r",
+									"\r",
+									"pm.environment.unset(\"createdPointId\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points/{{createdPointId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points",
+								"{{createdPointId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete All Points By Function ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Все точки для функции с ID\", pm.environment.get(\"createdFunctionId\"), \"удалены.\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/tabulated-points/function/{{createdFunctionId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"tabulated-points",
+								"function",
+								"{{createdFunctionId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Operation (with function check)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Операция с ID\", pm.environment.get(\"createdOperationId\"), \"удалена.\");\r",
+									"\r",
+									"pm.environment.unset(\"createdOperationId\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/operations/{{createdOperationId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"operations",
+								"{{createdOperationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete All Operations By Function ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									"\r",
+									"if (pm.response.code === 204) {\r",
+									"    console.log(\"Все операции для функции с ID\", pm.environment.get(\"createdFunctionId\"), \"удалены.\");\r",
+									"} else {\r",
+									"    console.error(\"Ошибка при удалении операций. Статус:\", pm.response.code, \"Ответ:\", pm.response.text());\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/operations/function/{{createdFunctionId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"operations",
+								"function",
+								"{{createdFunctionId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Function",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Функция с ID\", pm.environment.get(\"createdFunctionId\"), \"удалена.\");\r",
+									"\r",
+									"pm.environment.unset(\"createdFunctionId\");\r",
+									"pm.environment.unset(\"createdFunctionName\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/functions/{{createdFunctionId}}?userId={{createdUserId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"functions",
+								"{{createdFunctionId}}"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{createdUserId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/users/{{createdUserId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"{{createdUserId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
