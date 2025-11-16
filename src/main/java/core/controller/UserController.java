@@ -206,7 +206,8 @@ public class UserController {
                         .map(core.entity.FunctionEntity::getId)
                         .collect(Collectors.toList()) : new ArrayList<>();
 
-        return new UserDto(userEntity.getId(), userEntity.getName(), userEntity.getPasswordHash(), userEntity.getRole(), functionIds); // Порядок полей в конструкторе UserDto
+
+        return new UserDto(userEntity.getId(), userEntity.getName(), userEntity.getRole(), null, functionIds);
     }
 
     static class AuthRequest{

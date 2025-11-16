@@ -1,5 +1,5 @@
 
-FROM openjdk:24-jdk-slim
+FROM openjdk:24-ea-14-jdk-slim
 
 WORKDIR /app
 

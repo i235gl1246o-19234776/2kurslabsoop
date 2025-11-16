@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: core.performance.SortingSearchPerformanceTest
 -------------------------------------------------------------------------------
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 55.53 s -- in core.performance.SortingSearchPerformanceTest
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 57.60 s -- in core.performance.SortingSearchPerformanceTest
