@@ -1,1 +1,1 @@
-SELECT id, function_id, x_val, y_val FROM tabulated_function WHERE id = ?;
+SELECT id, function_id, x_val, y_val FROM tabulated_functions WHERE id = ?;

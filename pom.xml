@@ -68,7 +68,6 @@
             <version>0.4</version>
         </dependency>
 
-        <!-- Lombok (ВРЕМЕННО УБРАТЬ для теста) -->
         <!--
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -77,6 +76,13 @@
             <scope>provided</scope>
         </dependency>
         !-->
+        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.8</version>
+        </dependency>
+
 
         <!-- Testing -->
         <dependency>

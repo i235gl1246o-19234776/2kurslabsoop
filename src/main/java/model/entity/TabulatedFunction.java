@@ -20,7 +20,7 @@ public class TabulatedFunction {
     }
 }*/
 package model.entity;
-
+//('tabular', 'analytic')
 public class TabulatedFunction {
     private Long id;
     private Long functionId;

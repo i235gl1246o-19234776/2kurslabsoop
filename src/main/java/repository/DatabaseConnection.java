@@ -8,6 +8,16 @@ import java.util.logging.Logger;
 public class DatabaseConnection{
     private static final Logger logger = Logger.getLogger(DatabaseConnection.class.getName());
 
+    static {
+        try {
+            Class.forName("org.postgresql.Driver");
+            logger.info("PostgreSQL JDBC Driver successfully loaded");
+        } catch (ClassNotFoundException e) {
+            logger.severe("Failed to load PostgreSQL JDBC Driver: " + e.getMessage());
+            throw new ExceptionInInitializerError("PostgreSQL JDBC Driver not found");
+        }
+    }
+
     private static final ThreadLocal<String> url = ThreadLocal.withInitial(() -> "jdbc:postgresql://localhost:5432/functions_database");
     private static final ThreadLocal<String> user = ThreadLocal.withInitial(() -> "postgres");
     private static final ThreadLocal<String> password = ThreadLocal.withInitial(() -> "1234");

@@ -195,7 +195,7 @@ public class UserRepository {
         User user = new User();
         user.setId(rs.getLong("id"));
         user.setName(rs.getString("name"));
-        user.setPasswordHash(rs.getString("password_hash"));
+        //user.setPasswordHash(rs.getString("password_hash"));
         return user;
     }
 
@@ -211,7 +211,7 @@ public class UserRepository {
                 User user = new User();
                 user.setId(rs.getLong("id"));
                 user.setName(rs.getString("name"));
-                user.setPasswordHash(rs.getString("password_hash"));
+                //user.setPasswordHash(rs.getString("password_hash"));
                 users.add(user);
             }
             logger.info("Найдено " + users.size() + " пользователей");

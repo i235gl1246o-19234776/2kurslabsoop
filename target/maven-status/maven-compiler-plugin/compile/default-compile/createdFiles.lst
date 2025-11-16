@@ -14,6 +14,7 @@ functions\SqrFunction.class
 io\TabulatedFunctionJsonIO.class
 operations\MiddleSteppingDifferentialOperator.class
 operations\SteppingDifferentialOperator.class
+model\servlet\AuthServlet.class
 model\service\OperationService.class
 model\entity\User.class
 functions\Insertable.class
@@ -43,6 +44,7 @@ operations\LeftSteppingDifferentialOperator.class
 exception\InterpolationException.class
 model\dto\response\OperationResponseDTO.class
 functions\CompositeFunction.class
+model\entity\UserRole.class
 functions\RungeKuttaFunction.class
 model\servlet\FunctionServlet.class
 model\entity\Operation.class

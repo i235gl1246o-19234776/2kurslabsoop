@@ -20,7 +20,7 @@ public class AuthenticationService {
         return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
-    public boolean authenticateUser(String name, String password) throws SQLException {
+    public boolean auxthenticateUser(String name, String password) throws SQLException {
         Optional<User> userOpt = userRepository.findByName(name);
         if (userOpt.isPresent()) {
             String storedHash = userOpt.get().getPasswordHash();
@@ -36,5 +36,14 @@ public class AuthenticationService {
         newUser.setPasswordHash(hashedPassword);
 
         userRepository.createUser(newUser);
+    }
+
+    public boolean authenticateUser(String username, String password) throws SQLException {
+        Optional<User> userOpt = userRepository.findByName(username);
+        if (userOpt.isPresent()) {
+            String storedHash = userOpt.get().getPasswordHash();
+            return BCrypt.checkpw(password, storedHash);
+        }
+        return false;
     }
 }

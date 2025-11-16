@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: functions.AbstractTabulatedFunctionTest
 -------------------------------------------------------------------------------
-Tests run: 47, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.058 s -- in functions.AbstractTabulatedFunctionTest
+Tests run: 47, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s -- in functions.AbstractTabulatedFunctionTest

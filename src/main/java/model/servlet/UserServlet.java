@@ -108,7 +108,7 @@ public class UserServlet extends HttpServlet {
                         resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                         resp.getWriter().write("{\"error\":\"Ошибка при получении пользователя по имени\"}");
                     }
-                } else if ("exist".equals(pathParts[1])) { // ['', 'exist', 'userName'] -> GET /api/users/exist/{name}
+                    /*} else if ("exist".equals(pathParts[1])) { // ['', 'exist', 'userName'] -> GET /api/users/exist/{name}
                     String userName = pathParts[2];
                     logger.info("GET /api/users/exist/" + userName + " вызван");
 
@@ -121,6 +121,28 @@ public class UserServlet extends HttpServlet {
                         out.flush();
                     } catch (SQLException e) {
                         logger.severe("Ошибка при проверке существования пользователя: " + e.getMessage());
+                        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        resp.getWriter().write("{\"error\":\"Ошибка при проверке существования пользователя\"}");
+                    }*/
+                } else if ("exist".equals(pathParts[1])) {
+                    try {
+                        String userName = pathParts[2];
+                        logger.info("🚀 PROCESSING EXIST REQUEST FOR: " + userName);
+
+                        // Временная заглушка для теста
+                        // boolean exists = userService.userNameExists(userName);
+                        boolean exists = true; // временно всегда true
+
+                        resp.setStatus(HttpServletResponse.SC_OK);
+                        resp.setContentType("application/json");
+                        PrintWriter out = resp.getWriter();
+                        out.print("{\"exists\": " + exists + "}");
+                        out.flush();
+
+                        logger.info("✅ EXIST REQUEST COMPLETED FOR: " + userName);
+
+                    } catch (Exception e) {
+                        logger.severe("❌ ERROR in exist: " + e.getMessage());
                         resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                         resp.getWriter().write("{\"error\":\"Ошибка при проверке существования пользователя\"}");
                     }

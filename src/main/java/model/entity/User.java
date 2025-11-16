@@ -23,6 +23,7 @@ public class User {
     private Long id;
     private String name;
     private String passwordHash;
+    private UserRole role;
 
     public User() {
     }
@@ -62,6 +63,8 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -89,5 +92,9 @@ public class User {
                 ", name='" + name + '\'' +
                 ", passwordHash='" + passwordHash + '\'' +
                 '}';
+    }
+
+    public UserRole getRole() {
+        return role;
     }
 }

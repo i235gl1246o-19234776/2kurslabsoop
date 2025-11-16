@@ -2,6 +2,7 @@ package operations;
 import functions.MathFunction;
 
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 public class ParallelIntegrator {
     public static double integrate(MathFunction func, double a, double b, long n) {
@@ -36,8 +37,8 @@ public class ParallelIntegrator {
         }
 
         long startTime = System.nanoTime();
-
-        try (ForkJoinPool customPool = new ForkJoinPool(parallelism)) {
+        ForkJoinPool customPool = new ForkJoinPool(parallelism);
+        try {
             SimpsonIntegral task;
             double result;
 
@@ -53,6 +54,16 @@ public class ParallelIntegrator {
             long duration = endTime - startTime;
 
             return new IntegrationResult(result, duration);
+        } finally {
+            customPool.shutdown();
+            try {
+                if (!customPool.awaitTermination(60, TimeUnit.SECONDS)) {
+                    customPool.shutdownNow(); // принудительно завершить
+                }
+            } catch (InterruptedException e) {
+                customPool.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

@@ -49,6 +49,8 @@ public class TabulatedFunctionServlet extends HttpServlet {
 
         String[] pathParts = pathInfo.split("/");
 
+
+
         if (pathParts.length == 2) { // ['', 'functionId'] -> GET /api/tabulated-points/function/{id}
             try {
                 Long functionId = Long.parseLong(pathParts[1]);
@@ -166,6 +168,27 @@ public class TabulatedFunctionServlet extends HttpServlet {
                     logger.severe("Ошибка при получении точки по ID: " + e.getMessage());
                     resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     resp.getWriter().write("{\"error\":\"Ошибка при получении точки по ID\"}");
+                }
+            } else if (pathParts.length == 3 && pathParts[1].equals("function")) {
+                try {
+                    Long functionId = Long.parseLong(pathParts[2]);
+                    logger.info("GET /api/tabulated-points/function/" + functionId + " вызван");
+
+                    List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsByFunctionId(functionId);
+
+                    resp.setStatus(HttpServletResponse.SC_OK);
+                    resp.setContentType("application/json");
+                    PrintWriter out = resp.getWriter();
+                    out.print(objectMapper.writeValueAsString(points));
+                    out.flush();
+                } catch (NumberFormatException e) {
+                    logger.warning("Неверный формат functionId: " + pathParts[2]);
+                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    resp.getWriter().write("{\"error\":\"Неверный формат functionId\"}");
+                } catch (SQLException e) {
+                    logger.severe("Ошибка при получении точек функции: " + e.getMessage());
+                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    resp.getWriter().write("{\"error\":\"Ошибка при получении точек функции\"}");
                 }
             } else {
                 logger.warning("Неверный путь для GET: " + pathInfo);
