@@ -5,9 +5,7 @@ import model.dto.request.SearchFunctionRequestDTO;
 import model.dto.response.SearchFunctionResponseDTO;
 import model.service.FunctionService;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -18,7 +16,8 @@ import java.sql.SQLException;
 import java.util.logging.Logger;
 
 @WebServlet("/api/admin/search/functions")
-public class SearchFunctionServlet extends HttpServlet {
+public class SearchFunctionServlet extends AuthServlet {
+
     private static final Logger logger = Logger.getLogger(SearchFunctionServlet.class.getName());
     private final FunctionService functionService;
     private final ObjectMapper objectMapper;
@@ -33,39 +32,15 @@ public class SearchFunctionServlet extends HttpServlet {
         this.objectMapper = new ObjectMapper();
     }
 
-    /** Проверка, что пользователь — админ */
-    private boolean isAdmin(HttpServletRequest req) {
-        Object role = req.getSession().getAttribute("role");
-        return role != null && role.toString().equalsIgnoreCase("ADMIN");
-    }
-
-    private void sendForbidden(HttpServletResponse resp) throws IOException {
-        resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        resp.setContentType("application/json");
-        resp.getWriter().write("{\"error\": \"Доступ запрещён. Требуется роль ADMIN.\"}");
-    }
-
-    private void sendUnauthorized(HttpServletResponse resp) throws IOException {
-        resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        resp.setContentType("application/json");
-        resp.getWriter().write("{\"error\": \"Пользователь не авторизован\"}");
-    }
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         logger.info("GET /api/admin/search/functions вызван");
 
-        // Проверка сессии
-        if (req.getSession(false) == null) {
-            sendUnauthorized(resp);
-            return;
-        }
         if (!isAdmin(req)) {
             sendForbidden(resp);
             return;
         }
 
-        // Параметры запроса
         String userName = req.getParameter("userName");
         String functionName = req.getParameter("functionName");
         String typeFunction = req.getParameter("typeFunction");
@@ -100,7 +75,7 @@ public class SearchFunctionServlet extends HttpServlet {
             SearchFunctionResponseDTO result = functionService.searchFunctions(searchRequest);
 
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.setContentType("application/json");
+            resp.setContentType("application/json; charset=UTF-8");
             PrintWriter out = resp.getWriter();
             out.print(objectMapper.writeValueAsString(result));
             out.flush();
@@ -115,11 +90,6 @@ public class SearchFunctionServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         logger.info("POST /api/admin/search/functions вызван");
 
-        // Проверка сессии
-        if (req.getSession(false) == null) {
-            sendUnauthorized(resp);
-            return;
-        }
         if (!isAdmin(req)) {
             sendForbidden(resp);
             return;
@@ -138,7 +108,7 @@ public class SearchFunctionServlet extends HttpServlet {
             SearchFunctionResponseDTO result = functionService.searchFunctions(searchRequest);
 
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.setContentType("application/json");
+            resp.setContentType("application/json; charset=UTF-8");
             PrintWriter out = resp.getWriter();
             out.print(objectMapper.writeValueAsString(result));
             out.flush();
@@ -151,5 +121,11 @@ public class SearchFunctionServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\":\"Ошибка при поиске функций\"}");
         }
+    }
+
+    protected void sendForbidden(HttpServletResponse resp) throws IOException {
+        resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        resp.setContentType("application/json; charset=UTF-8");
+        resp.getWriter().write("{\"error\": \"Доступ запрещён. Требуется роль ADMIN.\"}");
     }
 }

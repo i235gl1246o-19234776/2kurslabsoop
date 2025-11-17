@@ -9,7 +9,6 @@ import model.service.TabulatedFunctionService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -38,12 +37,9 @@ public class TabulatedFunctionServlet extends AuthServlet {
             this.objectMapper = new ObjectMapper();
         }
 
-        // ======================= ДОБАВЛЕНО: проверка прав доступа =======================
-
         private boolean checkFunctionAccess(HttpServletRequest req, Long functionId) throws SQLException, IOException {
             User user = getAuthenticatedUser(req);
 
-            // USER может только свои функции
             if (isUser(req)) {
                 boolean allowed = tabulatedFunctionService.isFunctionOwnedByUser(functionId, user.getId());
                 if (!allowed) {
@@ -65,7 +61,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
             return checkFunctionAccess(req, functionIdOpt.get());
         }
 
-        // Чтобы можно было использовать resp в методах
         private HttpServletResponse resp(HttpServletRequest req) {
             return (HttpServletResponse) req.getAttribute("resp");
         }
@@ -81,9 +76,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
 
             super.service(req, resp);
         }
-
-        // ================================================================================
-
 
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -142,9 +134,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
             }
         }
 
-
-        // ===================== POST ========================
-
         @Override
         protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
             try {
@@ -159,9 +148,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
                 sendError(resp, 500, "DB error");
             }
         }
-
-
-        // ===================== PUT ========================
 
         @Override
         protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -201,9 +187,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
                 sendError(resp, 500, "DB error");
             }
         }
-
-
-        // ===================== DELETE ========================
 
         @Override
         protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -331,8 +314,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
         sendJsonResponse(resp, HttpServletResponse.SC_OK, points);
     }
 
-    // НОВЫЕ МЕТОДЫ ДЛЯ ПОИСКА ФУНКЦИЙ
-
     private void handleGetFunctionById(String functionIdStr, HttpServletResponse resp)
             throws IOException, SQLException {
         Long functionId = Long.parseLong(functionIdStr);
@@ -361,7 +342,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
         Double xValue = Double.parseDouble(xValueParam);
         logger.info("GET функции по ID: " + functionId + " и значению X: " + xValue);
 
-        // Предполагаем, что в сервисе есть метод getFunctionByXValue
         Optional<TabulatedFunctionResponseDTO> function = tabulatedFunctionService.getTabulatedFunctionByXValue(functionId, xValue);
 
         if (function.isPresent()) {
@@ -388,7 +368,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
 
         logger.info("GET функций в диапазоне для functionId: " + functionId + ", диапазон: " + fromX + " - " + toX);
 
-        // Предполагаем, что в сервисе есть метод getFunctionsInRange
         List<TabulatedFunctionResponseDTO> functions = tabulatedFunctionService.getTabulatedFunctionsBetweenXValues(functionId, fromX, toX);
         sendJsonResponse(resp, HttpServletResponse.SC_OK, functions);
     }
@@ -421,7 +400,6 @@ public class TabulatedFunctionServlet extends AuthServlet {
         }
     }
 
-    // Вспомогательные методы
     private <T> T parseJsonRequest(HttpServletRequest req, Class<T> valueType) throws IOException {
         StringBuilder jsonBuffer = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {

@@ -148,6 +148,44 @@ public class OperationRepository {
         }
     }
 
+    public boolean isOperationOwnedByUser(Long operationId, Long userId) throws SQLException {
+       String sql = "SELECT 1 FROM operations o JOIN functions f ON o.function_id = f.id WHERE o.id = ? AND f.user_id = ? LIMIT 1";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, operationId);
+            stmt.setLong(2, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            boolean isOwned = rs.next();
+            logger.info("Проверка принадлежности операции ID: " + operationId + " пользователю ID: " + userId + ". Результат: " + isOwned);
+            return isOwned;
+        } catch (SQLException e) {
+            logger.severe("Ошибка при проверке принадлежности операции пользователю: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean isFunctionOwnedByUser(Long functionId, Long userId) throws SQLException {
+        String sql = "SELECT 1 FROM functions WHERE id = ? AND user_id = ? LIMIT 1";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, functionId);
+            stmt.setLong(2, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            boolean isOwned = rs.next();
+            logger.info("Проверка принадлежности функции ID: " + functionId + " пользователю ID: " + userId + ". Результат: " + isOwned);
+            return isOwned;
+        } catch (SQLException e) {
+            logger.severe("Ошибка при проверке принадлежности функции пользователю: " + e.getMessage());
+            throw e;
+        }
+    }
+
     private Operation mapResultSetToOperation(ResultSet rs) throws SQLException {
         Operation operation = new Operation();
         operation.setId(rs.getLong("id"));

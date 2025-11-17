@@ -90,7 +90,6 @@ public class FunctionServlet extends AuthServlet {
 
         Long userId = Long.parseLong(userIdParam);
 
-        // USER может запрашивать только свои функции
         if (isUser(req) && !user.getId().equals(userId)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
             resp.getWriter().write("{\"error\":\"Users may access only their own functions\"}");

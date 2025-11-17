@@ -105,7 +105,6 @@ public class AuthFilter implements Filter {
 
             User user = userOpt.get();
 
-            // Проверяем валидность роли пользователя
             if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.USER) {
                 logger.warning("User has invalid role: " + user.getRole());
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -113,7 +112,6 @@ public class AuthFilter implements Filter {
                 return;
             }
 
-            // Сохраняем пользователя и роль в атрибуты запроса
             request.setAttribute("authenticatedUser", user);
             request.setAttribute("userRole", user.getRole());
 

@@ -9,8 +9,6 @@ public class FunctionResponseDTO {
     private Double yVal;
     private String userName;
     private Long operationsTypeId;
-    private String operationTypeName;  // Из таблицы operation_types через JOIN
-    private String userEmail;          // Из таблицы users через JOIN
 
     // Пустой конструктор
     public FunctionResponseDTO() {
@@ -27,8 +25,6 @@ public class FunctionResponseDTO {
         this.yVal = yVal;
         this.userName = userName;
         this.operationsTypeId = operationsTypeId;
-        this.operationTypeName = operationTypeName;
-        this.userEmail = userEmail;
     }
 
     // Дополнительные конструкторы для удобства
@@ -53,7 +49,6 @@ public class FunctionResponseDTO {
         this.yVal = yVal;
         this.userName = userName;
         this.operationsTypeId = operationsTypeId;
-        this.operationTypeName = operationTypeName;
     }
 
     // Геттеры
@@ -85,14 +80,6 @@ public class FunctionResponseDTO {
         return operationsTypeId;
     }
 
-    public String getOperationTypeName() {
-        return operationTypeName;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
     // Сеттеры
     public void setFunctionId(Long functionId) {
         this.functionId = functionId;
@@ -120,13 +107,5 @@ public class FunctionResponseDTO {
 
     public void setOperationsTypeId(Long operationsTypeId) {
         this.operationsTypeId = operationsTypeId;
-    }
-
-    public void setOperationTypeName(String operationTypeName) {
-        this.operationTypeName = operationTypeName;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
     }
 }

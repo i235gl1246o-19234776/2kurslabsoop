@@ -6,7 +6,6 @@ import repository.dao.UserRepository;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.logging.Level;
 
 public class AuthenticationService {
     private static final Logger logger = Logger.getLogger(AuthenticationService.class.getName());
@@ -26,16 +25,13 @@ public class AuthenticationService {
 
         User user = userOpt.get();
 
-        // ПРЯМОЕ сравнение паролей без хеширования
-        String storedPassword = user.getPasswordHash(); // теперь это просто пароль
+        String storedPassword = user.getPasswordHash();
 
-        // Если пароль в базе NULL - аутентификация не пройдена
         if (storedPassword == null) {
             logger.warning("Password is NULL for user: " + username);
             return false;
         }
 
-        // Простое сравнение строк
         boolean isAuthenticated = storedPassword.equals(password);
 
         if (isAuthenticated) {

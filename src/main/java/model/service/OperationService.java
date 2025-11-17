@@ -62,4 +62,12 @@ public class OperationService {
     public Optional<Operation> getOperationEntityById(Long id, Long functionId) throws SQLException {
         return operationRepository.findById(id, functionId);
     }
+    public boolean isOperationOwnedByUser(Long operationId, Long userId) throws SQLException {
+        logger.info("Проверка принадлежности операции ID: " + operationId + " пользователю ID: " + userId);
+        return operationRepository.isOperationOwnedByUser(operationId, userId);
+    }
+    public boolean isFunctionOwnedByUser(Long functionId, Long userId) throws SQLException {
+        logger.info("Проверка принадлежности функции ID: " + functionId + " пользователю ID: " + userId);
+        return operationRepository.isFunctionOwnedByUser(functionId, userId);
+    }
 }

@@ -83,119 +83,24 @@ public class FunctionService {
         return functionRepository.deleteFunction(id, userId);
     }
 
-    public List<SearchFunctionResult> searchFunctions(
-            Long userId,
-            String userName,
-            String functionNamePattern,
-            String typeFunction,
-            Double xVal,
-            Double yVal,
-            Long operationsTypeId,
-            String sortBy,
-            String sortOrder) throws SQLException {
-
-        logger.info("Поиск функций с параметрами: user=" + userName + ", function=" + functionNamePattern + ", type=" + typeFunction);
-
-        return functionRepository.search(
-                userId, userName, functionNamePattern, typeFunction,
-                xVal, yVal, operationsTypeId, sortBy, sortOrder
-        );
-    }
-
-
-    public Optional<Function> getFunctionEntityById(Long id, Long userId) throws SQLException {
-        return functionRepository.findById(id, userId);
-    }
-
-    public void printPerformanceStats() throws SQLException {
-        functionRepository.printPerformanceStats();
-    }
-
-    public void createPerformanceTable() throws SQLException {
-        functionRepository.createPerformanceTable();
-    }
-
-    private Connection getConnection() throws SQLException {
-        throw new UnsupportedOperationException("getConnection() должен быть реализован");
-    }
     public SearchFunctionResponseDTO searchFunctions(SearchFunctionRequestDTO request) throws SQLException {
-        StringBuilder sql = new StringBuilder("""
-            SELECT
-                f.id AS function_id,
-                f.function_name,
-                f.type_function,
-                f.function_expression,
-                u.name AS username,              -- имя пользователя из users
-                o.id AS operation_id,
-                o.operations_type_id,            -- ID типа операции
-                t.id AS tabulated_function_id,
-                t.x_val,                         -- значение X из tabulated_functions
-                t.y_val                          -- значение Y из tabulated_functions
-            FROM functions f
-            LEFT JOIN users u ON f.user_id = u.id
-            LEFT JOIN operations o ON f.id = o.function_id
-            LEFT JOIN tabulated_functions t ON f.id = t.function_id
-            WHERE 1=1
-    """);
-
-        List<Object> parameters = new ArrayList<>();
-        List<FunctionResponseDTO> functions = new ArrayList<>();
-
-        // Добавляем условия фильтрации
-        if (request.getUserName() != null && !request.getUserName().isEmpty()) {
-            sql.append(" AND u.name = ?");  // Исправлено: u.name вместо f.user_name
-            parameters.add(request.getUserName());
-        }
-        if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
-            sql.append(" AND f.function_name LIKE ?");
-            parameters.add(request.getFunctionName() + "%");
-        }
-        if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
-            sql.append(" AND f.type_function = ?");
-            parameters.add(request.getTypeFunction());
-        }
-        if (request.getXVal() != null) {
-            sql.append(" AND t.x_val = ?");  // Исправлено: t.x_val вместо f.x_val
-            parameters.add(request.getXVal());
-        }
-        if (request.getYVal() != null) {
-            sql.append(" AND t.y_val = ?");  // Исправлено: t.y_val вместо f.y_val
-            parameters.add(request.getYVal());
-        }
-        if (request.getOperationsTypeId() != null) {
-            sql.append(" AND o.operations_type_id = ?");  // Исправлено: o.operations_type_id вместо f.operations_type_id
-            parameters.add(request.getOperationsTypeId());
-        }
-
-        // Добавляем сортировку
-        if (request.getSortBy() != null && !request.getSortBy().isEmpty()) {
-            String sortField = getSortField(request.getSortBy());
-            String sortOrder = "ASC".equalsIgnoreCase(request.getSortOrder()) ? "ASC" : "DESC";
-            sql.append(" ORDER BY ").append(sortField).append(" ").append(sortOrder);
-        }
-
-        // Добавляем пагинацию
-        if (request.getPage() != null && request.getSize() != null) {
-            int offset = (request.getPage() - 1) * request.getSize();
-            sql.append(" LIMIT ? OFFSET ?");
-            parameters.add(request.getSize());
-            parameters.add(offset);
-        }
+        QueryBuilder queryBuilder = new QueryBuilder(request);
+        String sql = queryBuilder.buildQuery();
+        List<Object> parameters = queryBuilder.getParameters();
 
         System.out.println("Executing Search SQL: " + sql);
         System.out.println("Parameters: " + parameters);
 
         DatabaseConnection dbconn = new DatabaseConnection();
+        List<FunctionResponseDTO> functions = new ArrayList<>();
 
         try (Connection conn = dbconn.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            // Устанавливаем параметры
             for (int i = 0; i < parameters.size(); i++) {
                 stmt.setObject(i + 1, parameters.get(i));
             }
 
-            // Выполняем запрос и маппим результаты
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     FunctionResponseDTO function = new FunctionResponseDTO();
@@ -204,62 +109,27 @@ public class FunctionService {
                     function.setTypeFunction(rs.getString("type_function"));
                     function.setXVal(rs.getDouble("x_val"));
                     function.setYVal(rs.getDouble("y_val"));
-                    function.setUserName(rs.getString("username"));  // Исправлено: username вместо user_name
+                    function.setUserName(rs.getString("username"));
                     function.setOperationsTypeId(rs.getLong("operations_type_id"));
-                    // Убрано: function.setOperationTypeName(rs.getString("operation_type_name")); — нет такой колонки
 
                     functions.add(function);
                 }
             }
 
             int total = getTotalCount(request);
-
             return new SearchFunctionResponseDTO(functions, total);
-
         }
     }
 
     private int getTotalCount(SearchFunctionRequestDTO request) throws SQLException {
-        StringBuilder countSql = new StringBuilder("""
-        SELECT COUNT(*) 
-        FROM functions f
-        LEFT JOIN users u ON f.user_id = u.id
-        LEFT JOIN operations o ON f.id = o.function_id
-        LEFT JOIN tabulated_functions t ON f.id = t.function_id
-        WHERE 1=1
-    """);
-
-        List<Object> params = new ArrayList<>();
-
-        if (request.getUserName() != null && !request.getUserName().isEmpty()) {
-            countSql.append(" AND u.name = ?");
-            params.add(request.getUserName());
-        }
-        if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
-            countSql.append(" AND f.function_name LIKE ?");
-            params.add(request.getFunctionName() + "%");
-        }
-        if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
-            countSql.append(" AND f.type_function = ?");
-            params.add(request.getTypeFunction());
-        }
-        if (request.getXVal() != null) {
-            countSql.append(" AND t.x_val = ?");
-            params.add(request.getXVal());
-        }
-        if (request.getYVal() != null) {
-            countSql.append(" AND t.y_val = ?");
-            params.add(request.getYVal());
-        }
-        if (request.getOperationsTypeId() != null) {
-            countSql.append(" AND o.operations_type_id = ?");
-            params.add(request.getOperationsTypeId());
-        }
+        QueryBuilder queryBuilder = new QueryBuilder(request);
+        String countSql = queryBuilder.buildCountQuery();
+        List<Object> params = queryBuilder.getParameters();
 
         DatabaseConnection dbconn = new DatabaseConnection();
 
         try (Connection conn = dbconn.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(countSql.toString())) {
+             PreparedStatement stmt = conn.prepareStatement(countSql)) {
 
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
@@ -273,20 +143,112 @@ public class FunctionService {
         return 0;
     }
 
+    private static class QueryBuilder {
+        private final SearchFunctionRequestDTO request;
+        private final List<Object> parameters;
+        private final StringBuilder whereClause;
 
-    private String getSortField(String sortBy) {
+        public QueryBuilder(SearchFunctionRequestDTO request) {
+            this.request = request;
+            this.parameters = new ArrayList<>();
+            this.whereClause = new StringBuilder();
+            buildWhereClause();
+        }
+
+        private void buildWhereClause() {
+            if (request.getUserName() != null && !request.getUserName().isEmpty()) {
+                whereClause.append(" AND u.name = ?");
+                parameters.add(request.getUserName());
+            }
+            if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
+                whereClause.append(" AND f.function_name LIKE ?");
+                parameters.add(request.getFunctionName() + "%");
+            }
+            if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
+                whereClause.append(" AND f.type_function = ?");
+                parameters.add(request.getTypeFunction());
+            }
+            if (request.getXVal() != null) {
+                whereClause.append(" AND t.x_val = ?");
+                parameters.add(request.getXVal());
+            }
+            if (request.getYVal() != null) {
+                whereClause.append(" AND t.y_val = ?");
+                parameters.add(request.getYVal());
+            }
+            if (request.getOperationsTypeId() != null) {
+                whereClause.append(" AND o.operations_type_id = ?");
+                parameters.add(request.getOperationsTypeId());
+            }
+        }
+
+        public String buildQuery() {
+            StringBuilder sql = new StringBuilder("""
+            SELECT
+                f.id AS function_id,
+                f.function_name,
+                f.type_function,
+                f.function_expression,
+                u.name AS username,
+                o.id AS operation_id,
+                o.operations_type_id,
+                t.id AS tabulated_function_id,
+                t.x_val,
+                t.y_val
+            FROM functions f
+            LEFT JOIN users u ON f.user_id = u.id
+            LEFT JOIN operations o ON f.id = o.function_id
+            LEFT JOIN tabulated_functions t ON f.id = t.function_id
+            WHERE 1=1
+        """);
+
+            sql.append(whereClause);
+
+            if (request.getSortBy() != null && !request.getSortBy().isEmpty()) {
+                String sortField = getSortField(request.getSortBy());
+                String sortOrder = "ASC".equalsIgnoreCase(request.getSortOrder()) ? "ASC" : "DESC";
+                sql.append(" ORDER BY ").append(sortField).append(" ").append(sortOrder);
+            }
+
+            if (request.getPage() != null && request.getSize() != null) {
+                int offset = (request.getPage() - 1) * request.getSize();
+                sql.append(" LIMIT ? OFFSET ?");
+                parameters.add(request.getSize());
+                parameters.add(offset);
+            }
+
+            return sql.toString();
+        }
+
+        public String buildCountQuery() {
+            return """
+            SELECT COUNT(*) 
+            FROM functions f
+            LEFT JOIN users u ON f.user_id = u.id
+            LEFT JOIN operations o ON f.id = o.function_id
+            LEFT JOIN tabulated_functions t ON f.id = t.function_id
+            WHERE 1=1
+        """ + whereClause;
+        }
+
+        public List<Object> getParameters() {
+            return new ArrayList<>(parameters);
+        }
+    }
+
+    private static String getSortField(String sortBy) {
         return switch (sortBy.toLowerCase()) {
-            case "function_id" -> "f.id"; // Исправлено: f.id вместо f.function_id
+            case "function_id" -> "f.id";
             case "function_name" -> "f.function_name";
             case "type_function" -> "f.type_function";
-            case "function_expression" -> "f.function_expression"; // Добавлено, если нужно сортировать по выражению
-            case "name" -> "u.name"; // Исправлено: u.name, так как f.user_name не существует
-            case "x_val" -> "t.x_val"; // Исправлено: t.x_val, так как f.x_val не существует
-            case "y_val" -> "t.y_val"; // Исправлено: t.y_val, так как f.y_val не существует
-            case "operations_type_id" -> "o.operations_type_id"; // Исправлено: o.operations_type_id, так как f.operations_type_id не существует
-            case "operation_id" -> "o.id"; // Добавлено, если нужно сортировать по ID операции
-            case "tabulated_function_id" -> "t.id"; // Добавлено, если нужно сортировать по ID табулированной точки
-            default -> "f.id"; // Исправлено: f.id вместо f.function_id
+            case "function_expression" -> "f.function_expression";
+            case "name" -> "u.name";
+            case "x_val" -> "t.x_val";
+            case "y_val" -> "t.y_val";
+            case "operations_type_id" -> "o.operations_type_id";
+            case "operation_id" -> "o.id";
+            case "tabulated_function_id" -> "t.id";
+            default -> "f.id";
         };
     }
 }
