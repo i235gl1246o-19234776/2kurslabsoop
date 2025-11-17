@@ -1,13 +1,13 @@
 Метод,"Время, мс"
-full_scan,94.00
-search_by_name_exact,1.00
-search_by_name_pattern,29.00
-search_by_type_analytic,94.00
-search_by_user_existing,4.00
-search_by_user_not_found,4.00
-sort_by_name_asc,31.00
-sort_by_id_desc,30.00
-search_by_x_val,14.00
-search_by_y_val,16.00
-search_by_operations_type,24.00
-search_combined_user_type_x,18.00
+full_scan,50.00
+search_by_name_exact,0.00
+search_by_name_pattern,14.00
+search_by_type_analytic,52.00
+search_by_user_existing,1.00
+search_by_user_not_found,1.00
+sort_by_name_asc,16.00
+sort_by_id_desc,15.00
+search_by_x_val,4.00
+search_by_y_val,4.00
+search_by_operations_type,14.00
+search_combined_user_type_x,6.00

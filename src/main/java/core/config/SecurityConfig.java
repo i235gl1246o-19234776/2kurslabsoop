@@ -1,7 +1,6 @@
-package core.config; // Убедись, что пакет правильный
-
-import core.security.CustomUserDetailsService; // Убедись, что импорт правильный
-import lombok.RequiredArgsConstructor; // Убедись, что используешь @RequiredArgsConstructor
+package core.config;
+import core.security.CustomUserDetailsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,7 +17,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
@@ -40,16 +38,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/users/authenticate", "/api/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/authenticate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/exist/**").permitAll()
+                        // .requestMatchers(HttpMethod.POST, "/api/users").permitAll() <-- УБРАНО
                         .requestMatchers(HttpMethod.PUT, "/api/users/{id}/role").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic
                         .realmName("My App Realm")
                 );
-
         http.authenticationProvider(authenticationProvider()); // Применяет провайдер
-
         return http.build();
     }
 }

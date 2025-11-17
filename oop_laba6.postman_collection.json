@@ -1,12 +1,46 @@
 {
 	"info": {
-		"_postman_id": "50e847f4-0856-49d0-a7ad-2e757adcf8b0",
+		"_postman_id": "0994eedc-c459-4bf2-b207-b6cf5f237051",
 		"name": "oop_laba6",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "50094366",
-		"_collection_link": "https://sidnegdok-1880764.postman.co/workspace/%D0%92%D0%BB%D0%B0%D0%B4%D0%B8%D1%81%D0%BB%D0%B0%D0%B2-%D0%9D%D0%B8%D0%BA%D0%BE%D0%BB%D0%B0%D0%B5%D0%B2's-Workspace~d4b56136-0341-4961-88e3-7429881e011e/collection/50094366-50e847f4-0856-49d0-a7ad-2e757adcf8b0?action=share&source=collection_link&creator=50094366"
+		"_exporter_id": "50094366"
 	},
 	"item": [
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Authenticate  Admin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"admin\",\r\n  \"password\": \"admin123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/authenticate",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"authenticate"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
 		{
 			"name": "Create",
 			"item": [
@@ -61,6 +95,21 @@
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{adminPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{adminUsername}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -393,7 +442,8 @@
 									"    pm.expect(users.length).to.be.at.least(1);\r",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -401,6 +451,21 @@
 						"disableBodyPruning": true
 					},
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{adminPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{adminUsername}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"body": {
@@ -450,7 +515,8 @@
 									"\r",
 									"console.log(\"Получен пользователь по ID:\", responseJson.id);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -458,6 +524,21 @@
 						"disableBodyPruning": true
 					},
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{adminPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{adminUsername}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"body": {
@@ -488,6 +569,21 @@
 				{
 					"name": "Get User By Name",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{adminPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{adminUsername}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -510,6 +606,21 @@
 				{
 					"name": "Check User Exists",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{adminPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{adminUsername}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -552,11 +663,27 @@
 									"\r",
 									"console.log(\"Аутентификация прошла успешно для пользователя:\", responseJson.name);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -610,11 +737,27 @@
 									"\r",
 									"console.log(\"Пользователь обновлён. Новое имя:\", responseJson.name);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{adminPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{adminUsername}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
 						"header": [],
 						"body": {
@@ -675,11 +818,27 @@
 									"\r",
 									"console.log(\"Получены функции пользователя с ID:\", pm.environment.get(\"createdUserId\"));"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -730,7 +889,8 @@
 									"\r",
 									"console.log(\"Получена функция по ID:\", responseJson.id);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						},
 						{
@@ -739,7 +899,8 @@
 								"exec": [
 									""
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -747,6 +908,21 @@
 						"disableBodyPruning": true
 					},
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"body": {
@@ -805,11 +981,27 @@
 									"\r",
 									"console.log(\"Найдены функции по шаблону 'func' для пользователя:\", pm.environment.get(\"createdUserId\"));"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -868,11 +1060,27 @@
 									"\r",
 									"console.log(\"Фильтрация по типу 'tabular' прошла успешно.\");"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -929,11 +1137,27 @@
 									"\r",
 									"console.log(\"Функция обновлена. Новое имя:\", responseJson.functionName, \", Новый тип:\", responseJson.typeFunction);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
 						"header": [
 							{
@@ -1000,11 +1224,27 @@
 									"\r",
 									"console.log(\"Получены точки функции с ID:\", pm.environment.get(\"createdFunctionId\"));"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -1051,11 +1291,27 @@
 									"\r",
 									"console.log(\"Получена точка по X=1.5 для функции с ID:\", pm.environment.get(\"createdFunctionId\"));"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -1109,11 +1365,27 @@
 									"\r",
 									"console.log(\"Получены точки в диапазоне [0, 10] для функции с ID:\", pm.environment.get(\"createdFunctionId\"));"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -1175,11 +1447,27 @@
 									"\r",
 									"console.log(\"Точка обновлена. Новые значения: X=\", responseJson.xVal, \", Y=\", responseJson.yVal);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
 						"header": [
 							{
@@ -1245,11 +1533,27 @@
 									"\r",
 									"console.log(\"Получена операция по ID:\", responseJson.id, \"для функции с ID:\", responseJson.functionId);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -1295,11 +1599,27 @@
 									"\r",
 									"console.log(\"Операция обновлена. Новый тип:\", responseJson.operationsTypeId);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
 						"header": [
 							{
@@ -1375,11 +1695,27 @@
 									"\r",
 									"console.log(\"Расширенный поиск прошёл успешно. Найдено функций:\", functions.length);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -1432,11 +1768,27 @@
 									"\r",
 									"pm.environment.unset(\"createdPointId\");"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
@@ -1468,11 +1820,27 @@
 									"\r",
 									"console.log(\"Все точки для функции с ID\", pm.environment.get(\"createdFunctionId\"), \"удалены.\");"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
@@ -1507,11 +1875,27 @@
 									"\r",
 									"pm.environment.unset(\"createdOperationId\");"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
@@ -1547,11 +1931,27 @@
 									"    console.error(\"Ошибка при удалении операций. Статус:\", pm.response.code, \"Ответ:\", pm.response.text());\r",
 									"}"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
@@ -1587,11 +1987,27 @@
 									"pm.environment.unset(\"createdFunctionId\");\r",
 									"pm.environment.unset(\"createdFunctionName\");"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"body": {
@@ -1628,6 +2044,21 @@
 				{
 					"name": "Delete User",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
