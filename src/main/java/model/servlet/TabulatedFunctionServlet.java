@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import model.dto.request.TabulatedFunctionRequestDTO;
 import model.dto.response.TabulatedFunctionResponseDTO;
 import model.entity.TabulatedFunction;
+import model.entity.User;
 import model.service.TabulatedFunctionService;
 
 import jakarta.servlet.ServletException;
@@ -19,73 +20,233 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+
 @WebServlet("/api/tabulated-points/*")
-public class TabulatedFunctionServlet extends HttpServlet {
-    private static final Logger logger = Logger.getLogger(TabulatedFunctionServlet.class.getName());
-    private final TabulatedFunctionService tabulatedFunctionService;
-    private final ObjectMapper objectMapper;
+public class TabulatedFunctionServlet extends AuthServlet {
 
-    public TabulatedFunctionServlet() {
-        this.tabulatedFunctionService = new TabulatedFunctionService();
-        this.objectMapper = new ObjectMapper();
-    }
+        private static final Logger logger = Logger.getLogger(TabulatedFunctionServlet.class.getName());
+        private final TabulatedFunctionService tabulatedFunctionService;
+        private final ObjectMapper objectMapper;
 
-    // Конструктор для тестирования
-    public TabulatedFunctionServlet(TabulatedFunctionService tabulatedFunctionService) {
-        this.tabulatedFunctionService = tabulatedFunctionService;
-        this.objectMapper = new ObjectMapper();
-    }
+        public TabulatedFunctionServlet() {
+            this.tabulatedFunctionService = new TabulatedFunctionService();
+            this.objectMapper = new ObjectMapper();
+        }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String pathInfo = req.getPathInfo();
+        public TabulatedFunctionServlet(TabulatedFunctionService tabulatedFunctionService) {
+            this.tabulatedFunctionService = tabulatedFunctionService;
+            this.objectMapper = new ObjectMapper();
+        }
 
-        if (pathInfo == null || pathInfo.equals("/")) {
-            // GET /api/tabulated-points?functionId=1&fromX=0&toX=10
+        // ======================= ДОБАВЛЕНО: проверка прав доступа =======================
+
+        private boolean checkFunctionAccess(HttpServletRequest req, Long functionId) throws SQLException, IOException {
+            User user = getAuthenticatedUser(req);
+
+            // USER может только свои функции
+            if (isUser(req)) {
+                boolean allowed = tabulatedFunctionService.isFunctionOwnedByUser(functionId, user.getId());
+                if (!allowed) {
+                    sendError(resp(req), 403, "Users may access only their own functions");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean checkPointAccess(HttpServletRequest req, Long pointId) throws SQLException, IOException {
+            Optional<Long> functionIdOpt = tabulatedFunctionService.getFunctionIdByPointId(pointId);
+
+            if (functionIdOpt.isEmpty()) {
+                sendError(resp(req), 404, "Point not found");
+                return false;
+            }
+
+            return checkFunctionAccess(req, functionIdOpt.get());
+        }
+
+        // Чтобы можно было использовать resp в методах
+        private HttpServletResponse resp(HttpServletRequest req) {
+            return (HttpServletResponse) req.getAttribute("resp");
+        }
+
+        @Override
+        protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            req.setAttribute("resp", resp);
+
+            if (!isAuthenticated(req)) {
+                sendUnauthorized(resp);
+                return;
+            }
+
+            super.service(req, resp);
+        }
+
+        // ================================================================================
+
+
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            String pathInfo = req.getPathInfo();
+
             try {
-                handleGetByRange(req, resp);
+                if (pathInfo == null || pathInfo.equals("/")) {
+                    // GET /api/tabulated-points?functionId=1
+                    Long functionId = Long.parseLong(req.getParameter("functionId"));
+                    if (!checkFunctionAccess(req, functionId)) return;
+
+                    handleGetByRange(req, resp);
+                    return;
+                }
+
+                String[] p = pathInfo.split("/");
+
+                if (p.length == 2) {
+                    Long pointId = Long.parseLong(p[1]);
+                    if (!checkPointAccess(req, pointId)) return;
+
+                    handleGetPointById(p[1], resp);
+                    return;
+                }
+
+                if (p.length == 3 && "function".equals(p[1])) {
+                    Long functionId = Long.parseLong(p[2]);
+                    if (!checkFunctionAccess(req, functionId)) return;
+
+                    handleGetPointsByFunctionId(p[2], resp);
+                    return;
+                }
+
+                if (p.length == 5 && "function".equals(p[1]) && "x".equals(p[3])) {
+                    Long functionId = Long.parseLong(p[2]);
+                    if (!checkFunctionAccess(req, functionId)) return;
+
+                    handleGetPointByXValue(p[2], p[4], resp);
+                    return;
+                }
+
+                if (p.length == 4 && "function".equals(p[1]) && "range".equals(p[3])) {
+                    Long functionId = Long.parseLong(p[2]);
+                    if (!checkFunctionAccess(req, functionId)) return;
+
+                    handleGetPointsInRange(p[2], req, resp);
+                    return;
+                }
+
+                sendError(resp, 400, "Invalid GET path");
+
+            } catch (NumberFormatException e) {
+                sendError(resp, 400, "Invalid numeric parameter");
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                sendError(resp, 500, "Database error");
             }
-            return;
         }
 
-        String[] pathParts = pathInfo.split("/");
 
-        try {
-            if (pathParts.length == 2) {
-                // GET /api/tabulated-points/{id} - поиск точки по ID
-                handleGetPointById(pathParts[1], resp);
-            } else if (pathParts.length == 3 && "function".equals(pathParts[1])) {
-                // GET /api/tabulated-points/function/{functionId} - поиск всех точек функции
-                handleGetPointsByFunctionId(pathParts[2], resp);
-            } else if (pathParts.length == 5 && "function".equals(pathParts[1]) && "x".equals(pathParts[3])) {
-                // GET /api/tabulated-points/function/{functionId}/x/{xValue} - поиск точки по X
-                handleGetPointByXValue(pathParts[2], pathParts[4], resp);
-            } else if (pathParts.length == 4 && "function".equals(pathParts[1]) && "range".equals(pathParts[3])) {
-                // GET /api/tabulated-points/function/{functionId}/range - поиск точек в диапазоне X
-                handleGetPointsInRange(pathParts[2], req, resp);
-            } else if (pathParts.length == 3 && "search".equals(pathParts[1])) {
-                // GET /api/tabulated-points/search/{functionId} - поиск функции по ID
-                handleGetFunctionById(pathParts[2], resp);
-            } else if (pathParts.length == 4 && "search".equals(pathParts[1]) && "x".equals(pathParts[3])) {
-                // GET /api/tabulated-points/search/{functionId}/x - поиск функции по значению X
-                handleGetFunctionByXValue(pathParts[2], req, resp);
-            } else if (pathParts.length == 4 && "search".equals(pathParts[1]) && "range".equals(pathParts[3])) {
-                // GET /api/tabulated-points/search/{functionId}/range - поиск функций в диапазоне X
-                handleGetFunctionsInRange(pathParts[2], req, resp);
-            } else {
-                logger.warning("Неверный путь для GET: " + pathInfo);
-                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный путь для GET");
+        // ===================== POST ========================
+
+        @Override
+        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            try {
+                TabulatedFunctionRequestDTO dto = parseJsonRequest(req, TabulatedFunctionRequestDTO.class);
+
+                if (!checkFunctionAccess(req, dto.getFunctionId())) return;
+
+                TabulatedFunctionResponseDTO result = tabulatedFunctionService.createTabulatedFunction(dto);
+                sendJsonResponse(resp, 201, result);
+
+            } catch (SQLException e) {
+                sendError(resp, 500, "DB error");
             }
-        } catch (NumberFormatException e) {
-            logger.warning("Неверный формат числового параметра: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат числового параметра");
-        } catch (SQLException e) {
-            logger.severe("Ошибка базы данных: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных");
         }
-    }
+
+
+        // ===================== PUT ========================
+
+        @Override
+        protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            String pathInfo = req.getPathInfo();
+
+            if (pathInfo == null || pathInfo.equals("/")) {
+                sendError(resp, 400, "Path required");
+                return;
+            }
+
+            String[] p = pathInfo.split("/");
+            if (p.length != 2) {
+                sendError(resp, 400, "Invalid PUT path");
+                return;
+            }
+
+            try {
+                Long pointId = Long.parseLong(p[1]);
+
+                if (!checkPointAccess(req, pointId)) return;
+
+                TabulatedFunction tf = parseJsonRequest(req, TabulatedFunction.class);
+
+                if (!pointId.equals(tf.getId())) {
+                    sendError(resp, 400, "ID mismatch");
+                    return;
+                }
+
+                boolean updated = tabulatedFunctionService.updateTabulatedFunction(tf);
+
+                if (updated)
+                    sendMessage(resp, 200, "Updated");
+                else
+                    sendError(resp, 404, "Not found");
+
+            } catch (SQLException e) {
+                sendError(resp, 500, "DB error");
+            }
+        }
+
+
+        // ===================== DELETE ========================
+
+        @Override
+        protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            String pathInfo = req.getPathInfo();
+
+            if (pathInfo == null || pathInfo.equals("/")) {
+                sendError(resp, 400, "Path required");
+                return;
+            }
+
+            String[] p = pathInfo.split("/");
+
+            try {
+
+                if (p.length == 2) {
+                    Long pointId = Long.parseLong(p[1]);
+
+                    if (!checkPointAccess(req, pointId)) return;
+
+                    boolean deleted = tabulatedFunctionService.deleteTabulatedFunction(pointId);
+
+                    if (deleted) sendMessage(resp, 200, "Deleted");
+                    else sendError(resp, 404, "Not found");
+
+                    return;
+                }
+
+                if (p.length == 3 && "function".equals(p[1])) {
+                    Long functionId = Long.parseLong(p[2]);
+
+                    if (!checkFunctionAccess(req, functionId)) return;
+
+                    tabulatedFunctionService.deleteAllTabulatedFunctions(functionId);
+                    sendMessage(resp, 200, "All points deleted");
+                    return;
+                }
+
+                sendError(resp, 400, "Invalid DELETE path");
+
+            } catch (SQLException e) {
+                sendError(resp, 500, "DB error");
+            }
+        }
 
     private void handleGetByRange(HttpServletRequest req, HttpServletResponse resp)
             throws IOException, SQLException {
@@ -230,96 +391,6 @@ public class TabulatedFunctionServlet extends HttpServlet {
         // Предполагаем, что в сервисе есть метод getFunctionsInRange
         List<TabulatedFunctionResponseDTO> functions = tabulatedFunctionService.getTabulatedFunctionsBetweenXValues(functionId, fromX, toX);
         sendJsonResponse(resp, HttpServletResponse.SC_OK, functions);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        logger.info("POST /api/tabulated-points вызван");
-
-        try {
-            TabulatedFunctionRequestDTO request = parseJsonRequest(req, TabulatedFunctionRequestDTO.class);
-            TabulatedFunctionResponseDTO response = tabulatedFunctionService.createTabulatedFunction(request);
-
-            sendJsonResponse(resp, HttpServletResponse.SC_CREATED, response);
-        } catch (IOException e) {
-            logger.warning("Неверный формат JSON в теле запроса: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат JSON");
-        } catch (SQLException e) {
-            logger.severe("Ошибка при создании точки: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка при создании точки");
-        }
-    }
-
-    @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String pathInfo = req.getPathInfo();
-
-        if (pathInfo == null || pathInfo.equals("/")) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Путь для PUT запроса отсутствует");
-            return;
-        }
-
-        String[] pathParts = pathInfo.split("/");
-        if (pathParts.length != 2) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный путь для PUT");
-            return;
-        }
-
-        try {
-            Long id = Long.parseLong(pathParts[1]);
-            TabulatedFunction tabulatedFunction = parseJsonRequest(req, TabulatedFunction.class);
-
-            // Убедимся, что ID в сущности совпадает с URL
-            if (!id.equals(tabulatedFunction.getId())) {
-                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID в пути и теле запроса не совпадают");
-                return;
-            }
-
-            logger.info("PUT точки с ID: " + id);
-            boolean updated = tabulatedFunctionService.updateTabulatedFunction(tabulatedFunction);
-
-            if (updated) {
-                sendMessage(resp, HttpServletResponse.SC_OK, "Точка обновлена");
-            } else {
-                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Точка не найдена для обновления");
-            }
-        } catch (NumberFormatException e) {
-            logger.warning("Неверный формат ID точки: " + pathParts[1]);
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID точки");
-        } catch (SQLException e) {
-            logger.severe("Ошибка при обновлении точки: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка при обновлении точки");
-        }
-    }
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String pathInfo = req.getPathInfo();
-
-        if (pathInfo == null || pathInfo.equals("/")) {
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Путь для DELETE запроса отсутствует");
-            return;
-        }
-
-        String[] pathParts = pathInfo.split("/");
-
-        try {
-            if (pathParts.length == 2) {
-                // DELETE /api/tabulated-points/{id}
-                handleDeletePointById(pathParts[1], resp);
-            } else if (pathParts.length == 3 && "function".equals(pathParts[1])) {
-                // DELETE /api/tabulated-points/function/{functionId}
-                handleDeletePointsByFunctionId(pathParts[2], resp);
-            } else {
-                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный путь для DELETE");
-            }
-        } catch (NumberFormatException e) {
-            logger.warning("Неверный формат числового параметра: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат числового параметра");
-        } catch (SQLException e) {
-            logger.severe("Ошибка при удалении: " + e.getMessage());
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка при удалении");
-        }
     }
 
     private void handleDeletePointById(String idStr, HttpServletResponse resp)

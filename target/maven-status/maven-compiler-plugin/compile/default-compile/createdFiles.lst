@@ -49,7 +49,6 @@ model\servlet\FunctionServlet.class
 model\entity\Operation.class
 repository\dao\TabulatedFunctionRepository.class
 io\TabulatedFunctionFileInputStream.class
-model\servlet\MainServlet.class
 functions\LinkedListTabulatedFunction$1.class
 functions\ZeroFunction.class
 operations\ParallelIntegrator$IntegrationResult.class

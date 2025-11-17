@@ -4,7 +4,12 @@ import model.entity.TabulatedFunction;
 import model.dto.request.TabulatedFunctionRequestDTO;
 import model.dto.response.TabulatedFunctionResponseDTO;
 import model.dto.DTOTransformService;
+import repository.DatabaseConnection;
 import repository.dao.TabulatedFunctionRepository;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -85,4 +90,43 @@ public class TabulatedFunctionService {
     public List<TabulatedFunction> getTabulatedFunctionEntitiesByFunctionId(Long functionId) throws SQLException {
         return tabulatedFunctionRepository.findAllByFunctionId(functionId);
     }
+
+    public boolean isFunctionOwnedByUser(Long functionId, Long userId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM functions WHERE id = ? AND user_id = ?";
+
+        DatabaseConnection conn = new DatabaseConnection();
+        try (Connection connection = conn.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setLong(1, functionId);
+            stmt.setLong(2, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+    public Optional<Long> getFunctionIdByPointId(Long pointId) throws SQLException {
+        String sql = "SELECT function_id FROM tabulated_functions WHERE id = ?";
+        DatabaseConnection conn = new DatabaseConnection();
+        try (Connection connection = conn.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setLong(1, pointId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(rs.getLong("function_id"));
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+
 }

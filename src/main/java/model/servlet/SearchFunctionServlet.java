@@ -10,13 +10,14 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 
-@WebServlet("/api/search/functions")
+@WebServlet("/api/admin/search/functions")
 public class SearchFunctionServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(SearchFunctionServlet.class.getName());
     private final FunctionService functionService;
@@ -27,18 +28,44 @@ public class SearchFunctionServlet extends HttpServlet {
         this.objectMapper = new ObjectMapper();
     }
 
-    // Конструктор для тестирования
     public SearchFunctionServlet(FunctionService functionService) {
         this.functionService = functionService;
         this.objectMapper = new ObjectMapper();
     }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        logger.info("GET /api/search/functions вызван");
+    /** Проверка, что пользователь — админ */
+    private boolean isAdmin(HttpServletRequest req) {
+        Object role = req.getSession().getAttribute("role");
+        return role != null && role.toString().equalsIgnoreCase("ADMIN");
+    }
 
-        // Считываем параметры из строки запроса
-        String userIdParam = req.getParameter("userId");
+    private void sendForbidden(HttpServletResponse resp) throws IOException {
+        resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        resp.setContentType("application/json");
+        resp.getWriter().write("{\"error\": \"Доступ запрещён. Требуется роль ADMIN.\"}");
+    }
+
+    private void sendUnauthorized(HttpServletResponse resp) throws IOException {
+        resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        resp.setContentType("application/json");
+        resp.getWriter().write("{\"error\": \"Пользователь не авторизован\"}");
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        logger.info("GET /api/admin/search/functions вызван");
+
+        // Проверка сессии
+        if (req.getSession(false) == null) {
+            sendUnauthorized(resp);
+            return;
+        }
+        if (!isAdmin(req)) {
+            sendForbidden(resp);
+            return;
+        }
+
+        // Параметры запроса
         String userName = req.getParameter("userName");
         String functionName = req.getParameter("functionName");
         String typeFunction = req.getParameter("typeFunction");
@@ -48,19 +75,15 @@ public class SearchFunctionServlet extends HttpServlet {
         String sortBy = req.getParameter("sortBy");
         String sortOrder = req.getParameter("sortOrder");
 
-        // Параметры пагинации
         String pageParam = req.getParameter("page");
         String sizeParam = req.getParameter("size");
 
-        // Пытаемся преобразовать строки в нужные типы
-        Long userId = (userIdParam != null && !userIdParam.isEmpty()) ? Long.parseLong(userIdParam) : null;
         Double xVal = (xValParam != null && !xValParam.isEmpty()) ? Double.parseDouble(xValParam) : null;
         Double yVal = (yValParam != null && !yValParam.isEmpty()) ? Double.parseDouble(yValParam) : null;
         Long operationsTypeId = (operationsTypeIdParam != null && !operationsTypeIdParam.isEmpty()) ? Long.parseLong(operationsTypeIdParam) : null;
         Integer page = (pageParam != null && !pageParam.isEmpty()) ? Integer.parseInt(pageParam) : null;
         Integer size = (sizeParam != null && !sizeParam.isEmpty()) ? Integer.parseInt(sizeParam) : null;
 
-        // Создаем DTO с параметрами из запроса
         SearchFunctionRequestDTO searchRequest = new SearchFunctionRequestDTO();
         searchRequest.setUserName(userName);
         searchRequest.setFunctionName(functionName);
@@ -89,8 +112,18 @@ public class SearchFunctionServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        logger.info("POST /api/search/functions вызван");
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        logger.info("POST /api/admin/search/functions вызван");
+
+        // Проверка сессии
+        if (req.getSession(false) == null) {
+            sendUnauthorized(resp);
+            return;
+        }
+        if (!isAdmin(req)) {
+            sendForbidden(resp);
+            return;
+        }
 
         StringBuilder jsonBuffer = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {
@@ -110,7 +143,7 @@ public class SearchFunctionServlet extends HttpServlet {
             out.print(objectMapper.writeValueAsString(result));
             out.flush();
         } catch (IOException e) {
-            logger.warning("Неверный формат JSON в теле запроса: " + e.getMessage());
+            logger.warning("Неверный формат JSON: " + e.getMessage());
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"Неверный формат JSON\"}");
         } catch (SQLException e) {
