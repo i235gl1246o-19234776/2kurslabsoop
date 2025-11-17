@@ -1,5 +1,7 @@
 package model.dto.response;
 
+import model.entity.UserRole;
+
 import java.util.logging.Logger;
 
 public class UserResponseDTO {
@@ -8,6 +10,7 @@ public class UserResponseDTO {
 
     private Long id;
     private String name;
+    private UserRole role;
 
     // Пустой конструктор
     public UserResponseDTO() {
@@ -19,6 +22,13 @@ public class UserResponseDTO {
         this.id = id;
         this.name = name;
         log.fine("Создан UserResponseDTO с id: " + id);
+    }
+
+    public UserResponseDTO(Long id, String name, UserRole role) {
+        this.id = id;
+        this.name = name;
+        this.role = role;
+        log.fine("Создан UserResponseDTO с id: " + id + role);
     }
 
     // Геттеры

@@ -421,14 +421,13 @@ public class MethodPerformanceTester {
 
     private void testFindUserByName() {
         long startTime = System.nanoTime();
-        try {
             String name = NAME_PATTERNS[random.nextInt(NAME_PATTERNS.length)] + "_" + random.nextInt(1000);
             userRepository.findByName(name);
             recordPerformance("user_findByName", System.nanoTime() - startTime);
-        } catch (SQLException e) {
+        /*catch (SQLException e) {
             recordPerformance("user_findByName", System.nanoTime() - startTime);
             logger.warning("Ошибка в testFindUserByName: " + e.getMessage());
-        }
+        */
     }
 
     private void testUpdateUser() {

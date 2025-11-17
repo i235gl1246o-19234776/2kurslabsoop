@@ -1,6 +1,7 @@
 package repository.dao;
 
 import model.entity.User;
+import model.entity.UserRole;
 import repository.DatabaseConnection;
 import repository.SqlLoader;
 
@@ -8,6 +9,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UserRepository {
@@ -81,7 +83,7 @@ public class UserRepository {
             throw e;
         }
     }
-
+    /*
     public Optional<User> findByName(String name) throws SQLException {
         String sql = SqlLoader.loadSql("user/find_user_name.sql");
 
@@ -101,6 +103,29 @@ public class UserRepository {
         } catch (SQLException e) {
             logger.severe("Ошибка при поиске пользователя по имени " + name + ": " + e.getMessage());
             throw e;
+        }
+    }*/
+    public Optional<User> findByName(String name) {
+        String sql = "SELECT * FROM users WHERE name = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, name);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getLong("id"));
+                user.setName(rs.getString("name")); // используем поле "name" из БД
+                user.setPasswordHash(rs.getString("password_hash"));
+                user.setRole(UserRole.valueOf(rs.getString("role")));
+                return Optional.of(user);
+            }
+            return Optional.empty();
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error finding user by name: " + name, e);
+            return Optional.empty();
         }
     }
 
@@ -219,6 +244,18 @@ public class UserRepository {
         } catch (SQLException e) {
             logger.severe("Ошибка при поиске всех пользователей: " + e.getMessage());
             throw e;
+        }
+    }
+
+    public void updatePasswordHash(Long userId, String newHash) throws SQLException {
+        String sql = "UPDATE users SET password_hash = ? WHERE id = ?";
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, newHash);
+            stmt.setLong(2, userId);
+            stmt.executeUpdate();
         }
     }
 }

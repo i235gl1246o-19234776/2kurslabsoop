@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="service.DTOTransformServiceTest" time="0.017" tests="12" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="service.DTOTransformServiceTest" time="0.009" tests="12" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="25"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -15,7 +15,7 @@
     <property name="user.country" value="RU"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-25\bin"/>
-    <property name="sun.java.command" value="C:\Users\zkovd\AppData\Local\Temp\surefire14605029968209275490\surefirebooter-20251116224739114_3.jar C:\Users\zkovd\AppData\Local\Temp\surefire14605029968209275490 2025-11-16T22-47-39_003-jvmRun1 surefire-20251116224739114_1tmp surefire_0-20251116224739114_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\zkovd\AppData\Local\Temp\surefire14262666744322184571\surefirebooter-20251117102123420_3.jar C:\Users\zkovd\AppData\Local\Temp\surefire14262666744322184571 2025-11-17T10-21-23_310-jvmRun1 surefire-20251117102123420_1tmp surefire_0-20251117102123420_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\zkovd\IdeaProjects\2kurslabsoop\target\test-classes;C:\Users\zkovd\IdeaProjects\2kurslabsoop\target\classes;C:\Users\zkovd\.m2\repository\jakarta\servlet\jakarta.servlet-api\6.0.0\jakarta.servlet-api-6.0.0.jar;C:\Users\zkovd\.m2\repository\jakarta\servlet\jsp\jakarta.servlet.jsp-api\3.1.0\jakarta.servlet.jsp-api-3.1.0.jar;C:\Users\zkovd\.m2\repository\org\postgresql\postgresql\42.7.8\postgresql-42.7.8.jar;C:\Users\zkovd\.m2\repository\org\checkerframework\checker-qual\3.49.5\checker-qual-3.49.5.jar;C:\Users\zkovd\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\zkovd\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\zkovd\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\zkovd\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\zkovd\.m2\repository\com\thoughtworks\xstream\xstream\1.4.21\xstream-1.4.21.jar;C:\Users\zkovd\.m2\repository\io\github\x-stream\mxparser\1.2.2\mxparser-1.2.2.jar;C:\Users\zkovd\.m2\repository\xmlpull\xmlpull\1.1.3.1\xmlpull-1.1.3.1.jar;C:\Users\zkovd\.m2\repository\org\mindrot\jbcrypt\0.4\jbcrypt-0.4.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.2\junit-jupiter-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.2\junit-jupiter-api-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\zkovd\.m2\repository\org\junit\platform\junit-platform-commons\1.10.2\junit-platform-commons-1.10.2.jar;C:\Users\zkovd\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.2\junit-jupiter-params-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.2\junit-jupiter-engine-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\junit\platform\junit-platform-engine\1.10.2\junit-platform-engine-1.10.2.jar;C:\Users\zkovd\.m2\repository\org\mockito\mockito-core\5.20.0\mockito-core-5.20.0.jar;C:\Users\zkovd\.m2\repository\net\bytebuddy\byte-buddy\1.17.7\byte-buddy-1.17.7.jar;C:\Users\zkovd\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.7\byte-buddy-agent-1.17.7.jar;C:\Users\zkovd\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;C:\Users\zkovd\.m2\repository\org\mockito\mockito-junit-jupiter\5.11.0\mockito-junit-jupiter-5.11.0.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\testcontainers\1.19.7\testcontainers-1.19.7.jar;C:\Users\zkovd\.m2\repository\junit\junit\4.13.2\junit-4.13.2.jar;C:\Users\zkovd\.m2\repository\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;C:\Users\zkovd\.m2\repository\org\slf4j\slf4j-api\1.7.36\slf4j-api-1.7.36.jar;C:\Users\zkovd\.m2\repository\org\apache\commons\commons-compress\1.24.0\commons-compress-1.24.0.jar;C:\Users\zkovd\.m2\repository\org\rnorth\duct-tape\duct-tape\1.0.8\duct-tape-1.0.8.jar;C:\Users\zkovd\.m2\repository\org\jetbrains\annotations\17.0.0\annotations-17.0.0.jar;C:\Users\zkovd\.m2\repository\com\github\docker-java\docker-java-api\3.3.6\docker-java-api-3.3.6.jar;C:\Users\zkovd\.m2\repository\com\github\docker-java\docker-java-transport-zerodep\3.3.6\docker-java-transport-zerodep-3.3.6.jar;C:\Users\zkovd\.m2\repository\com\github\docker-java\docker-java-transport\3.3.6\docker-java-transport-3.3.6.jar;C:\Users\zkovd\.m2\repository\net\java\dev\jna\jna\5.13.0\jna-5.13.0.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\postgresql\1.19.7\postgresql-1.19.7.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\jdbc\1.19.7\jdbc-1.19.7.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\database-commons\1.19.7\database-commons-1.19.7.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\junit-jupiter\1.19.7\junit-jupiter-1.19.7.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -31,7 +31,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\zkovd\AppData\Local\Temp\surefire14605029968209275490\surefirebooter-20251116224739114_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\zkovd\AppData\Local\Temp\surefire14262666744322184571\surefirebooter-20251117102123420_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="25.0.1+8-LTS-27"/>
@@ -64,119 +64,119 @@
     <property name="maven.repo.local" value="C:\Users\zkovd\.m2\repository"/>
     <property name="java.class.version" value="69.0"/>
   </properties>
-  <testcase name="testDTOToString" classname="service.DTOTransformServiceTest" time="0.002">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testDTOToString" classname="service.DTOTransformServiceTest" time="0.001">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
 ]]></system-err>
   </testcase>
-  <testcase name="testTabulatedFunctionRequestToEntity" classname="service.DTOTransformServiceTest" time="0.0">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testTabulatedFunctionRequestToEntity" classname="service.DTOTransformServiceTest" time="0.001">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование TabulatedFunctionRequestDTO в TabulatedFunction entity
 ]]></system-err>
   </testcase>
-  <testcase name="testFunctionRequestToEntity" classname="service.DTOTransformServiceTest" time="0.0">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testFunctionRequestToEntity" classname="service.DTOTransformServiceTest" time="0.001">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование FunctionRequestDTO в Function entity: test_function
 ]]></system-err>
   </testcase>
-  <testcase name="testBatchTabulatedFunctionTransformations" classname="service.DTOTransformServiceTest" time="0.003">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testBatchTabulatedFunctionTransformations" classname="service.DTOTransformServiceTest" time="0.001">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntities
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntities
 INFO: Пакетное преобразование 3 TabulatedFunctionRequestDTO в entities
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование TabulatedFunctionRequestDTO в TabulatedFunction entity
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование TabulatedFunctionRequestDTO в TabulatedFunction entity
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование TabulatedFunctionRequestDTO в TabulatedFunction entity
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntities
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntities
 INFO: Пакетное преобразование завершено, создано 3 entities
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTOs
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTOs
 INFO: Пакетное преобразование 3 TabulatedFunction entities в ResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование TabulatedFunction entity в TabulatedFunctionResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование TabulatedFunction entity в TabulatedFunctionResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование TabulatedFunction entity в TabulatedFunctionResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTOs
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTOs
 INFO: Пакетное преобразование завершено, создано 3 ResponseDTO
 ]]></system-err>
   </testcase>
-  <testcase name="testOperationRequestToEntity" classname="service.DTOTransformServiceTest" time="0.001">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testOperationRequestToEntity" classname="service.DTOTransformServiceTest" time="0.0">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование OperationRequestDTO в Operation entity
 ]]></system-err>
   </testcase>
   <testcase name="testTabulatedFunctionEntityToResponseDTO" classname="service.DTOTransformServiceTest" time="0.0">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование TabulatedFunction entity в TabulatedFunctionResponseDTO
 ]]></system-err>
   </testcase>
   <testcase name="testUserResponseDTOWithoutCreatedAt" classname="service.DTOTransformServiceTest" time="0.001">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
 ]]></system-err>
   </testcase>
-  <testcase name="testUserRequestToEntity" classname="service.DTOTransformServiceTest" time="0.001">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testUserRequestToEntity" classname="service.DTOTransformServiceTest" time="0.0">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toEntity
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toEntity
 INFO: Преобразование UserRequestDTO в User entity: testuser
 ]]></system-err>
   </testcase>
   <testcase name="testBatchUserTransformations" classname="service.DTOTransformServiceTest" time="0.001">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toUserResponseDTOs
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toUserResponseDTOs
 INFO: Пакетное преобразование 3 User entities в ResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование User entity в UserResponseDTO: user1
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование User entity в UserResponseDTO: user2
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование User entity в UserResponseDTO: user3
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toUserResponseDTOs
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toUserResponseDTOs
 INFO: Пакетное преобразование завершено, создано 3 UserResponseDTO
 ]]></system-err>
   </testcase>
   <testcase name="testOperationEntityToResponseDTO" classname="service.DTOTransformServiceTest" time="0.001">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование Operation entity в OperationResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.response.OperationResponseDTO <init>
+нояб. 17, 2025 10:21:49 AM model.dto.response.OperationResponseDTO <init>
 INFO: Создан OperationResponseDTO: id=1 (functionId: 1)
 ]]></system-err>
   </testcase>
-  <testcase name="testBatchFunctionTransformations" classname="service.DTOTransformServiceTest" time="0.002">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+  <testcase name="testBatchFunctionTransformations" classname="service.DTOTransformServiceTest" time="0.001">
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toFunctionResponseDTOs
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toFunctionResponseDTOs
 INFO: Пакетное преобразование 3 Function entities в ResponseDTO
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование Function entity в FunctionResponseDTO: func1
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование Function entity в FunctionResponseDTO: func2
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование Function entity в FunctionResponseDTO: func3
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toFunctionResponseDTOs
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toFunctionResponseDTOs
 INFO: Пакетное преобразование завершено, создано 3 FunctionResponseDTO
 ]]></system-err>
   </testcase>
   <testcase name="testUserEntityToResponseDTO" classname="service.DTOTransformServiceTest" time="0.0">
-    <system-err><![CDATA[нояб. 16, 2025 10:48:03 PM model.dto.request.OperationRequestDTO <init>
+    <system-err><![CDATA[нояб. 17, 2025 10:21:49 AM model.dto.request.OperationRequestDTO <init>
 INFO: Создан OperationRequestDTO для функции: 1 (тип: 1)
-нояб. 16, 2025 10:48:03 PM model.dto.DTOTransformService toResponseDTO
+нояб. 17, 2025 10:21:49 AM model.dto.DTOTransformService toResponseDTO
 INFO: Преобразование User entity в UserResponseDTO: testuser
 ]]></system-err>
   </testcase>

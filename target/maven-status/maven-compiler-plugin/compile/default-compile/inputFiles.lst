@@ -8,6 +8,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\response\Operat
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\MainServlet.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\MathFunction.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\UserServlet.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\repository\PasswordMigrationUtil.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\Removable.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\io\TabulatedFunctionFileWriter.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\repository\dao\OperationRepository.java
@@ -43,6 +44,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\ParallelIntegr
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\service\FunctionService.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\service\OperationService.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\LeftSteppingDifferentialOperator.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\AuthFilter.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\repository\SqlLoader.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\concurrent\MultiplyingTaskExecutor.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\AbstractTabulatedFunction.java
@@ -60,6 +62,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\response\Functi
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\response\TabulatedFunctionResponseDTO.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\entity\Function.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\MiddleSteppingDifferentialOperator.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\RoleAssignmentRequestDTO.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\concurrent\WriteTask.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\DTOTransformService.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\OperationServlet.java

@@ -33,7 +33,6 @@ io\TabulatedFunctionFileWriter.class
 functions\ArrayTabulatedFunction.class
 operations\RightSteppingDifferentialOperator.class
 Main.class
-model\servlet\UserServlet$AuthenticateRequest.class
 functions\ConstantFunction.class
 exception\ArrayIsNotSortedException.class
 operations\TabulatedFunctionOperationService$BiOperation.class
@@ -55,7 +54,6 @@ functions\LinkedListTabulatedFunction$1.class
 functions\ZeroFunction.class
 operations\ParallelIntegrator$IntegrationResult.class
 repository\dao\OperationRepository.class
-model\servlet\UserServlet$UserExistsResponse.class
 io\LinkedListTabulatedFunctionSerialization.class
 model\dto\response\FunctionResponseDTO.class
 functions\UnmodifiableTabulatedFunction.class
@@ -80,10 +78,13 @@ model\dto\response\SearchFunctionResponseDTO.class
 concurrent\MultiplyingTaskExecutor.class
 io\TabulatedFunctionFileReader.class
 functions\NewtonMethod.class
+model\servlet\AuthFilter.class
 functions\IdentityFunction.class
 functions\LinkedListTabulatedFunction.class
+repository\PasswordMigrationUtil.class
 functions\factory\LinkedListTabulatedFunctionFactory.class
 model\service\FunctionService.class
+model\dto\request\RoleAssignmentRequestDTO.class
 model\service\AuthenticationService.class
 model\dto\request\SearchFunctionRequestDTO.class
 functions\MathFunction.class

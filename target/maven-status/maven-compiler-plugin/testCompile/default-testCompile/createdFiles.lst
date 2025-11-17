@@ -29,7 +29,6 @@ operations\SteppingDifferentialOperatorsTest$1.class
 repository\FunctionRepositoryTest.class
 functions\MathFunctionTest$10.class
 functions\MathFunctionTest$5.class
-service\AuthenticationServiceTest.class
 functions\NewtonMethodTest$20.class
 repository\test10k\MethodPerformanceTester.class
 functions\UnmodifiableTabulatedFunctionTest.class

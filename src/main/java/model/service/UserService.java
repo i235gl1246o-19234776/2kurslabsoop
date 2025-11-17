@@ -4,6 +4,7 @@ import model.entity.User;
 import model.dto.request.CreateUserRequest;
 import model.dto.response.UserResponseDTO;
 import model.dto.DTOTransformService;
+import model.entity.UserRole;
 import repository.dao.UserRepository;
 import java.sql.SQLException;
 import java.util.List;
