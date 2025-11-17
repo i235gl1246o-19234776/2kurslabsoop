@@ -40,194 +40,213 @@ public class TabulatedFunctionServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String pathInfo = req.getPathInfo();
 
-        if (pathInfo == null) {
-            logger.warning("Путь для GET запроса отсутствует");
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Путь для GET запроса отсутствует\"}");
+        if (pathInfo == null || pathInfo.equals("/")) {
+            // GET /api/tabulated-points?functionId=1&fromX=0&toX=10
+            try {
+                handleGetByRange(req, resp);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
             return;
         }
 
         String[] pathParts = pathInfo.split("/");
 
-
-
-        if (pathParts.length == 2) { // ['', 'functionId'] -> GET /api/tabulated-points/function/{id}
-            try {
-                Long functionId = Long.parseLong(pathParts[1]);
-                logger.info("GET /api/tabulated-points/function/" + functionId + " вызван");
-
-                List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsByFunctionId(functionId);
-
-                resp.setStatus(HttpServletResponse.SC_OK);
-                resp.setContentType("application/json");
-                PrintWriter out = resp.getWriter();
-                out.print(objectMapper.writeValueAsString(points));
-                out.flush();
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат functionId: " + pathParts[1]);
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Неверный формат functionId\"}");
-            } catch (SQLException e) {
-                logger.severe("Ошибка при получении точек функции: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Ошибка при получении точек функции\"}");
-            }
-        } else if (pathParts.length == 4 && pathParts[1].equals("function") && pathParts[3].equals("x")) { // ['', 'function', 'id', 'x', 'xValue'] -> GET /api/tabulated-points/function/{id}/x/{xValue}
-            try {
-                Long functionId = Long.parseLong(pathParts[2]);
-                Double xValue = Double.parseDouble(pathParts[4]); // pathParts[4] - это xValue после 'x'
-                logger.info("GET /api/tabulated-points/function/" + functionId + "/x/" + xValue + " вызван");
-
-                Optional<TabulatedFunctionResponseDTO> point = tabulatedFunctionService.getTabulatedFunctionByXValue(functionId, xValue);
-
-                if (point.isPresent()) {
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                    resp.setContentType("application/json");
-                    PrintWriter out = resp.getWriter();
-                    out.print(objectMapper.writeValueAsString(point.get()));
-                    out.flush();
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    resp.getWriter().write("{\"error\":\"Точка с X=" + xValue + " не найдена для функции " + functionId + "\"}");
-                }
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат functionId или xValue: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Неверный формат functionId или xValue\"}");
-            } catch (SQLException e) {
-                logger.severe("Ошибка при поиске точки по X: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Ошибка при поиске точки по X\"}");
-            }
-        } else if (pathParts.length == 2 && pathParts[1].equals("function")) { // ['', 'function'] -> GET /api/tabulated-points?functionId=1&fromX=0&toX=10
-            String functionIdParam = req.getParameter("functionId");
-            String fromXParam = req.getParameter("fromX");
-            String toXParam = req.getParameter("toX");
-
-            if (functionIdParam == null || functionIdParam.isEmpty()) {
-                logger.warning("Параметр functionId обязателен для GET запроса с диапазоном");
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Параметр functionId обязателен\"}");
-                return;
-            }
-
-            try {
-                Long functionId = Long.parseLong(functionIdParam);
-                Double fromX = (fromXParam != null && !fromXParam.isEmpty()) ? Double.parseDouble(fromXParam) : null;
-                Double toX = (toXParam != null && !toXParam.isEmpty()) ? Double.parseDouble(toXParam) : null;
-
-                if (fromX == null || toX == null) {
-                    logger.warning("Параметры fromX и toX обязательны для GET запроса с диапазоном");
-                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    resp.getWriter().write("{\"error\":\"Параметры fromX и toX обязательны\"}");
-                    return;
-                }
-
-                logger.info("GET /api/tabulated-points с диапазоном X вызван для functionId: " + functionId + ", диапазон: " + fromX + " - " + toX);
-
-                List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsBetweenXValues(functionId, fromX, toX);
-
-                resp.setStatus(HttpServletResponse.SC_OK);
-                resp.setContentType("application/json");
-                PrintWriter out = resp.getWriter();
-                out.print(objectMapper.writeValueAsString(points));
-                out.flush();
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат functionId, fromX или toX: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Неверный формат числовых параметров\"}");
-            } catch (SQLException e) {
-                logger.severe("Ошибка при поиске точек в диапазоне X: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Ошибка при поиске точек в диапазоне X\"}");
-            }
-        } else {
-            // Попробуем обработать как GET /api/tabulated-points/{id}
-            if (pathParts.length == 2) { // ['', 'id']
-                try {
-                    Long pointId = Long.parseLong(pathParts[1]);
-                    logger.info("GET /api/tabulated-points/" + pointId + " вызван");
-
-                    Optional<TabulatedFunctionResponseDTO> point = tabulatedFunctionService.getTabulatedFunctionById(pointId);
-
-                    if (point.isPresent()) {
-                        resp.setStatus(HttpServletResponse.SC_OK);
-                        resp.setContentType("application/json");
-                        PrintWriter out = resp.getWriter();
-                        out.print(objectMapper.writeValueAsString(point.get()));
-                        out.flush();
-                    } else {
-                        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                        resp.getWriter().write("{\"error\":\"Точка с ID=" + pointId + " не найдена\"}");
-                    }
-                } catch (NumberFormatException e) {
-                    logger.warning("Неверный формат ID точки: " + pathParts[1]);
-                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    resp.getWriter().write("{\"error\":\"Неверный формат ID точки\"}");
-                } catch (SQLException e) {
-                    logger.severe("Ошибка при получении точки по ID: " + e.getMessage());
-                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    resp.getWriter().write("{\"error\":\"Ошибка при получении точки по ID\"}");
-                }
-            } else if (pathParts.length == 3 && pathParts[1].equals("function")) {
-                try {
-                    Long functionId = Long.parseLong(pathParts[2]);
-                    logger.info("GET /api/tabulated-points/function/" + functionId + " вызван");
-
-                    List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsByFunctionId(functionId);
-
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                    resp.setContentType("application/json");
-                    PrintWriter out = resp.getWriter();
-                    out.print(objectMapper.writeValueAsString(points));
-                    out.flush();
-                } catch (NumberFormatException e) {
-                    logger.warning("Неверный формат functionId: " + pathParts[2]);
-                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    resp.getWriter().write("{\"error\":\"Неверный формат functionId\"}");
-                } catch (SQLException e) {
-                    logger.severe("Ошибка при получении точек функции: " + e.getMessage());
-                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    resp.getWriter().write("{\"error\":\"Ошибка при получении точек функции\"}");
-                }
+        try {
+            if (pathParts.length == 2) {
+                // GET /api/tabulated-points/{id} - поиск точки по ID
+                handleGetPointById(pathParts[1], resp);
+            } else if (pathParts.length == 3 && "function".equals(pathParts[1])) {
+                // GET /api/tabulated-points/function/{functionId} - поиск всех точек функции
+                handleGetPointsByFunctionId(pathParts[2], resp);
+            } else if (pathParts.length == 5 && "function".equals(pathParts[1]) && "x".equals(pathParts[3])) {
+                // GET /api/tabulated-points/function/{functionId}/x/{xValue} - поиск точки по X
+                handleGetPointByXValue(pathParts[2], pathParts[4], resp);
+            } else if (pathParts.length == 4 && "function".equals(pathParts[1]) && "range".equals(pathParts[3])) {
+                // GET /api/tabulated-points/function/{functionId}/range - поиск точек в диапазоне X
+                handleGetPointsInRange(pathParts[2], req, resp);
+            } else if (pathParts.length == 3 && "search".equals(pathParts[1])) {
+                // GET /api/tabulated-points/search/{functionId} - поиск функции по ID
+                handleGetFunctionById(pathParts[2], resp);
+            } else if (pathParts.length == 4 && "search".equals(pathParts[1]) && "x".equals(pathParts[3])) {
+                // GET /api/tabulated-points/search/{functionId}/x - поиск функции по значению X
+                handleGetFunctionByXValue(pathParts[2], req, resp);
+            } else if (pathParts.length == 4 && "search".equals(pathParts[1]) && "range".equals(pathParts[3])) {
+                // GET /api/tabulated-points/search/{functionId}/range - поиск функций в диапазоне X
+                handleGetFunctionsInRange(pathParts[2], req, resp);
             } else {
                 logger.warning("Неверный путь для GET: " + pathInfo);
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Неверный путь для GET\"}");
+                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный путь для GET");
             }
+        } catch (NumberFormatException e) {
+            logger.warning("Неверный формат числового параметра: " + e.getMessage());
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат числового параметра");
+        } catch (SQLException e) {
+            logger.severe("Ошибка базы данных: " + e.getMessage());
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка базы данных");
         }
     }
 
+    private void handleGetByRange(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, SQLException {
+        String functionIdParam = req.getParameter("functionId");
+        String fromXParam = req.getParameter("fromX");
+        String toXParam = req.getParameter("toX");
+
+        if (functionIdParam == null || functionIdParam.isEmpty()) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметр functionId обязателен");
+            return;
+        }
+
+        Long functionId = Long.parseLong(functionIdParam);
+        Double fromX = parseDoubleParameter(fromXParam);
+        Double toX = parseDoubleParameter(toXParam);
+
+        if (fromX == null || toX == null) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметры fromX и toX обязательны");
+            return;
+        }
+
+        logger.info("GET по диапазону X для functionId: " + functionId + ", диапазон: " + fromX + " - " + toX);
+        List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsBetweenXValues(functionId, fromX, toX);
+        sendJsonResponse(resp, HttpServletResponse.SC_OK, points);
+    }
+
+    private void handleGetPointById(String idStr, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long pointId = Long.parseLong(idStr);
+        logger.info("GET точки по ID: " + pointId);
+
+        Optional<TabulatedFunctionResponseDTO> point = tabulatedFunctionService.getTabulatedFunctionById(pointId);
+
+        if (point.isPresent()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK, point.get());
+        } else {
+            sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Точка с ID=" + pointId + " не найдена");
+        }
+    }
+
+    private void handleGetPointsByFunctionId(String functionIdStr, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        logger.info("GET точек по functionId: " + functionId);
+
+        List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsByFunctionId(functionId);
+        sendJsonResponse(resp, HttpServletResponse.SC_OK, points);
+    }
+
+    private void handleGetPointByXValue(String functionIdStr, String xValueStr, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        Double xValue = Double.parseDouble(xValueStr);
+        logger.info("GET точки по functionId: " + functionId + " и X: " + xValue);
+
+        Optional<TabulatedFunctionResponseDTO> point = tabulatedFunctionService.getTabulatedFunctionByXValue(functionId, xValue);
+
+        if (point.isPresent()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK, point.get());
+        } else {
+            sendError(resp, HttpServletResponse.SC_NOT_FOUND,
+                    "Точка с X=" + xValue + " не найдена для функции " + functionId);
+        }
+    }
+
+    private void handleGetPointsInRange(String functionIdStr, HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        String fromXParam = req.getParameter("fromX");
+        String toXParam = req.getParameter("toX");
+
+        Double fromX = parseDoubleParameter(fromXParam);
+        Double toX = parseDoubleParameter(toXParam);
+
+        if (fromX == null || toX == null) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметры fromX и toX обязательны");
+            return;
+        }
+
+        logger.info("GET точек в диапазоне для functionId: " + functionId + ", диапазон: " + fromX + " - " + toX);
+        List<TabulatedFunctionResponseDTO> points = tabulatedFunctionService.getTabulatedFunctionsBetweenXValues(functionId, fromX, toX);
+        sendJsonResponse(resp, HttpServletResponse.SC_OK, points);
+    }
+
+    // НОВЫЕ МЕТОДЫ ДЛЯ ПОИСКА ФУНКЦИЙ
+
+    private void handleGetFunctionById(String functionIdStr, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        logger.info("GET функции по ID: " + functionId);
+
+        // Предполагаем, что в сервисе есть метод getFunctionById
+        Optional<TabulatedFunctionResponseDTO> function = tabulatedFunctionService.getTabulatedFunctionById(functionId);
+
+        if (function.isPresent()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK, function.get());
+        } else {
+            sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Функция с ID=" + functionId + " не найдена");
+        }
+    }
+
+    private void handleGetFunctionByXValue(String functionIdStr, HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        String xValueParam = req.getParameter("x");
+
+        if (xValueParam == null || xValueParam.isEmpty()) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметр x обязателен");
+            return;
+        }
+
+        Double xValue = Double.parseDouble(xValueParam);
+        logger.info("GET функции по ID: " + functionId + " и значению X: " + xValue);
+
+        // Предполагаем, что в сервисе есть метод getFunctionByXValue
+        Optional<TabulatedFunctionResponseDTO> function = tabulatedFunctionService.getTabulatedFunctionByXValue(functionId, xValue);
+
+        if (function.isPresent()) {
+            sendJsonResponse(resp, HttpServletResponse.SC_OK, function.get());
+        } else {
+            sendError(resp, HttpServletResponse.SC_NOT_FOUND,
+                    "Функция с ID=" + functionId + " и значением X=" + xValue + " не найдена");
+        }
+    }
+
+    private void handleGetFunctionsInRange(String functionIdStr, HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        String fromXParam = req.getParameter("fromX");
+        String toXParam = req.getParameter("toX");
+
+        Double fromX = parseDoubleParameter(fromXParam);
+        Double toX = parseDoubleParameter(toXParam);
+
+        if (fromX == null || toX == null) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Параметры fromX и toX обязательны");
+            return;
+        }
+
+        logger.info("GET функций в диапазоне для functionId: " + functionId + ", диапазон: " + fromX + " - " + toX);
+
+        // Предполагаем, что в сервисе есть метод getFunctionsInRange
+        List<TabulatedFunctionResponseDTO> functions = tabulatedFunctionService.getTabulatedFunctionsBetweenXValues(functionId, fromX, toX);
+        sendJsonResponse(resp, HttpServletResponse.SC_OK, functions);
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         logger.info("POST /api/tabulated-points вызван");
 
-        StringBuilder jsonBuffer = new StringBuilder();
-        try (BufferedReader reader = req.getReader()) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuffer.append(line);
-            }
-        }
-
         try {
-            TabulatedFunctionRequestDTO tabulatedFunctionRequest = objectMapper.readValue(jsonBuffer.toString(), TabulatedFunctionRequestDTO.class);
-            TabulatedFunctionResponseDTO response = tabulatedFunctionService.createTabulatedFunction(tabulatedFunctionRequest);
+            TabulatedFunctionRequestDTO request = parseJsonRequest(req, TabulatedFunctionRequestDTO.class);
+            TabulatedFunctionResponseDTO response = tabulatedFunctionService.createTabulatedFunction(request);
 
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.setContentType("application/json");
-            PrintWriter out = resp.getWriter();
-            out.print(objectMapper.writeValueAsString(response));
-            out.flush();
+            sendJsonResponse(resp, HttpServletResponse.SC_CREATED, response);
         } catch (IOException e) {
             logger.warning("Неверный формат JSON в теле запроса: " + e.getMessage());
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Неверный формат JSON\"}");
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат JSON");
         } catch (SQLException e) {
             logger.severe("Ошибка при создании точки: " + e.getMessage());
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"error\":\"Ошибка при создании точки\"}");
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка при создании точки");
         }
     }
 
@@ -235,57 +254,41 @@ public class TabulatedFunctionServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String pathInfo = req.getPathInfo();
 
-        if (pathInfo == null) {
-            logger.warning("Путь для PUT запроса отсутствует");
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Путь для PUT запроса отсутствует\"}");
+        if (pathInfo == null || pathInfo.equals("/")) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Путь для PUT запроса отсутствует");
             return;
         }
 
         String[] pathParts = pathInfo.split("/");
-        if (pathParts.length != 2) { // ['', 'id']
-            logger.warning("Неверный путь для PUT: " + pathInfo);
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Неверный путь для PUT\"}");
+        if (pathParts.length != 2) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный путь для PUT");
             return;
         }
 
         try {
             Long id = Long.parseLong(pathParts[1]);
+            TabulatedFunction tabulatedFunction = parseJsonRequest(req, TabulatedFunction.class);
 
-            StringBuilder jsonBuffer = new StringBuilder();
-            try (BufferedReader reader = req.getReader()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    jsonBuffer.append(line);
-                }
+            // Убедимся, что ID в сущности совпадает с URL
+            if (!id.equals(tabulatedFunction.getId())) {
+                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID в пути и теле запроса не совпадают");
+                return;
             }
 
-            TabulatedFunction tabulatedFunction = objectMapper.readValue(jsonBuffer.toString(), TabulatedFunction.class);
-            // Убедимся, что ID в сущности совпадает с URL
-
-            logger.info("PUT /api/tabulated-points/" + id + " вызван");
-
+            logger.info("PUT точки с ID: " + id);
             boolean updated = tabulatedFunctionService.updateTabulatedFunction(tabulatedFunction);
+
             if (updated) {
-                resp.setStatus(HttpServletResponse.SC_OK);
-                resp.getWriter().write("{\"message\":\"Точка обновлена\"}");
+                sendMessage(resp, HttpServletResponse.SC_OK, "Точка обновлена");
             } else {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                resp.getWriter().write("{\"error\":\"Точка не найдена для обновления\"}");
+                sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Точка не найдена для обновления");
             }
         } catch (NumberFormatException e) {
             logger.warning("Неверный формат ID точки: " + pathParts[1]);
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Неверный формат ID точки\"}");
-        } catch (IOException e) {
-            logger.warning("Неверный формат JSON в теле PUT запроса: " + e.getMessage());
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Неверный формат JSON\"}");
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат ID точки");
         } catch (SQLException e) {
             logger.severe("Ошибка при обновлении точки: " + e.getMessage());
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"error\":\"Ошибка при обновлении точки\"}");
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка при обновлении точки");
         }
     }
 
@@ -293,66 +296,104 @@ public class TabulatedFunctionServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String pathInfo = req.getPathInfo();
 
-        if (pathInfo == null) {
-            logger.warning("Путь для DELETE запроса отсутствует");
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Путь для DELETE запроса отсутствует\"}");
+        if (pathInfo == null || pathInfo.equals("/")) {
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Путь для DELETE запроса отсутствует");
             return;
         }
 
         String[] pathParts = pathInfo.split("/");
 
-        if (pathParts.length == 2) { // ['', 'id'] -> DELETE /api/tabulated-points/{id}
-            try {
-                Long id = Long.parseLong(pathParts[1]);
-                logger.info("DELETE /api/tabulated-points/" + id + " вызван");
-
-                boolean deleted = tabulatedFunctionService.deleteTabulatedFunction(id);
-                if (deleted) {
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                    resp.getWriter().write("{\"message\":\"Точка удалена\"}");
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    resp.getWriter().write("{\"error\":\"Точка не найдена для удаления\"}");
-                }
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат ID точки: " + pathParts[1]);
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Неверный формат ID точки\"}");
-            } catch (SQLException e) {
-                logger.severe("Ошибка при удалении точки: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Ошибка при удалении точки\"}");
+        try {
+            if (pathParts.length == 2) {
+                // DELETE /api/tabulated-points/{id}
+                handleDeletePointById(pathParts[1], resp);
+            } else if (pathParts.length == 3 && "function".equals(pathParts[1])) {
+                // DELETE /api/tabulated-points/function/{functionId}
+                handleDeletePointsByFunctionId(pathParts[2], resp);
+            } else {
+                sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный путь для DELETE");
             }
-        } else if (pathParts.length == 3 && pathParts[1].equals("function")) { // ['', 'function', 'functionId'] -> DELETE /api/tabulated-points/function/{id}
-            try {
-                Long functionId = Long.parseLong(pathParts[2]);
-                logger.info("DELETE /api/tabulated-points/function/" + functionId + " вызван");
-
-                boolean deleted = tabulatedFunctionService.deleteAllTabulatedFunctions(functionId);
-                if (deleted) {
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                    resp.getWriter().write("{\"message\":\"Все точки функции удалены\"}");
-                } else {
-                    // deleteAllTabulatedFunctions может вернуть true даже если записей не было
-                    // В данном случае, если логика возвращает false, можно интерпретировать как ошибку
-                    // или просто как "ничего не удалено". Здесь мы интерпретируем как успех.
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                    resp.getWriter().write("{\"message\":\"Запрос обработан, возможно, точек не было\"}");
-                }
-            } catch (NumberFormatException e) {
-                logger.warning("Неверный формат functionId: " + pathParts[2]);
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Неверный формат functionId\"}");
-            } catch (SQLException e) {
-                logger.severe("Ошибка при удалении всех точек функции: " + e.getMessage());
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Ошибка при удалении всех точек функции\"}");
-            }
-        } else {
-            logger.warning("Неверный путь для DELETE: " + pathInfo);
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Неверный путь для DELETE\"}");
+        } catch (NumberFormatException e) {
+            logger.warning("Неверный формат числового параметра: " + e.getMessage());
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Неверный формат числового параметра");
+        } catch (SQLException e) {
+            logger.severe("Ошибка при удалении: " + e.getMessage());
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Ошибка при удалении");
         }
+    }
+
+    private void handleDeletePointById(String idStr, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long id = Long.parseLong(idStr);
+        logger.info("DELETE точки с ID: " + id);
+
+        boolean deleted = tabulatedFunctionService.deleteTabulatedFunction(id);
+
+        if (deleted) {
+            sendMessage(resp, HttpServletResponse.SC_OK, "Точка удалена");
+        } else {
+            sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Точка не найдена для удаления");
+        }
+    }
+
+    private void handleDeletePointsByFunctionId(String functionIdStr, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Long functionId = Long.parseLong(functionIdStr);
+        logger.info("DELETE всех точек функции с ID: " + functionId);
+
+        boolean deleted = tabulatedFunctionService.deleteAllTabulatedFunctions(functionId);
+
+        if (deleted) {
+            sendMessage(resp, HttpServletResponse.SC_OK, "Все точки функции удалены");
+        } else {
+            sendMessage(resp, HttpServletResponse.SC_OK, "Запрос обработан, возможно, точек не было");
+        }
+    }
+
+    // Вспомогательные методы
+    private <T> T parseJsonRequest(HttpServletRequest req, Class<T> valueType) throws IOException {
+        StringBuilder jsonBuffer = new StringBuilder();
+        try (BufferedReader reader = req.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonBuffer.append(line);
+            }
+        }
+        return objectMapper.readValue(jsonBuffer.toString(), valueType);
+    }
+
+    private void sendJsonResponse(HttpServletResponse resp, int status, Object data) throws IOException {
+        resp.setStatus(status);
+        resp.setContentType("application/json; charset=UTF-8");
+        try (PrintWriter out = resp.getWriter()) {
+            out.print(objectMapper.writeValueAsString(data));
+        }
+    }
+
+    private void sendError(HttpServletResponse resp, int status, String errorMessage) throws IOException {
+        resp.setStatus(status);
+        resp.setContentType("application/json; charset=UTF-8");
+        try (PrintWriter out = resp.getWriter()) {
+            out.print("{\"error\":\"" + errorMessage + "\"}");
+        }
+    }
+
+    private void sendMessage(HttpServletResponse resp, int status, String message) throws IOException {
+        resp.setStatus(status);
+        resp.setContentType("application/json; charset=UTF-8");
+        try (PrintWriter out = resp.getWriter()) {
+            out.print("{\"message\":\"" + message + "\"}");
+        }
+    }
+
+    private Double parseDoubleParameter(String param) {
+        if (param != null && !param.isEmpty()) {
+            try {
+                return Double.parseDouble(param);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 }
