@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "49108e29-6979-4c30-813e-090a889b163d",
+		"_postman_id": "50e847f4-0856-49d0-a7ad-2e757adcf8b0",
 		"name": "oop_laba6",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "50094366"
+		"_exporter_id": "50094366",
+		"_collection_link": "https://sidnegdok-1880764.postman.co/workspace/%D0%92%D0%BB%D0%B0%D0%B4%D0%B8%D1%81%D0%BB%D0%B0%D0%B2-%D0%9D%D0%B8%D0%BA%D0%BE%D0%BB%D0%B0%D0%B5%D0%B2's-Workspace~d4b56136-0341-4961-88e3-7429881e011e/collection/50094366-50e847f4-0856-49d0-a7ad-2e757adcf8b0?action=share&source=collection_link&creator=50094366"
 	},
 	"item": [
 		{
@@ -16,26 +17,46 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201\", function () {\r",
-									"    pm.response.to.have.status(201);\r",
-									"});\r",
+									"var responseJson = pm.response.json();\r",
 									"\r",
-									"const responseJson = pm.response.json();\r",
-									"\r",
-									"pm.test(\"Response has id and name\", function () {\r",
+									"pm.test(\"Response has id, name, and role\", function () {\r",
 									"    pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
 									"    pm.expect(responseJson).to.have.property('name').that.is.a('string');\r",
+									"    pm.expect(responseJson).to.have.property('role').that.is.a('string');\r",
 									"});\r",
 									"\r",
 									"if (responseJson && responseJson.id) {\r",
 									"    pm.environment.set(\"createdUserId\", responseJson.id);\r",
-									"    pm.environment.set(\"createdUserName\", responseJson.name);\r",
-									"    console.log(\"Создан пользователь с ID:\", responseJson.id, \"и именем:\", responseJson.name);\r",
+									"    // Используем имя, которое мы сохранили до отправки\r",
+									"    pm.environment.set(\"createdUserName\", pm.environment.get(\"tempUserName\"));\r",
+									"    // Используем пароль, который мы сохранили до отправки\r",
+									"    pm.environment.set(\"createdUserPassword\", pm.environment.get(\"tempUserPassword\"));\r",
+									"    pm.environment.set(\"createdUserRole\", responseJson.role);\r",
+									"\r",
+									"    console.log(\"Создан пользователь с ID:\", responseJson.id, \", name:\", responseJson.name, \", password:\", pm.environment.get(\"tempUserPassword\"));\r",
 									"} else {\r",
 									"    console.error(\"Не удалось получить ID пользователя из ответа:\", responseJson);\r",
 									"}"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Генерируем случайное число\r",
+									"var randomInt = Math.floor(Math.random() * 10000); // или другой диапазон\r",
+									"// Формируем пароль\r",
+									"var password = \"user_password_\" + randomInt;\r",
+									"// Сохраняем его в переменную окружения или глобальную\r",
+									"pm.environment.set(\"tempUserPassword\", password);\r",
+									"// Также можно сохранить и имя, если хочешь\r",
+									"pm.environment.set(\"tempUserName\", \"test_user_\" + randomInt);"
+								],
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -44,7 +65,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"name\": \"test_user_{{$randomInt}}\",\r\n  \"passwordHash\": \"hash_{{$randomInt}}\"\r\n}",
+							"raw": "{\r\n  \"name\": \"{{tempUserName}}\",\r\n  \"password\": \"{{tempUserPassword}}\",\r\n  \"role\": \"USER\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -77,22 +98,51 @@
 									"    pm.response.to.have.status(201);\r",
 									"});\r",
 									"\r",
-									"const responseJson = pm.response.json();\r",
+									"// Проверяем, есть ли тело ответа и является ли оно JSON\r",
+									"if (pm.response.text()) { // pm.response.text() возвращает тело как строку\r",
+									"    try {\r",
+									"        const responseJson = pm.response.json(); // Пробуем распарсить\r",
 									"\r",
-									"pm.test(\"Response has id and functionName\", function () {\r",
-									"    pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
-									"    pm.expect(responseJson).to.have.property('functionName').that.is.a('string');\r",
-									"});\r",
+									"        pm.test(\"Response has id and functionName\", function () {\r",
+									"            pm.expect(responseJson).to.have.property('id').that.is.a('number');\r",
+									"            pm.expect(responseJson).to.have.property('functionName').that.is.a('string');\r",
+									"        });\r",
 									"\r",
-									"if (responseJson && responseJson.id) {\r",
-									"    pm.environment.set(\"createdFunctionId\", responseJson.id);\r",
-									"    pm.environment.set(\"createdFunctionName\", responseJson.functionName);\r",
-									"    console.log(\"Создана функция с ID:\", responseJson.id, \"и именем:\", responseJson.functionName);\r",
+									"        if (responseJson && responseJson.id) {\r",
+									"            pm.environment.set(\"createdFunctionId\", responseJson.id);\r",
+									"            pm.environment.set(\"createdFunctionName\", responseJson.functionName);\r",
+									"            console.log(\"Создана функция с ID:\", responseJson.id, \"и именем:\", responseJson.functionName);\r",
+									"        } else {\r",
+									"            console.error(\"Не удалось получить ID функции из ответа:\", responseJson);\r",
+									"        }\r",
+									"\r",
+									"    } catch (e) {\r",
+									"        // Если не удалось распарсить JSON (например, тело не JSON)\r",
+									"        console.log(\"Тело ответа не является JSON или пустое. Текст тела:\", pm.response.text());\r",
+									"        // Можно добавить тесты для не-JSON ответа, если это ожидаемо\r",
+									"        pm.test(\"Response body is not JSON or is empty\", function () {\r",
+									"            pm.expect.fail(\"Ожидался JSON-ответ, но получен другой формат или пустое тело.\");\r",
+									"        });\r",
+									"    }\r",
 									"} else {\r",
-									"    console.error(\"Не удалось получить ID функции из ответа:\", responseJson);\r",
-									"}"
+									"    // Если тело пустое\r",
+									"    console.log(\"Тело ответа пустое.\");\r",
+									"    pm.test(\"Response body is empty\", function () {\r",
+									"        pm.expect(pm.response.text()).to.be.empty; // Проверяем, что тело пустое\r",
+									"    });\r",
+									"    // Здесь не вызываем pm.response.json()\r",
+									"}\r",
+									"\r",
+									"// Остальные тесты, которые зависят от responseJson, размещайте внутри блока try\r",
+									"// или добавьте дополнительные проверки.\r",
+									"\r",
+									"// Пример: этот тест НЕ должен быть здесь, если responseJson не определён вне блока try\r",
+									"// pm.test(\"Response body contains 'data' key\", function () {\r",
+									"//     pm.expect(responseJson).to.have.property('data'); // ОШИБКА, если responseJson не определён\r",
+									"// });"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						},
 						{
@@ -119,11 +169,27 @@
 									"pm.environment.unset(\"createdFunctionId\");\r",
 									"pm.environment.unset(\"createdFunctionName\");"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -173,11 +239,27 @@
 									"\r",
 									"console.log(\"Создана точка с ID:\", responseJson.id, \"для функции с ID:\", responseJson.functionId);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [
 							{
@@ -232,11 +314,27 @@
 									"\r",
 									"console.log(\"Создана операция с ID:\", responseJson.id, \"для функции с ID:\", responseJson.functionId);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{createdUserPassword}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{createdUserName}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [
 							{

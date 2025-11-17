@@ -1,7 +1,7 @@
-package core.config;
+package core.config; // Убедись, что пакет правильный
 
-import core.security.CustomUserDetailsService;
-import lombok.RequiredArgsConstructor;
+import core.security.CustomUserDetailsService; // Убедись, что импорт правильный
+import lombok.RequiredArgsConstructor; // Убедись, что используешь @RequiredArgsConstructor
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -45,10 +45,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic
-                                .realmName("My App Realm")
+                        .realmName("My App Realm")
                 );
 
-        http.authenticationProvider(authenticationProvider());
+        http.authenticationProvider(authenticationProvider()); // Применяет провайдер
 
         return http.build();
     }

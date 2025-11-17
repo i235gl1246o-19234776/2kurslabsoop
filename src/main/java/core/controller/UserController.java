@@ -132,7 +132,8 @@ public class UserController {
 
         UserEntity userEntity = new UserEntity();
         userEntity.setName(userDto.getName());
-        String rawPassword = userDto.getName();
+
+        String rawPassword = userDto.getPassword();
         String hashedPassword = passwordEncoder.encode(rawPassword);
         userEntity.setPasswordHash(hashedPassword);
 
@@ -207,7 +208,7 @@ public class UserController {
                         .collect(Collectors.toList()) : new ArrayList<>();
 
 
-        return new UserDto(userEntity.getId(), userEntity.getName(), userEntity.getRole(), null, functionIds);
+        return new UserDto(userEntity.getId(), userEntity.getName(), userEntity.getRole(), null , functionIds);
     }
 
     static class AuthRequest{
