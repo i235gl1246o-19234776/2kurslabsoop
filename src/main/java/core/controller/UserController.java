@@ -239,7 +239,7 @@ public class UserController {
         if (userRepository.existsById(id)) {
             userRepository.deleteById(id);
             log.info("Пользователь с ID {} удалён", id);
-            return ResponseEntity.noContent().build(); // 204 No Content
+            return ResponseEntity.noContent().build();
         } else {
             log.warn("Попытка удалить несуществующего пользователя с ID: {}", id);
             return ResponseEntity.notFound().build();

@@ -40,14 +40,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.POST, "/api/users/authenticate").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/exist/**").permitAll()
-                        // .requestMatchers(HttpMethod.POST, "/api/users").permitAll() <-- УБРАНО
                         .requestMatchers(HttpMethod.PUT, "/api/users/{id}/role").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic
                         .realmName("My App Realm")
                 );
-        http.authenticationProvider(authenticationProvider()); // Применяет провайдер
+        http.authenticationProvider(authenticationProvider());
         return http.build();
     }
 }

@@ -119,7 +119,7 @@ public class OperationController {
         }
 
         OperationEntity opEntity = new OperationEntity();
-        opEntity.setFunction(functionOpt.get()); // Устанавливаем функцию
+        opEntity.setFunction(functionOpt.get());
         opEntity.setOperationsTypeId(operationDto.getOperationsTypeId());
 
         OperationEntity savedEntity = operationRepository.save(opEntity);
@@ -207,7 +207,7 @@ public class OperationController {
 
         if (!hasAccessToFunction(functionId)) {
             log.warn("Пользователь '{}' пытается удалить операции функции {}, к которой не имеет доступа", auth.getName(), functionId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 Forbidden
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         List<OperationEntity> operations = operationRepository.findAll().stream()

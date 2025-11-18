@@ -86,7 +86,7 @@ public class TabulatedFunctionController {
 
         if (!hasAccessToFunction(functionId)) {
             log.warn("Пользователь '{}' пытается получить точки функции {}, к которой не имеет доступа", auth.getName(), functionId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 Forbidden
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(functionId);
@@ -148,7 +148,6 @@ public class TabulatedFunctionController {
             return ResponseEntity.notFound().build();
         }
 
-        // Проверяем доступ к функции
         if (!hasAccessToFunction(functionId)) {
             log.warn("Пользователь '{}' пытается получить точки в диапазоне функции {}, к которой не имеет доступа", auth.getName(), functionId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -184,7 +183,6 @@ public class TabulatedFunctionController {
             return ResponseEntity.notFound().build();
         }
 
-        // Проверяем доступ к функции
         if (!hasAccessToFunction(pointDto.getFunctionId())) {
             log.warn("Пользователь '{}' пытается создать точку для функции {}, к которой не имеет доступа", auth.getName(), pointDto.getFunctionId());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -218,7 +216,7 @@ public class TabulatedFunctionController {
 
             if (!hasAccessToFunction(functionId)) {
                 log.warn("Пользователь '{}' не имеет прав на обновление точки {}, принадлежащей функции {}", auth.getName(), id, functionId);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 Forbidden
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
             point.setXVal(pointDtoDetails.getXVal());
@@ -280,7 +278,6 @@ public class TabulatedFunctionController {
             return ResponseEntity.notFound().build();
         }
 
-        // Проверяем доступ к функции
         if (!hasAccessToFunction(functionId)) {
             log.warn("Пользователь '{}' пытается удалить точки функции {}, к которой не имеет доступа", auth.getName(), functionId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

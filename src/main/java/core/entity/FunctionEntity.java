@@ -45,7 +45,7 @@ public class FunctionEntity {
 
         @Override
         public String toString() {
-            return name().toUpperCase(); // Преобразуем в верхний регистр
+            return name().toUpperCase();
         }
     }
 
