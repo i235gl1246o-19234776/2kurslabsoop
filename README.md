@@ -67,7 +67,14 @@
 </details>
 
 ---![photo_2025-11-11_15-01-50](https://github.com/user-attachments/assets/b4aa87f7-9e10-4ca0-95a7-541734eb29a3)
+| Метод | Framework Test (мс) | Manual Test (мс) |
+|:---------------------------|-----------------:|----------------:|
+| Create_User | 3.00 | 90 |
+| Create_Function | 3.56 | 144 |
+| Create Tabulated Function | 2.67 | 128 |
+| Get User By Id | 6.50 | 82 |
 
+[api_request.csv](https://github.com/user-attachments/files/23598641/api_request.csv)
 
 
 
