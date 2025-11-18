@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "0994eedc-c459-4bf2-b207-b6cf5f237051",
+		"_postman_id": "95c34cf8-4ad9-47f8-aed8-db1e02504372",
 		"name": "oop_laba6",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "50094366"
+		"_exporter_id": "50094366",
+		"_collection_link": "https://sidnegdok-1880764.postman.co/workspace/%D0%92%D0%BB%D0%B0%D0%B4%D0%B8%D1%81%D0%BB%D0%B0%D0%B2-%D0%9D%D0%B8%D0%BA%D0%BE%D0%BB%D0%B0%D0%B5%D0%B2's-Workspace~d4b56136-0341-4961-88e3-7429881e011e/collection/50094366-95c34cf8-4ad9-47f8-aed8-db1e02504372?action=share&source=collection_link&creator=50094366"
 	},
 	"item": [
 		{
@@ -669,26 +670,11 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{createdUserPassword}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{createdUserName}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"name\": \"{{createdUserName}}\",\r\n  \"password\": \"{{createdUserName}}\"\r\n}",
+							"raw": "{\r\n  \"name\": \"{{createdUserName}}\",\r\n  \"password\": \"{{createdUserPassword}}\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"

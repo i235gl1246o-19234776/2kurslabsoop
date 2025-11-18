@@ -218,14 +218,28 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         log.info("Запрос на удаление пользователя с ID: {}", id);
-        if (!isOwnerOrAdmin(id)) {
-            log.warn("Пользователь '{}' не имеет прав на удаление пользователя с ID: {}", SecurityContextHolder.getContext().getAuthentication().getName(), id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            log.warn("Попытка удаления пользователя без аутентификации (ID: {})", id);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String currentUsername = auth.getName();
+        UserEntity currentUser = userRepository.findByName(currentUsername);
+        if (currentUser == null) {
+            log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (!currentUser.getId().equals(id) && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            log.warn("Пользователь '{}' не имеет прав на удаление пользователя с ID: {}", currentUsername, id);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
         if (userRepository.existsById(id)) {
             userRepository.deleteById(id);
             log.info("Пользователь с ID {} удалён", id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.noContent().build(); // 204 No Content
         } else {
             log.warn("Попытка удалить несуществующего пользователя с ID: {}", id);
             return ResponseEntity.notFound().build();
