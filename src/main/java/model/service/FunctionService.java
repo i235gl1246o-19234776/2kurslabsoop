@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -84,71 +85,57 @@ public class FunctionService {
     }
 
     public SearchFunctionResponseDTO searchFunctions(SearchFunctionRequestDTO request) throws SQLException {
-        QueryBuilder queryBuilder = new QueryBuilder(request);
-        String sql = queryBuilder.buildQuery();
+        SearchQueryBuilder queryBuilder = new SearchQueryBuilder(request);
+        String sql = queryBuilder.buildSearchSql();
         List<Object> parameters = queryBuilder.getParameters();
 
         System.out.println("Executing Search SQL: " + sql);
         System.out.println("Parameters: " + parameters);
 
-        DatabaseConnection dbconn = new DatabaseConnection();
         List<FunctionResponseDTO> functions = new ArrayList<>();
+        DatabaseConnection dbconn = new DatabaseConnection();
 
         try (Connection conn = dbconn.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            for (int i = 0; i < parameters.size(); i++) {
-                stmt.setObject(i + 1, parameters.get(i));
-            }
+            setParameters(stmt, parameters);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    FunctionResponseDTO function = new FunctionResponseDTO();
-                    function.setFunctionId(rs.getLong("function_id"));
-                    function.setFunctionName(rs.getString("function_name"));
-                    function.setTypeFunction(rs.getString("type_function"));
-                    function.setXVal(rs.getDouble("x_val"));
-                    function.setYVal(rs.getDouble("y_val"));
-                    function.setUserName(rs.getString("username"));
-                    function.setOperationsTypeId(rs.getLong("operations_type_id"));
-
-                    functions.add(function);
+                    functions.add(mapResultSetToFunction(rs));
                 }
             }
-
-            int total = getTotalCount(request);
-            return new SearchFunctionResponseDTO(functions, total);
         }
+
+        int total = getTotalCount(request);
+        return new SearchFunctionResponseDTO(functions, total);
     }
 
     private int getTotalCount(SearchFunctionRequestDTO request) throws SQLException {
-        QueryBuilder queryBuilder = new QueryBuilder(request);
-        String countSql = queryBuilder.buildCountQuery();
-        List<Object> params = queryBuilder.getParameters();
+        SearchQueryBuilder queryBuilder = new SearchQueryBuilder(request);
+        String countSql = queryBuilder.buildCountSql();
+        List<Object> parameters = queryBuilder.getParameters();
 
         DatabaseConnection dbconn = new DatabaseConnection();
 
         try (Connection conn = dbconn.getConnection();
              PreparedStatement stmt = conn.prepareStatement(countSql)) {
 
-            for (int i = 0; i < params.size(); i++) {
-                stmt.setObject(i + 1, params.get(i));
-            }
+            setParameters(stmt, parameters);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                return rs.next() ? rs.getInt(1) : 0;
             }
         }
-
-        return 0;
     }
 
-    private static class QueryBuilder {
+    // Вспомогательные классы и методы
+    private static class SearchQueryBuilder {
         private final SearchFunctionRequestDTO request;
         private final List<Object> parameters;
         private final StringBuilder whereClause;
 
-        public QueryBuilder(SearchFunctionRequestDTO request) {
+        public SearchQueryBuilder(SearchFunctionRequestDTO request) {
             this.request = request;
             this.parameters = new ArrayList<>();
             this.whereClause = new StringBuilder();
@@ -156,45 +143,36 @@ public class FunctionService {
         }
 
         private void buildWhereClause() {
-            if (request.getUserName() != null && !request.getUserName().isEmpty()) {
-                whereClause.append(" AND u.name = ?");
-                parameters.add(request.getUserName());
-            }
-            if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
-                whereClause.append(" AND f.function_name LIKE ?");
-                parameters.add(request.getFunctionName() + "%");
-            }
-            if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
-                whereClause.append(" AND f.type_function = ?");
-                parameters.add(request.getTypeFunction());
-            }
-            if (request.getXVal() != null) {
-                whereClause.append(" AND t.x_val = ?");
-                parameters.add(request.getXVal());
-            }
-            if (request.getYVal() != null) {
-                whereClause.append(" AND t.y_val = ?");
-                parameters.add(request.getYVal());
-            }
-            if (request.getOperationsTypeId() != null) {
-                whereClause.append(" AND o.operations_type_id = ?");
-                parameters.add(request.getOperationsTypeId());
-            }
+            Map<String, Condition> conditions = Map.of(
+                    "userName", new Condition("u.name", request.getUserName(), ConditionType.EQUAL),
+                    "functionName", new Condition("f.function_name", request.getFunctionName(), ConditionType.LIKE_START),
+                    "typeFunction", new Condition("f.type_function", request.getTypeFunction(), ConditionType.EQUAL),
+                    "xVal", new Condition("t.x_val", request.getXVal(), ConditionType.EQUAL),
+                    "yVal", new Condition("t.y_val", request.getYVal(), ConditionType.EQUAL),
+                    "operationsTypeId", new Condition("o.operations_type_id", request.getOperationsTypeId(), ConditionType.EQUAL)
+            );
+
+            conditions.forEach((field, condition) -> {
+                if (condition.shouldInclude()) {
+                    whereClause.append(" AND ").append(condition.buildClause());
+                    parameters.add(condition.getParameterValue());
+                }
+            });
         }
 
-        public String buildQuery() {
+        public String buildSearchSql() {
             StringBuilder sql = new StringBuilder("""
             SELECT
                 f.id AS function_id,
                 f.function_name,
                 f.type_function,
                 f.function_expression,
-                u.name AS username,
+                u.name AS username,              
                 o.id AS operation_id,
-                o.operations_type_id,
+                o.operations_type_id,            
                 t.id AS tabulated_function_id,
-                t.x_val,
-                t.y_val
+                t.x_val,                         
+                t.y_val                          
             FROM functions f
             LEFT JOIN users u ON f.user_id = u.id
             LEFT JOIN operations o ON f.id = o.function_id
@@ -220,7 +198,7 @@ public class FunctionService {
             return sql.toString();
         }
 
-        public String buildCountQuery() {
+        public String buildCountSql() {
             return """
             SELECT COUNT(*) 
             FROM functions f
@@ -232,9 +210,67 @@ public class FunctionService {
         }
 
         public List<Object> getParameters() {
-            return new ArrayList<>(parameters);
+            return parameters;
         }
     }
+
+    private static class Condition {
+        private final String column;
+        private final Object value;
+        private final ConditionType type;
+
+        public Condition(String column, Object value, ConditionType type) {
+            this.column = column;
+            this.value = value;
+            this.type = type;
+        }
+
+        public boolean shouldInclude() {
+            if (value == null) return false;
+            if (value instanceof String stringValue) {
+                return !stringValue.isEmpty();
+            }
+            return true;
+        }
+
+        public String buildClause() {
+            return switch (type) {
+                case EQUAL -> column + " = ?";
+                case LIKE_START -> column + " LIKE ?";
+            };
+        }
+
+        public Object getParameterValue() {
+            return switch (type) {
+                case EQUAL -> value;
+                case LIKE_START -> value + "%";
+            };
+        }
+    }
+
+    private enum ConditionType {
+        EQUAL, LIKE_START
+    }
+
+    // Вспомогательные методы
+    private void setParameters(PreparedStatement stmt, List<Object> parameters) throws SQLException {
+        for (int i = 0; i < parameters.size(); i++) {
+            stmt.setObject(i + 1, parameters.get(i));
+        }
+    }
+
+    private FunctionResponseDTO mapResultSetToFunction(ResultSet rs) throws SQLException {
+        FunctionResponseDTO function = new FunctionResponseDTO();
+        function.setFunctionId(rs.getLong("function_id"));
+        function.setFunctionName(rs.getString("function_name"));
+        function.setTypeFunction(rs.getString("type_function"));
+        function.setXVal(rs.getDouble("x_val"));
+        function.setYVal(rs.getDouble("y_val"));
+        function.setUserName(rs.getString("username"));
+        function.setOperationsTypeId(rs.getLong("operations_type_id"));
+        return function;
+    }
+
 
     private static String getSortField(String sortBy) {
         return switch (sortBy.toLowerCase()) {

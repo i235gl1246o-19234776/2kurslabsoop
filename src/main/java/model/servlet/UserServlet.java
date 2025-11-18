@@ -93,15 +93,6 @@ public class UserServlet extends AuthServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        if (!isAuthenticated(req)) {
-            sendUnauthorized(resp);
-            return;
-        }
-
-        if (!isAdmin(req)) {
-            sendForbidden(resp);
-            return;
-        }
 
         StringBuilder jsonBuffer = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {
@@ -125,6 +116,7 @@ public class UserServlet extends AuthServlet {
             resp.getWriter().write("{\"error\":\"Ошибка при создании пользователя\"}");
         }
     }
+
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {

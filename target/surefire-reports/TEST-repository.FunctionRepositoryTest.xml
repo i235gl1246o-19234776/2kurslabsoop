@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="repository.FunctionRepositoryTest" time="3.442" tests="17" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="repository.FunctionRepositoryTest" time="5.567" tests="17" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="25"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -15,7 +15,7 @@
     <property name="user.country" value="RU"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-25\bin"/>
-    <property name="sun.java.command" value="C:\Users\zkovd\AppData\Local\Temp\surefire1969619376483166303\surefirebooter-20251117223033288_3.jar C:\Users\zkovd\AppData\Local\Temp\surefire1969619376483166303 2025-11-17T22-30-33_199-jvmRun1 surefire-20251117223033288_1tmp surefire_0-20251117223033288_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\zkovd\AppData\Local\Temp\surefire6880788086644264745\surefirebooter-20251118165755334_3.jar C:\Users\zkovd\AppData\Local\Temp\surefire6880788086644264745 2025-11-18T16-57-55_174-jvmRun1 surefire-20251118165755334_1tmp surefire_0-20251118165755334_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\zkovd\IdeaProjects\2kurslabsoop\target\test-classes;C:\Users\zkovd\IdeaProjects\2kurslabsoop\target\classes;C:\Users\zkovd\.m2\repository\jakarta\servlet\jakarta.servlet-api\6.0.0\jakarta.servlet-api-6.0.0.jar;C:\Users\zkovd\.m2\repository\jakarta\servlet\jsp\jakarta.servlet.jsp-api\3.1.0\jakarta.servlet.jsp-api-3.1.0.jar;C:\Users\zkovd\.m2\repository\org\postgresql\postgresql\42.7.8\postgresql-42.7.8.jar;C:\Users\zkovd\.m2\repository\org\checkerframework\checker-qual\3.49.5\checker-qual-3.49.5.jar;C:\Users\zkovd\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\zkovd\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\zkovd\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\zkovd\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\zkovd\.m2\repository\com\thoughtworks\xstream\xstream\1.4.21\xstream-1.4.21.jar;C:\Users\zkovd\.m2\repository\io\github\x-stream\mxparser\1.2.2\mxparser-1.2.2.jar;C:\Users\zkovd\.m2\repository\xmlpull\xmlpull\1.1.3.1\xmlpull-1.1.3.1.jar;C:\Users\zkovd\.m2\repository\org\mindrot\jbcrypt\0.4\jbcrypt-0.4.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.2\junit-jupiter-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.2\junit-jupiter-api-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\zkovd\.m2\repository\org\junit\platform\junit-platform-commons\1.10.2\junit-platform-commons-1.10.2.jar;C:\Users\zkovd\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.2\junit-jupiter-params-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.2\junit-jupiter-engine-5.10.2.jar;C:\Users\zkovd\.m2\repository\org\junit\platform\junit-platform-engine\1.10.2\junit-platform-engine-1.10.2.jar;C:\Users\zkovd\.m2\repository\org\mockito\mockito-core\5.20.0\mockito-core-5.20.0.jar;C:\Users\zkovd\.m2\repository\net\bytebuddy\byte-buddy\1.17.7\byte-buddy-1.17.7.jar;C:\Users\zkovd\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.7\byte-buddy-agent-1.17.7.jar;C:\Users\zkovd\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;C:\Users\zkovd\.m2\repository\org\mockito\mockito-junit-jupiter\5.11.0\mockito-junit-jupiter-5.11.0.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\testcontainers\1.19.7\testcontainers-1.19.7.jar;C:\Users\zkovd\.m2\repository\junit\junit\4.13.2\junit-4.13.2.jar;C:\Users\zkovd\.m2\repository\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;C:\Users\zkovd\.m2\repository\org\slf4j\slf4j-api\1.7.36\slf4j-api-1.7.36.jar;C:\Users\zkovd\.m2\repository\org\apache\commons\commons-compress\1.24.0\commons-compress-1.24.0.jar;C:\Users\zkovd\.m2\repository\org\rnorth\duct-tape\duct-tape\1.0.8\duct-tape-1.0.8.jar;C:\Users\zkovd\.m2\repository\org\jetbrains\annotations\17.0.0\annotations-17.0.0.jar;C:\Users\zkovd\.m2\repository\com\github\docker-java\docker-java-api\3.3.6\docker-java-api-3.3.6.jar;C:\Users\zkovd\.m2\repository\com\github\docker-java\docker-java-transport-zerodep\3.3.6\docker-java-transport-zerodep-3.3.6.jar;C:\Users\zkovd\.m2\repository\com\github\docker-java\docker-java-transport\3.3.6\docker-java-transport-3.3.6.jar;C:\Users\zkovd\.m2\repository\net\java\dev\jna\jna\5.13.0\jna-5.13.0.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\postgresql\1.19.7\postgresql-1.19.7.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\jdbc\1.19.7\jdbc-1.19.7.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\database-commons\1.19.7\database-commons-1.19.7.jar;C:\Users\zkovd\.m2\repository\org\testcontainers\junit-jupiter\1.19.7\junit-jupiter-1.19.7.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -31,7 +31,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\zkovd\AppData\Local\Temp\surefire1969619376483166303\surefirebooter-20251117223033288_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\zkovd\AppData\Local\Temp\surefire6880788086644264745\surefirebooter-20251118165755334_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="25.0.1+8-LTS-27"/>
@@ -54,7 +54,7 @@
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
     <property name="sun.os.patch.level" value=""/>
     <property name="native.encoding" value="Cp1251"/>
-    <property name="java.library.path" value="C:\Program Files\Java\jdk-25\bin;C:\Windows\Sun\Java\bin;C:\Windows\system32;C:\Windows;C:\Program Files\Google\Chrome\Application;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\Git\cmd;C:\Users\zkovd\AppData\Local\Microsoft\WindowsApps;;."/>
+    <property name="java.library.path" value="C:\Program Files\Java\jdk-25\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\Git\cmd;C:\Program Files\Java\jdk-25.0.1\bin;C:\Users\zkovd\Downloads\node-v24.11.0-win-x64\node-v24.11.0-win-x64;;C:\Program Files\Docker\Docker\resources\bin;C:\Users\zkovd\AppData\Local\Microsoft\WindowsApps;;."/>
     <property name="java.vm.info" value="mixed mode, sharing"/>
     <property name="stderr.encoding" value="Cp1251"/>
     <property name="java.vendor" value="Oracle Corporation"/>
@@ -64,485 +64,485 @@
     <property name="maven.repo.local" value="C:\Users\zkovd\.m2\repository"/>
     <property name="java.class.version" value="69.0"/>
   </properties>
-  <testcase name="testFindByUserId_ShouldReturnAllUserFunctions" classname="repository.FunctionRepositoryTest" time="0.52">
+  <testcase name="testFindByUserId_ShouldReturnAllUserFunctions" classname="repository.FunctionRepositoryTest" time="0.712">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection <clinit>
+    <system-err><![CDATA[нояб. 18, 2025 4:58:00 PM repository.DatabaseConnection <clinit>
 INFO: PostgreSQL JDBC Driver successfully loaded
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection setTestConnection
+нояб. 18, 2025 4:58:00 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:36 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:00 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:00 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 SLF4J: Defaulting to no-operation (NOP) logger implementation
 SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
-нояб. 17, 2025 10:30:36 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:00 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:00 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:36 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:00 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:00 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:36 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 2
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:36 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 3
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:36 PM repository.dao.FunctionRepository findByUserId
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository findByUserId
 INFO: Найдено 3 функций для пользователя с ID: 1
-нояб. 17, 2025 10:30:36 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testCreateMultipleFunctions_ShouldHandleConsecutiveOperations" classname="repository.FunctionRepositoryTest" time="0.32">
+  <testcase name="testCreateMultipleFunctions_ShouldHandleConsecutiveOperations" classname="repository.FunctionRepositoryTest" time="0.621">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:37 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:01 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 2
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 3
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findByUserId
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository findByUserId
 INFO: Найдено 3 функций для пользователя с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 2
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:01 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 3
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testCreateFunction_ShouldCreateNewFunction" classname="repository.FunctionRepositoryTest" time="0.152">
+  <testcase name="testCreateFunction_ShouldCreateNewFunction" classname="repository.FunctionRepositoryTest" time="0.255">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:37 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:01 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:01 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindByName_ShouldReturnEmptyList_WhenNoMatches" classname="repository.FunctionRepositoryTest" time="0.149">
+  <testcase name="testFindByName_ShouldReturnEmptyList_WhenNoMatches" classname="repository.FunctionRepositoryTest" time="0.253">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:37 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:02 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findByName
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository findByName
 INFO: Найдено 0 функций по шаблону имени: nonexistent
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testDeleteFunction_ShouldReturnFalse_WhenFunctionNotExists" classname="repository.FunctionRepositoryTest" time="0.226">
+  <testcase name="testDeleteFunction_ShouldReturnFalse_WhenFunctionNotExists" classname="repository.FunctionRepositoryTest" time="0.187">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:37 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:02 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository deleteFunction
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository deleteFunction
 WARNING: Функция для удаления не найдена с ID: 999999
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindById_ShouldReturnFunction_WhenFunctionExists" classname="repository.FunctionRepositoryTest" time="0.153">
+  <testcase name="testFindById_ShouldReturnFunction_WhenFunctionExists" classname="repository.FunctionRepositoryTest" time="0.262">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:37 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:02 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:37 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:37 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindByType_ShouldReturnFunctionsByType" classname="repository.FunctionRepositoryTest" time="0.283">
+  <testcase name="testFindByType_ShouldReturnFunctionsByType" classname="repository.FunctionRepositoryTest" time="0.495">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:38 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:02 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:02 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:02 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 2
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 3
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 4
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository findByType
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository findByType
 INFO: Найдено 2 функций типа: analytic
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository findByType
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository findByType
 INFO: Найдено 2 функций типа: tabular
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindByUserId_ShouldReturnEmptyList_WhenNoFunctions" classname="repository.FunctionRepositoryTest" time="0.122">
+  <testcase name="testFindByUserId_ShouldReturnEmptyList_WhenNoFunctions" classname="repository.FunctionRepositoryTest" time="0.191">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:38 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:03 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository findByUserId
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository findByUserId
 INFO: Найдено 0 функций для пользователя с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testUpdateFunction_ShouldReturnFalse_WhenFunctionNotExists" classname="repository.FunctionRepositoryTest" time="0.115">
+  <testcase name="testUpdateFunction_ShouldReturnFalse_WhenFunctionNotExists" classname="repository.FunctionRepositoryTest" time="0.198">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:38 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:03 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository updateFunction
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository updateFunction
 WARNING: Функция для обновления не найдена с ID: 999999
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindById_ShouldReturnEmpty_WhenFunctionNotExists" classname="repository.FunctionRepositoryTest" time="0.122">
+  <testcase name="testFindById_ShouldReturnEmpty_WhenFunctionNotExists" classname="repository.FunctionRepositoryTest" time="0.196">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:38 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:03 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:03 PM repository.dao.FunctionRepository findById
 INFO: Функция не найдена с ID: 999999
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testCreateFunction_ShouldCreateTabularFunction_WithNullExpression" classname="repository.FunctionRepositoryTest" time="0.145">
+  <testcase name="testCreateFunction_ShouldCreateTabularFunction_WithNullExpression" classname="repository.FunctionRepositoryTest" time="0.254">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:38 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:03 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:03 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindByName_ShouldReturnMatchingFunctions" classname="repository.FunctionRepositoryTest" time="0.217">
+  <testcase name="testFindByName_ShouldReturnMatchingFunctions" classname="repository.FunctionRepositoryTest" time="0.368">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:38 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:04 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 2
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 3
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:38 PM repository.dao.FunctionRepository findByName
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository findByName
 INFO: Найдено 2 функций по шаблону имени: quadratic
-нояб. 17, 2025 10:30:38 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testDeleteFunction_ShouldReturnFalse_WhenWrongUserId" classname="repository.FunctionRepositoryTest" time="0.185">
+  <testcase name="testDeleteFunction_ShouldReturnFalse_WhenWrongUserId" classname="repository.FunctionRepositoryTest" time="0.302">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:39 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:04 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository deleteFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository deleteFunction
 WARNING: Функция для удаления не найдена с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFunctionWithSpecialCharacters_ShouldHandleCorrectly" classname="repository.FunctionRepositoryTest" time="0.142">
+  <testcase name="testFunctionWithSpecialCharacters_ShouldHandleCorrectly" classname="repository.FunctionRepositoryTest" time="0.251">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:39 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:04 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:04 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:04 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testDeleteFunction_ShouldDeleteFunction" classname="repository.FunctionRepositoryTest" time="0.21">
+  <testcase name="testDeleteFunction_ShouldDeleteFunction" classname="repository.FunctionRepositoryTest" time="0.37">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:39 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:05 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository deleteFunction
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository deleteFunction
 INFO: Функция успешно удалена: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository findById
 INFO: Функция не найдена с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testFindById_ShouldReturnEmpty_WhenWrongUserId" classname="repository.FunctionRepositoryTest" time="0.152">
+  <testcase name="testFindById_ShouldReturnEmpty_WhenWrongUserId" classname="repository.FunctionRepositoryTest" time="0.249">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:39 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:05 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository findById
 INFO: Функция не найдена с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>
-  <testcase name="testUpdateFunction_ShouldUpdateFunctionData" classname="repository.FunctionRepositoryTest" time="0.172">
+  <testcase name="testUpdateFunction_ShouldUpdateFunctionData" classname="repository.FunctionRepositoryTest" time="0.307">
     <system-out><![CDATA[Создан тестовый пользователь с ID: 1
 Очистка тестовых данных...
 Тестовые данные очищены
 ]]></system-out>
-    <system-err><![CDATA[нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection setTestConnection
+    <system-err><![CDATA[нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection setTestConnection
 INFO: Установлены тестовые параметры подключения: jdbc:postgresql://localhost:5432/test_functions_database для потока: main
-нояб. 17, 2025 10:30:39 PM repository.DatabaseTestConnection setupTestConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseTestConnection setupTestConnection
 INFO: DatabaseTestConnection инициализирован для: jdbc:postgresql://localhost:5432/test_functions_database
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.UserRepository createUser
+нояб. 18, 2025 4:58:05 PM repository.dao.UserRepository createUser
 INFO: Пользователь успешно создан с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository createFunction
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository createFunction
 INFO: Функция успешно создана с ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository updateFunction
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository updateFunction
 INFO: Функция успешно обновлена: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
-нояб. 17, 2025 10:30:39 PM repository.dao.FunctionRepository findById
+нояб. 18, 2025 4:58:05 PM repository.dao.FunctionRepository findById
 INFO: Найдена функция по ID: 1
-нояб. 17, 2025 10:30:39 PM repository.DatabaseConnection getConnection
+нояб. 18, 2025 4:58:05 PM repository.DatabaseConnection getConnection
 INFO: Подключение для потока main: jdbc:postgresql://localhost:5432/test_functions_database, user: postgres
 ]]></system-err>
   </testcase>

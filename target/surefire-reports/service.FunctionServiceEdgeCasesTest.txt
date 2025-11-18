@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: service.FunctionServiceEdgeCasesTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.546 s -- in service.FunctionServiceEdgeCasesTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.000 s -- in service.FunctionServiceEdgeCasesTest

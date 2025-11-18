@@ -27,6 +27,7 @@ model\entity\SearchFunctionResult.class
 model\servlet\SearchFunctionServlet.class
 concurrent\ReadTask.class
 operations\TestParralellism2000.class
+model\service\FunctionService$SearchQueryBuilder.class
 operations\TabulatedDifferentialOperator.class
 operations\ParallelIntegrator.class
 io\TabulatedFunctionFileWriter.class
@@ -80,7 +81,7 @@ functions\NewtonMethod.class
 model\servlet\AuthFilter.class
 functions\IdentityFunction.class
 functions\LinkedListTabulatedFunction.class
-repository\PasswordMigrationUtil.class
+model\service\FunctionService$ConditionType.class
 functions\factory\LinkedListTabulatedFunctionFactory.class
 model\service\FunctionService.class
 model\dto\request\RoleAssignmentRequestDTO.class
@@ -91,6 +92,7 @@ exception\InconsistentFunctionsException.class
 model\service\UserService.class
 operations\RightSteppingDifferentialOperator$1.class
 repository\SqlLoader.class
+model\service\FunctionService$Condition.class
 operations\TabulatedFunctionOperationService.class
 functions\ArrayTabulatedFunction$1.class
 model\entity\Function.class

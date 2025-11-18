@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: repository.OperationRepositoryTest
 -------------------------------------------------------------------------------
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.017 s -- in repository.OperationRepositoryTest
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.431 s -- in repository.OperationRepositoryTest
