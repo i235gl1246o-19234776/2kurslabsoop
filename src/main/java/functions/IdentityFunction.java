@@ -7,4 +7,5 @@ public class IdentityFunction implements MathFunction {
         return x;
     }
 
+    public IdentityFunction() {}
 }

@@ -3,6 +3,7 @@ package core.controller;
 import core.entity.*;
 import core.repository.*;
 import core.dto.*;
+import functions.ArrayTabulatedFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import core.dto.MathFunctionCreationDto;
+import core.utils.MathFunctionRegistry;
+import functions.MathFunction;
+import functions.TabulatedFunction;
+import functions.factory.ArrayTabulatedFunctionFactory;
+import functions.factory.LinkedListTabulatedFunctionFactory;
+import functions.factory.TabulatedFunctionFactory;
 
 @Slf4j
 @RestController
@@ -27,6 +35,107 @@ public class FunctionController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TabulatedFunctionRepository tabulatedFunctionRepository;
+
+    @GetMapping("/math-functions") // GET запрос
+    public ResponseEntity<List<String>> getAvailableMathFunctionNames() {
+        log.info("Запрос на получение доступных имён MathFunction");
+        List<String> availableNames = MathFunctionRegistry.getAvailableFunctionNames();
+        return ResponseEntity.ok(availableNames);
+    }
+
+    @PostMapping("/from-math")
+    public ResponseEntity<FunctionDto> createFunctionFromMath(@RequestBody MathFunctionCreationDto dto) {
+        log.info("Запрос на создание табулированной функции из MathFunction: {}", dto);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            log.warn("Попытка создания функции из MathFunction без аутентификации");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String currentUsername = auth.getName();
+        UserEntity currentUser = userRepository.findByName(currentUsername);
+        if (currentUser == null) {
+            log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (!currentUser.getId().equals(dto.getUserId())) {
+            log.warn("Пользователь '{}' пытается создать функцию для другого пользователя (ожидаемый ID: {}, полученный в DTO: {})", currentUsername, currentUser.getId(), dto.getUserId());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            // 1. Получаем MathFunction по имени
+            MathFunction mathFunction = MathFunctionRegistry.getFunctionByName(dto.getMathFunctionName());
+            if (mathFunction == null) {
+                throw new IllegalArgumentException("Функция с именем '" + dto.getMathFunctionName() + "' не найдена.");
+            }
+
+            if (MathFunctionRegistry.isTabulatedFunction(mathFunction)) {
+                throw new IllegalArgumentException("Невозможно создать табулированную функцию из другой табулированной функции.");
+            }
+
+            if (dto.getXFrom() >= dto.getXTo()) {
+                throw new IllegalArgumentException("xFrom должен быть строго меньше xTo.");
+            }
+            if (dto.getCount() < 2) {
+                throw new IllegalArgumentException("Количество точек должно быть не менее 2.");
+            }
+
+            // --- ВЫБОР ФАБРИКИ НА ОСНОВЕ ПОЛЯ В DTO ---
+            TabulatedFunctionFactory factory;
+            String factoryType = dto.getFactoryType();
+            if ("linkedlist".equalsIgnoreCase(factoryType)) {
+                factory = new LinkedListTabulatedFunctionFactory();
+            } else { // По умолчанию или "array"
+                factory = new ArrayTabulatedFunctionFactory();
+            }
+
+            // 4. Используем выбранную фабрику для создания TabulatedFunction
+            TabulatedFunction tabulatedFunction = factory.create(mathFunction, dto.getXFrom(), dto.getXTo(), dto.getCount());
+
+            // 5. Создаём FunctionEntity (обёртка для табулированной функции)
+            FunctionEntity functionEntity = new FunctionEntity();
+            functionEntity.setFunctionName("FuncFromMath_" + dto.getMathFunctionName() + "_" + System.currentTimeMillis());
+            functionEntity.setTypeFunction(FunctionEntity.FunctionType.tabular);
+            functionEntity.setFunctionExpression(null);
+            functionEntity.setUser(currentUser);
+
+            // 6. Сохраняем FunctionEntity
+            FunctionEntity savedFunctionEntity = functionRepository.save(functionEntity);
+
+            // 7. Создаём точки для функции
+            for (int i = 0; i < tabulatedFunction.getCount(); i++) {
+                double x = tabulatedFunction.getX(i);
+                double y = tabulatedFunction.getY(i);
+
+                TabulatedFunctionEntity pointEntity = new TabulatedFunctionEntity();
+                pointEntity.setFunction(savedFunctionEntity);
+                pointEntity.setXVal(x);
+                pointEntity.setYVal(y);
+
+                tabulatedFunctionRepository.save(pointEntity);
+            }
+
+            // 8. Конвертируем FunctionEntity в FunctionDto и возвращаем
+            FunctionDto savedDto = convertToDto(savedFunctionEntity);
+            log.info("Табулированная функция из MathFunction создана и сохранена с ID: {}", savedDto.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
+
+        } catch (IllegalArgumentException e) {
+            log.error("Ошибка при создании функции из MathFunction: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Непредвиденная ошибка при создании функции из MathFunction", e);
+            throw e;
+        }
+    }
+
+// ... (остальные методы)
 
     private boolean hasAccessToUser(Long targetUserId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

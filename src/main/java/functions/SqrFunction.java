@@ -7,4 +7,5 @@ public class SqrFunction implements MathFunction{
         return Math.pow(x,2);
     }
 
+    public SqrFunction() {}
 }
