@@ -25,27 +25,51 @@
       <!-- Компонент создания функции -->
       <FunctionCreator v-if="isLoggedIn" />
 
-      <!-- Обработка ошибок -->
-      <div v-if="error" class="error-modal">
-        <p>{{ error }}</p>
-        <button @click="clearError">Закрыть</button>
-      </div>
+      <!-- ЦЕНТРАЛЬНОЕ МОДАЛЬНОЕ ОКНО ДЛЯ ОШИБОК -->
+      <ErrorModal
+        :is-open="showErrorModal"
+        :message="errorMessage"
+        @close="closeErrorModal"
+      />
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, provide } from 'vue';
 import LoginForm from './components/LoginForm.vue';
 import RegisterForm from './components/RegisterForm.vue';
 import FunctionCreator from './components/FunctionCreator.vue';
+import ErrorModal from './components/ErrorModal.vue'; // Импортируем компонент
 import { api } from './api.js';
 
 const isLoggedIn = ref(false);
 const username = ref('');
 const showLogin = ref(false);
 const showRegister = ref(false);
-const error = ref('');
+
+// --- НОВЫЕ СОСТОЯНИЯ ДЛЯ МОДАЛЬНОГО ОКНА ОШИБКИ ---
+const showErrorModal = ref(false);
+const errorMessage = ref('');
+// --- КОНЕЦ НОВЫХ СОСТОЯНИЙ ---
+
+// --- ЦЕНТРАЛИЗОВАННЫЙ ОБРАБОТЧИК ОШИБОК ---
+const showError = (message) => {
+  errorMessage.value = message;
+  showErrorModal.value = true;
+};
+
+// Функция для закрытия модального окна ошибки
+const closeErrorModal = () => {
+  showErrorModal.value = false;
+  errorMessage.value = '';
+};
+// --- КОНЕЦ ЦЕНТРАЛИЗОВАННОГО ОБРАБОТЧИКА ---
+
+// --- ПРЕДОСТАВЛЕНИЕ ФУНКЦИИ showError КОМПОНЕНТАМ ---
+// Это позволяет дочерним компонентам (и их потомкам) получить доступ к showError
+provide('showError', showError);
+// --- КОНЕЦ ПРЕДОСТАВЛЕНИЯ ---
 
 const handleLoginSuccess = (userData) => {
   isLoggedIn.value = true;
@@ -54,28 +78,22 @@ const handleLoginSuccess = (userData) => {
 };
 
 const handleRegisterSuccess = () => {
-  // После регистрации можно сразу попросить войти или автоматически залогинить, если сервер возвращает токен
   showRegister.value = false;
-  showLogin.value = true; // Или сразу залогинить, если сервер возвращает сессию
+  showLogin.value = true;
 };
 
 const logout = () => {
-  // Очистить сессию/токен на бэкенде (если нужно)
+  api.logout(); // Очищаем данные аутентификации в api.js
   isLoggedIn.value = false;
   username.value = '';
-  // Тут может быть вызов api.logout()
 };
 
-const clearError = () => {
-  error.value = '';
-};
-
-onMounted(() => {
-  // Проверить, есть ли активная сессия (например, через API /api/me)
-  // fetch('/api/me')
-  //   .then(response => { if(response.ok) { /* восстановить сессию */ }})
-  //   .catch(e => console.log("No active session"));
-});
+// onMounted можно оставить, если нужно проверять сессию при загрузке
+// import { onMounted } from 'vue';
+// onMounted(() => {
+//   // Проверить, есть ли активная сессия (например, через API /api/me)
+//   // fetch('/api/me') ...
+// });
 </script>
 
 <style>
@@ -92,16 +110,5 @@ onMounted(() => {
   align-items: center;
   z-index: 999;
 }
-.error-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border: 1px solid #f5c6cb;
-  border-radius: 0.3rem;
-  z-index: 1000;
-}
+/* Стили для ErrorModal уже определены в ErrorModal.vue */
 </style>

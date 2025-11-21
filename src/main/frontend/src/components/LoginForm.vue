@@ -1,3 +1,4 @@
+<!-- src/components/LoginForm.vue -->
 <template>
   <div class="form-container">
     <h2>Вход</h2>
@@ -11,8 +12,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { api } from '../api.js';
+
+// --- ИНЪЕКТИРУЕМ showError ---
+const showError = inject('showError');
+// --- КОНЕЦ ИНЪЕКЦИИ ---
 
 const username = ref('');
 const password = ref('');
@@ -21,12 +26,15 @@ const emit = defineEmits(['login-success', 'close']);
 
 const login = async () => {
   try {
+    console.log("Попытка входа:", username.value);
     const userData = await api.login(username.value, password.value);
+    console.log("Успешный вход, данные:", userData);
     emit('login-success', userData);
   } catch (e) {
-    // Здесь можно передать ошибку в родительский компонент через emit
-    console.error("Login error:", e);
-    // emit('error', e.message);
+    console.error("Ошибка входа:", e);
+    // --- ВЫЗОВ ЦЕНТРАЛИЗОВАННОГО ОБРАБОТЧИКА ОШИБОК ---
+    showError(e.message);
+    // --- КОНЕЦ ВЫЗОВА ---
   }
 };
 </script>

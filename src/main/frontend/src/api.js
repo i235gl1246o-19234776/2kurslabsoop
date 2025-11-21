@@ -23,7 +23,9 @@ export const api = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Registration failed');
+      // Пытаемся извлечь сообщение об ошибке из разных возможных полей
+      const errorMessage = errorData.error || errorData.message || 'Registration failed';
+      throw new Error(errorMessage);
     }
     return response.json();
   },
@@ -41,7 +43,8 @@ export const api = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Login failed');
+      const errorMessage = errorData.error || errorData.message || 'Login failed';
+      throw new Error(errorMessage);
     }
 
     const userData = await response.json(); // Ожидаем { id: 123, username: "user", role: "USER" }
@@ -89,6 +92,11 @@ export const api = {
     };
     // --- КОНЕЦ ДОБАВЛЕНИЯ ---
 
+    // --- ЛОГИРОВАНИЕ ДЛЯ createFunction ---
+    console.log("api.createFunction: Подготовленные данные для JSON.stringify:", bodyData);
+    console.log("api.createFunction: JSON.stringify(bodyData):", JSON.stringify(bodyData));
+    // --- КОНЕЦ ЛОГИРОВАНИЯ ---
+
     const response = await fetch('/api/functions', {
       method: 'POST',
       headers: {
@@ -100,7 +108,8 @@ export const api = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create function');
+      const errorMessage = errorData.error || errorData.message || 'Failed to create function';
+      throw new Error(errorMessage);
     }
     return response.json();
   },
@@ -119,6 +128,11 @@ export const api = {
         yval: yval            // <-- Обратите внимание на регистр: yval
     };
 
+    // --- ЛОГИРОВАНИЕ ДЛЯ createTabulatedPoints ---
+    console.log("api.createTabulatedPoints: Подготовленные данные для JSON.stringify:", pointData);
+    console.log("api.createTabulatedPoints: JSON.stringify(pointData):", JSON.stringify(pointData));
+    // --- КОНЕЦ ЛОГИРОВАНИЯ ---
+
     const response = await fetch('/api/tabulated-points', { // <-- Правильный URL с дефисом
       method: 'POST',
       headers: {
@@ -130,9 +144,54 @@ export const api = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to save tabulated points');
+      const errorMessage = errorData.error || errorData.message || 'Failed to save tabulated points';
+      throw new Error(errorMessage);
     }
     return response.json();
+  },
+
+  // --- Вычисление и сохранение табулированных точек из MathFunction: POST /api/tabulated-points/calculate (требует аутентификации) ---
+  // Тело запроса: { "functionId": 123, "mathFunctionName": "SqrFunction", "start": 0.0, "end": 10.0, "count": 100 }
+  calculateAndSaveTabulatedPoints: async (functionId, mathFunctionName, start, end, count) => {
+    if (!storedCredentials) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+
+    // Формируем тело запроса
+    const calculateData = {
+        functionId: functionId,
+        mathFunctionName: mathFunctionName, // Имя функции, как оно зарегистрировано на сервере
+        start: start,
+        end: end,
+        count: count
+    };
+
+    // --- ЛОГИРОВАНИЕ ДЛЯ calculateAndSaveTabulatedPoints ---
+    console.log("api.calculateAndSaveTabulatedPoints: Подготовленные данные для JSON.stringify:", calculateData);
+    console.log("api.calculateAndSaveTabulatedPoints: JSON.stringify(calculateData):", JSON.stringify(calculateData));
+    // --- КОНЕЦ ЛОГИРОВАНИЯ ---
+
+    const response = await fetch('/api/tabulated-points/calculate', { // <-- НОВЫЙ URL
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${storedCredentials}`,
+      },
+      body: JSON.stringify(calculateData), // <-- Отправляем сформированный объект
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage = errorData.error || errorData.message || 'Failed to calculate and save tabulated points';
+      throw new Error(errorMessage);
+    }
+    // Сервер возвращает JSON с сообщением, но обычно для POST на создание возвращают 201 Created
+    // и иногда объект созданного ресурса. В данном случае, сервер возвращает 200 OK с сообщением.
+    // Можно вернуть response.json() или просто true, если сервер возвращает сообщение.
+    // const result = await response.json();
+    // return result;
+    // Или просто проверить статус:
+    return response.json(); // Возвращает JSON {"message": "..."}
   },
 
   // --- Получение функций пользователя: GET /api/functions?userId={userId} (требует аутентификации) ---
@@ -150,27 +209,9 @@ export const api = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch functions');
+      const errorMessage = errorData.error || errorData.message || 'Failed to fetch functions';
+      throw new Error(errorMessage);
     }
     return response.json(); // Возвращает массив функций
   }
-
-  // Другие методы можно добавить здесь
-  // Пример: получение точек функции
-  // getTabulatedPointsByFunctionId: async (functionId) => {
-  //   if (!storedCredentials) {
-  //     throw new Error('Not authenticated. Please log in first.');
-  //   }
-  //   const response = await fetch(`/api/tabulated-points/function/${functionId}`, {
-  //     method: 'GET',
-  //     headers: {
-  //       'Authorization': `Basic ${storedCredentials}`,
-  //     },
-  //   });
-  //   if (!response.ok) {
-  //     const errorData = await response.json();
-  //     throw new Error(errorData.error || 'Failed to fetch tabulated points');
-  //   }
-  //   return response.json();
-  // },
-}; // <-- Закрывающая скобка и точка с запятой добавлены
+};
