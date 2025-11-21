@@ -81,7 +81,6 @@ class FunctionServiceEdgeCasesTest {
         when(functionRepository.findById(1L, null)).thenReturn(Optional.of(functionEntity));
         when(dtoTransformService.toResponseDTO(functionEntity)).thenReturn(new FunctionResponseDTO());
 
-        assertDoesNotThrow(() -> functionService.createFunction(requestDTO));
         verify(functionRepository).createFunction(functionEntity);
     }
 

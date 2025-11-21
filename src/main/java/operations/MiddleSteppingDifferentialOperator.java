@@ -16,6 +16,7 @@ public class MiddleSteppingDifferentialOperator extends SteppingDifferentialOper
             public double apply(double x) {
                 return (f.apply(x + step) - f.apply(x - step)) / (2 * step);
             }
+
         };
     }
 }

@@ -42,11 +42,6 @@ public class FunctionServlet extends AuthServlet {
             return;
         }
 
-        if (!isAdmin(req)) {
-            sendForbidden(resp);
-            return;
-        }
-
         logger.info("POST /api/functions вызван");
 
         StringBuilder jsonBuffer = new StringBuilder();
@@ -58,8 +53,22 @@ public class FunctionServlet extends AuthServlet {
         }
 
         try {
+            // --- ИЗМЕНЕНО: Не ожидаем userId в DTO ---
             FunctionRequestDTO functionRequest = objectMapper.readValue(jsonBuffer.toString(), FunctionRequestDTO.class);
-            FunctionResponseDTO response = functionService.createFunction(functionRequest);
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
+            // --- ИЗМЕНЕНО: Получаем userId из аутентифицированного пользователя ---
+
+
+            User authenticatedUser = getAuthenticatedUser(req);
+            Long userId = authenticatedUser.getId();
+            if (authenticatedUser == null || !authenticatedUser.getId().equals(functionRequest.getUserId())) {
+                logger.warning("User ID mismatch. Authenticated user ID: " + (authenticatedUser != null ? authenticatedUser.getId() : "null") + ", Requested user ID: " + functionRequest.getUserId());
+                sendForbidden(resp); // или sendUnauthorized
+                return;
+            }
+            FunctionResponseDTO response = functionService.createFunction(functionRequest, userId);
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.setContentType("application/json");

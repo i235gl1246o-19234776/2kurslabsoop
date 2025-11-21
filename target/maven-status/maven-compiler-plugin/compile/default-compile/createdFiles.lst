@@ -82,6 +82,7 @@ model\servlet\AuthFilter.class
 functions\IdentityFunction.class
 functions\LinkedListTabulatedFunction.class
 model\service\FunctionService$ConditionType.class
+exception\GlobalExceptionHandler.class
 functions\factory\LinkedListTabulatedFunctionFactory.class
 model\service\FunctionService.class
 model\dto\request\RoleAssignmentRequestDTO.class
@@ -89,6 +90,7 @@ model\service\AuthenticationService.class
 model\dto\request\SearchFunctionRequestDTO.class
 functions\MathFunction.class
 exception\InconsistentFunctionsException.class
+model\servlet\LoginServlet.class
 model\service\UserService.class
 operations\RightSteppingDifferentialOperator$1.class
 repository\SqlLoader.class
@@ -96,6 +98,7 @@ model\service\FunctionService$Condition.class
 operations\TabulatedFunctionOperationService.class
 functions\ArrayTabulatedFunction$1.class
 model\entity\Function.class
+model\servlet\RegisterServlet.class
 model\dto\response\UserResponseDTO.class
 concurrent\SynchronizedTabulatedFunction$Operation.class
 operations\SimpsonIntegral.class

@@ -5,6 +5,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\TabulatedFu
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\TabulatedDifferentialOperator.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\entity\User.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\response\OperationResponseDTO.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\exception\CustomException.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\MathFunction.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\UserServlet.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\Removable.java
@@ -38,6 +39,8 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\Point.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\entity\TabulatedFunction.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\NewtonMethod.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\concurrent\ReadWriteTaskExecutor.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\exception\ValidationException.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\LoginServlet.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\ParallelIntegrator.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\service\FunctionService.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\service\OperationService.java
@@ -63,6 +66,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\MiddleStepping
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\RoleAssignmentRequestDTO.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\concurrent\WriteTask.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\DTOTransformService.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\exception\GlobalExceptionHandler.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\OperationServlet.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\CompositeFunction.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\TabulatedFunction.java
@@ -72,6 +76,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\FunctionSer
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\service\AuthenticationService.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\operations\TabulatedFunctionOperationService.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\UnitFunction.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\servlet\RegisterServlet.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\RungeKuttaFunction.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\OperationRequestDTO.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\SearchFunctionRequestDTO.java
@@ -79,6 +84,7 @@ C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\CreateU
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\functions\ZeroFunction.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\io\TabulatedFunctionFileInputStream.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\TabulatedFunctionRequestDTO.java
+C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\exception\FunctionException.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\exception\DifferentLengthOfArraysException.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\request\FunctionRequestDTO.java
 C:\Users\zkovd\IdeaProjects\2kurslabsoop\src\main\java\model\dto\response\SearchFunctionResponseDTO.java

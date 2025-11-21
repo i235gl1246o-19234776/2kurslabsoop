@@ -47,17 +47,21 @@ public class AuthFilter implements Filter {
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-
+        /*if (uri.matches("./api/users/?") && method.equalsIgnoreCase("POST")) {
+            chain.doFilter(req, res);
+            return;
+        }*/
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
 
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
-        /*if (uri.matches("./api/users/?") && method.equalsIgnoreCase("POST")) {
+        if ((uri.matches(".*/api/users") && method.equalsIgnoreCase("POST")) || // Регистрация
+                (uri.matches(".*/api/users/name/.*") && method.equalsIgnoreCase("GET"))) { // Аутентификация
             chain.doFilter(req, res);
             return;
-        }*/
+        }
 
         String authHeader = request.getHeader("Authorization");
 

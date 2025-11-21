@@ -6,7 +6,6 @@ import model.entity.Function;
 import model.dto.request.FunctionRequestDTO;
 import model.dto.response.FunctionResponseDTO;
 import model.dto.DTOTransformService;
-import model.entity.SearchFunctionResult;
 import repository.DatabaseConnection;
 import repository.dao.FunctionRepository;
 
@@ -36,6 +35,20 @@ public class FunctionService {
         this.dtoTransformService = dtoTransformService;
     }
 
+    public FunctionResponseDTO createFunction(FunctionRequestDTO functionRequest, Long userId) throws SQLException {
+        logger.info("Создание новой функции: " + functionRequest.getFunctionName());
+
+        Function function = dtoTransformService.toEntity(functionRequest);
+        function.setUserId(userId);
+        Long functionId = functionRepository.createFunction(function);
+
+        Optional<Function> createdFunction = functionRepository.findById(functionId, functionRequest.getUserId());
+        if (createdFunction.isPresent()) {
+            return dtoTransformService.toResponseDTO(createdFunction.get());
+        } else {
+            throw new SQLException("Не удалось получить созданную функцию с ID: " + functionId);
+        }
+    }
     public FunctionResponseDTO createFunction(FunctionRequestDTO functionRequest) throws SQLException {
         logger.info("Создание новой функции: " + functionRequest.getFunctionName());
 

@@ -88,4 +88,20 @@ public class UserService {
     public Optional<User> getUserEntityByName(String name) throws SQLException {
         return userRepository.findByName(name);
     }
+
+    public Optional<UserResponseDTO> authenticateAndReturnUser(String username, String password) throws SQLException {
+        logger.info("Аутентификация пользователя: " + username);
+        Optional<User> userOpt = userRepository.findByName(username);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            // УДАЛЯЕМ СТРОКИ СОЗДАНИЯ НОВОГО ЭКЗЕМПЛЯРА
+            // UserRepository UR = new UserRepository();
+            AuthenticationService auth = new AuthenticationService(userRepository);
+            // ВЫЗОВ ЧЕРЕЗ СУЩЕСТВУЮЩИЙ ЭКЗЕМПЛЯР: this.authenticationService.authenticateUser(...)
+            if (auth.authenticateUser(username, password)) { // <--- Вот тут
+                return Optional.of(dtoTransformService.toResponseDTO(user));
+            }
+        }
+        return Optional.empty();
+    }
 }
