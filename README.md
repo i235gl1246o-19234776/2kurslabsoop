@@ -40,5 +40,6 @@
 
 запустить веб приложение -
 cd /path/to/your/project/src/main/frontend
+cd src/main/frontend
 npm run dev
 Ctrl + C - остановить

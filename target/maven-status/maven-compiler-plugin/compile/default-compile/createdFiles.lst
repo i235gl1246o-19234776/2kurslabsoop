@@ -33,6 +33,7 @@ operations\ParallelIntegrator.class
 io\TabulatedFunctionFileWriter.class
 functions\ArrayTabulatedFunction.class
 operations\RightSteppingDifferentialOperator.class
+model\dto\PointDTO.class
 Main.class
 functions\ConstantFunction.class
 exception\ArrayIsNotSortedException.class
@@ -42,6 +43,7 @@ model\dto\request\OperationRequestDTO.class
 repository\DatabaseConnection.class
 operations\LeftSteppingDifferentialOperator.class
 exception\InterpolationException.class
+model\servlet\TabulatedFunctionServlet$CalculatePointsRequestDTO.class
 model\dto\response\OperationResponseDTO.class
 functions\CompositeFunction.class
 model\entity\UserRole.class
@@ -79,16 +81,20 @@ concurrent\MultiplyingTaskExecutor.class
 io\TabulatedFunctionFileReader.class
 functions\NewtonMethod.class
 model\servlet\AuthFilter.class
+model\dto\response\ExecuteOperationResponseDTO.class
 functions\IdentityFunction.class
 functions\LinkedListTabulatedFunction.class
 model\service\FunctionService$ConditionType.class
 exception\GlobalExceptionHandler.class
+model\dto\TabulatedFunctionDifferentialOperator.class
 functions\factory\LinkedListTabulatedFunctionFactory.class
 model\service\FunctionService.class
 model\dto\request\RoleAssignmentRequestDTO.class
 model\service\AuthenticationService.class
 model\dto\request\SearchFunctionRequestDTO.class
+model\dto\request\ExecuteOperationRequestDTO.class
 functions\MathFunction.class
+model\dto\request\DifferentiateRequestDTO.class
 exception\InconsistentFunctionsException.class
 model\servlet\LoginServlet.class
 model\service\UserService.class

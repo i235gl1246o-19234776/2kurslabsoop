@@ -1,5 +1,8 @@
 package model.service;
 
+import functions.MathFunction;
+import functions.factory.ArrayTabulatedFunctionFactory;
+import functions.factory.TabulatedFunctionFactory;
 import model.entity.TabulatedFunction;
 import model.dto.request.TabulatedFunctionRequestDTO;
 import model.dto.response.TabulatedFunctionResponseDTO;
@@ -11,8 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class TabulatedFunctionService {
@@ -127,6 +129,65 @@ public class TabulatedFunctionService {
 
         return Optional.empty();
     }
+    public void calculateAndSaveTabulatedPoints(Long functionId, MathFunction mathFunction, double start, double end, int count, TabulatedFunctionFactory factory) throws SQLException {
+        logger.info("Вычисление точек для functionId: " + functionId + ", функции: " + mathFunction.getClass().getSimpleName() + ", интервал: [" + start + ", " + end + "], count: " + count);
 
+        if (count <= 0) {
+            throw new IllegalArgumentException("Count must be positive");
+        }
+        if (start >= end) {
+            throw new IllegalArgumentException("Start must be less than End");
+        }
 
+        // 1. Вычисляем точки
+        double[] xValues = new double[count];
+        double[] yValues = new double[count];
+
+        double step = (end - start) / (count); // Шаг разбиения
+
+        for (int i = 0; i < count; i++) {
+            xValues[i] = start + i * step;
+            yValues[i] = mathFunction.apply(xValues[i]);
+        }
+        functions.TabulatedFunction tabulatedFunc = factory.create(xValues, yValues);
+
+        // 3. Сохраняем точки в БД (используя Entity model.entity.TabulatedFunction)
+        // tabulatedFunc.getCount(), tabulatedFunc.getX(i), tabulatedFunc.getY(i) - методы из functions.TabulatedFunction
+        for (int i = 0; i < tabulatedFunc.getCount(); i++) {
+            TabulatedFunction entity = new TabulatedFunction(); // Это model.entity.TabulatedFunction
+            entity.setFunctionId(functionId);
+            entity.setXVal(tabulatedFunc.getX(i)); // getX(i) из functions.TabulatedFunction
+            entity.setYVal(tabulatedFunc.getY(i)); // getY(i) из functions.TabulatedFunction
+
+            // Сохраняем точку через репозиторий
+            // Убедитесь, что save в TabulatedFunctionRepository принимает model.entity.TabulatedFunction
+            tabulatedFunctionRepository.createTabulatedFunction(entity);
+        }
+
+        logger.info("Вычислено и сохранено " + count + " точек для functionId: " + functionId);
+    }
+    public functions.TabulatedFunction loadTabulatedFunction(Long functionId) throws SQLException {
+        List<model.entity.TabulatedFunction> dbPoints = tabulatedFunctionRepository.findAllByFunctionId(functionId);
+
+        if (dbPoints.isEmpty()) {
+            return null;
+        }
+
+        // Сортируем по xVal (и по id, если есть, для стабильности)
+        dbPoints.sort(Comparator.comparingDouble(model.entity.TabulatedFunction::getXVal)
+                .thenComparingLong(model.entity.TabulatedFunction::getId)); // если есть getId()
+
+        // Фильтруем дубликаты по xVal — оставляем ПЕРВУЮ точку для каждого x
+        Map<Double, TabulatedFunction> uniquePoints = new LinkedHashMap<>();
+        for (model.entity.TabulatedFunction point : dbPoints) {
+            uniquePoints.putIfAbsent(point.getXVal(), point);
+        }
+
+        List<model.entity.TabulatedFunction> filteredPoints = new ArrayList<>(uniquePoints.values());
+
+        double[] x = filteredPoints.stream().mapToDouble(model.entity.TabulatedFunction::getXVal).toArray();
+        double[] y = filteredPoints.stream().mapToDouble(model.entity.TabulatedFunction::getYVal).toArray();
+
+        return new ArrayTabulatedFunctionFactory().create(x, y);
+    }
 }
