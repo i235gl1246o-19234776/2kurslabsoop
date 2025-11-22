@@ -72,6 +72,11 @@ export const api = {
     return storedUserId;
   },
 
+  // --- Получение сохранённых Base64-credentials (для использования вручную) ---
+  getStoredCredentials: () => {
+    return storedCredentials;
+  },
+
   // --- Создание функции: POST /api/functions (требует аутентификации) ---
   // Тело запроса: { "functionName": "...", "functionExpression": "...", "typeFunction": "...", "userId": ... }
   createFunction: async (functionData) => {
@@ -152,7 +157,7 @@ export const api = {
 
   // --- Вычисление и сохранение табулированных точек из MathFunction: POST /api/tabulated-points/calculate (требует аутентификации) ---
   // Тело запроса: { "functionId": 123, "mathFunctionName": "SqrFunction", "start": 0.0, "end": 10.0, "count": 100 }
-  calculateAndSaveTabulatedPoints: async (functionId, mathFunctionName, start, end, count) => {
+  calculateAndSaveTabulatedPoints: async (functionId, mathFunctionName, start, end, count, factoryType) => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
     }
@@ -163,7 +168,8 @@ export const api = {
         mathFunctionName: mathFunctionName, // Имя функции, как оно зарегистрировано на сервере
         start: start,
         end: end,
-        count: count
+        count: count,
+        factoryType: factoryType
     };
 
     // --- ЛОГИРОВАНИЕ ДЛЯ calculateAndSaveTabulatedPoints ---
@@ -213,5 +219,58 @@ export const api = {
       throw new Error(errorMessage);
     }
     return response.json(); // Возвращает массив функций
+  },
+
+  // --- НОВОЕ: Получение табулированных точек по functionId ---
+  getTabulatedPointsByFunctionId: async (functionId) => {
+    if (!storedCredentials) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+
+    const response = await fetch(`/api/tabulated-points/function/${functionId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${storedCredentials}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage = errorData.error || errorData.message || 'Failed to load tabulated points';
+      throw new Error(errorMessage);
+    }
+
+    return await response.json(); // Массив точек
+  },
+
+  // --- НОВОЕ: Выполнение операции над двумя табулированными функциями ---
+  executeOperation: async (functionIdA, functionIdB, operation, factoryType = 'array') => {
+    if (!storedCredentials) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+
+    const payload = {
+      functionIdA,
+      functionIdB,
+      operation,        // "add", "subtract", "multiply", "divide"
+      factoryType       // "array" или "linked-list"
+    };
+
+    const response = await fetch('/api/operations/execute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${storedCredentials}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage = errorData.error || errorData.message || 'Failed to execute operation';
+      throw new Error(errorMessage);
+    }
+
+    return await response.json(); // { points: [{ x: number, y: number }, ...], ... }
   }
 };
