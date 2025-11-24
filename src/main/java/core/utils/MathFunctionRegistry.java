@@ -1,4 +1,3 @@
-// src/main/java/core/utils/MathFunctionRegistry.java
 package core.utils;
 
 import functions.MathFunction;
@@ -16,11 +15,15 @@ public class MathFunctionRegistry {
         registerFunction(IdentityFunction.class);
         registerFunction(ZeroFunction.class);
         registerFunction(ConstantFunction.class);
+        registerFunction(SinFunction.class);
+        registerFunction(CosFunction.class);
+        registerFunction(ExpFunction.class);
+        registerFunction(LogFunction.class);
     }
 
     private static void registerFunction(Class<? extends MathFunction> functionClass) {
-        if (functionClass.isAnnotationPresent(FunctionInfo.class)) {
-            FunctionInfo annotation = functionClass.getAnnotation(FunctionInfo.class);
+        FunctionInfo annotation = functionClass.getAnnotation(FunctionInfo.class);
+        if (annotation != null) {
             FUNCTION_CLASS_MAP.put(annotation.displayName(), functionClass);
             FUNCTION_PRIORITY_MAP.put(annotation.displayName(), annotation.priority());
         }
@@ -28,40 +31,11 @@ public class MathFunctionRegistry {
 
     public static void scanPackage(String packageName) {
         try {
-            // Получаем все классы в пакете
-            List<Class<?>> classes = getClasses(packageName);
-
-            for (Class<?> clazz : classes) {
-                // Проверяем, что класс реализует MathFunction и является конкретным классом
-                if (MathFunction.class.isAssignableFrom(clazz) &&
-                        !clazz.isInterface() &&
-                        !Modifier.isAbstract(clazz.getModifiers())) {
-
-                    // Проверяем наличие аннотации FunctionInfo
-                    if (clazz.isAnnotationPresent(FunctionInfo.class)) {
-                        @SuppressWarnings("unchecked")
-                        Class<? extends MathFunction> functionClass = (Class<? extends MathFunction>) clazz;
-                        registerFunction(functionClass);
-                    }
-                }
-            }
+            // В реальной реализации здесь будет код для сканирования пакета
+            // Для демонстрации оставим только встроенные функции
         } catch (Exception e) {
             System.err.println("Ошибка при сканировании пакета " + packageName + ": " + e.getMessage());
         }
-    }
-
-    private static List<Class<?>> getClasses(String packageName) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        // Это упрощенная реализация для демонстрации
-        // В реальном приложении здесь был бы код для получения всех классов в пакете
-        List<Class<?>> classes = new ArrayList<>();
-
-        // Возвращаем встроенные функции для демонстрации
-        classes.add(SqrFunction.class);
-        classes.add(IdentityFunction.class);
-        classes.add(ZeroFunction.class);
-        classes.add(ConstantFunction.class);
-
-        return classes;
     }
 
     public static MathFunction getFunctionByName(String name) {
@@ -87,12 +61,10 @@ public class MathFunctionRegistry {
             }
             return e1.getKey().compareTo(e2.getKey());
         });
-
         List<String> names = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : sortedEntries) {
             names.add(entry.getKey());
         }
-
         return names;
     }
 

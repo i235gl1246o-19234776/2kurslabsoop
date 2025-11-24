@@ -1,4 +1,3 @@
-// src/main/java/core/controller/IntegrationController.java
 package core.controller;
 
 import core.entity.FunctionEntity;
@@ -15,6 +14,7 @@ import functions.factory.ArrayTabulatedFunctionFactory;
 import functions.factory.LinkedListTabulatedFunctionFactory;
 import functions.factory.TabulatedFunctionFactory;
 import operations.ParallelIntegrator;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -74,7 +75,8 @@ public class IntegrationController {
 
         UserEntity owner = functionOpt.get().getUser();
         boolean hasAccess = owner.getId().equals(currentUser.getId());
-        log.debug("Проверка доступа: пользователь '{}' имеет доступ к функции {}: {}", currentUsername, functionId, hasAccess);
+        log.debug("Проверка доступа: пользователь '{}' имеет доступ к функции {}: {}",
+                currentUsername, functionId, hasAccess);
         return hasAccess;
     }
 
@@ -98,7 +100,6 @@ public class IntegrationController {
 
         // Сортируем точки по X
         points.sort((p1, p2) -> Double.compare(p1.getXVal(), p2.getXVal()));
-
         double[] xValues = points.stream().mapToDouble(TabulatedFunctionEntity::getXVal).toArray();
         double[] yValues = points.stream().mapToDouble(TabulatedFunctionEntity::getYVal).toArray();
 
@@ -152,7 +153,6 @@ public class IntegrationController {
             long duration = (endTime - startTime) / 1_000_000; // В миллисекундах
 
             log.info("Интеграл вычислен успешно. Значение: {}, время: {} мс", result, duration);
-
             return ResponseEntity.ok(new IntegrationResultDto(result, duration));
         } catch (Exception e) {
             log.error("Ошибка при вычислении интеграла: {}", e.getMessage(), e);

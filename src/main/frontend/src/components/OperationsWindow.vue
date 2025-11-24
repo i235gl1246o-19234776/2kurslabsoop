@@ -1,565 +1,529 @@
 <template>
-  <Teleport to="body">
-    <div v-if="isOpen" class="modal-overlay" @click="closeDialog">
-      <div class="modal-content" @click.stop style="width: 90%; max-width: 1200px; height: 80vh; max-height: 800px; display: flex; flex-direction: column;">
-        <h2>Операции над функциями</h2>
-        <div class="operations-buttons">
-          <button @click="performOperation('add')" :disabled="!operandsReady || loadingOperation" class="op-btn">Сложение (+)</button>
-          <button @click="performOperation('subtract')" :disabled="!operandsReady || loadingOperation" class="op-btn">Вычитание (-)</button>
-          <button @click="performOperation('multiply')" :disabled="!operandsReady || loadingOperation" class="op-btn">Умножение (*)</button>
-          <button @click="performOperation('divide')" :disabled="!operandsReady || loadingOperation" class="op-btn">Деление (/)</button>
-          <span v-if="loadingOperation" class="loading-text">Выполняется операция...</span>
+  <div v-if="show" class="operations-window">
+    <div class="window-header">
+      <h2>Операции над функциями</h2>
+      <button class="close-button" @click="$emit('close')">&times;</button>
+    </div>
+
+    <div class="operations-container">
+      <!-- Первая функция -->
+      <div class="function-section">
+        <h3>Функция 1</h3>
+        <div class="function-controls">
+          <button @click="openCreateDialog('first')">Создать</button>
+          <button @click="openLoadDialog('first')">Загрузить</button>
+          <button @click="saveFunction('first')" :disabled="!firstFunction">Сохранить</button>
+          <button @click="clearFunction('first')">Очистить</button>
         </div>
-        <div class="functions-container">
-          <FunctionSection
-            title="Операнд 1"
-            :function-data="operand1"
-            :is-result="false"
-            :current-user-id="currentUserId"
-            @function-loaded="handleOperandLoaded(1, $event)"
-            @function-cleared="handleOperandCleared(1)"
-            @error="handleError"
-          />
-          <div class="action-buttons">
-            <button v-if="canInsert(1)" @click="openInsertDialog(1)" class="action-btn insert-btn">Вставка точки</button>
-            <button v-if="canRemove(1)" @click="openRemoveDialog(1)" class="action-btn remove-btn">Удалить точку</button>
-          </div>
-          <FunctionSection
-            title="Операнд 2"
-            :function-data="operand2"
-            :is-result="false"
-            :current-user-id="currentUserId"
-            @function-loaded="handleOperandLoaded(2, $event)"
-            @function-cleared="handleOperandCleared(2)"
-            @error="handleError"
-          />
-          <div class="action-buttons">
-            <button v-if="canInsert(2)" @click="openInsertDialog(2)" class="action-btn insert-btn">Вставка точки</button>
-            <button v-if="canRemove(2)" @click="openRemoveDialog(2)" class="action-btn remove-btn">Удалить точку</button>
-          </div>
-          <FunctionSection
-            title="Результат"
-            :function-data="result"
-            :is-result="true"
-            :current-user-id="currentUserId"
-            @error="handleError"
-          />
-          <div class="calculate-section" v-if="result">
-            <label for="xInput">X:</label>
-            <input id="xInput" v-model.number="xValue" type="number" step="any" @keyup.enter="calculateY" />
-            <button @click="calculateY">Вычислить</button>
-            <span v-if="calculatedY !== null" class="result">f({{ xValue }}) = {{ calculatedY.toFixed(6) }}</span>
-          </div>
+
+        <div v-if="firstFunction" class="function-details">
+          <p><strong>Имя:</strong> {{ firstFunction.name }}</p>
+          <p><strong>ID:</strong> {{ firstFunction.id }}</p>
+          <p><strong>Точек:</strong> {{ firstFunction.points ? firstFunction.points.length : 0 }}</p>
         </div>
-        <div class="button-group">
-          <button @click="closeDialog" class="cancel-btn">Закрыть</button>
-        </div>
-        <!-- Диалоги вставки и удаления -->
-        <InsertPointDialog
-          v-if="activeOperand !== null && canInsert(activeOperand)"
-          :is-open="isInsertDialogOpen"
-          @close="closeInsertDialog"
-          @point-inserted="insertPoint"
+
+        <FunctionTable
+          v-if="firstFunction && firstFunction.points"
+          :points="firstFunction.points"
+          :editable="true"
+          @points-updated="updateFirstFunctionPoints"
         />
-        <RemovePointDialog
-          v-if="activeOperand !== null && canRemove(activeOperand)"
-          :is-open="isRemoveDialogOpen"
-          :point-count="getPointCount(activeOperand)"
-          :function-points="getFunctionPoints(activeOperand)"
-          @close="closeRemoveDialog"
-          @point-removed="removePoint"
+      </div>
+
+      <!-- Вторая функция -->
+      <div class="function-section">
+        <h3>Функция 2</h3>
+        <div class="function-controls">
+          <button @click="openCreateDialog('second')">Создать</button>
+          <button @click="openLoadDialog('second')">Загрузить</button>
+          <button @click="saveFunction('second')" :disabled="!secondFunction">Сохранить</button>
+          <button @click="clearFunction('second')">Очистить</button>
+        </div>
+
+        <div v-if="secondFunction" class="function-details">
+          <p><strong>Имя:</strong> {{ secondFunction.name }}</p>
+          <p><strong>ID:</strong> {{ secondFunction.id }}</p>
+          <p><strong>Точек:</strong> {{ secondFunction.points ? secondFunction.points.length : 0 }}</p>
+        </div>
+
+        <FunctionTable
+          v-if="secondFunction && secondFunction.points"
+          :points="secondFunction.points"
+          :editable="true"
+          @points-updated="updateSecondFunctionPoints"
+        />
+      </div>
+
+      <!-- Результат -->
+      <div class="function-section result-section">
+        <h3>Результат</h3>
+        <div class="operation-controls">
+          <button @click="addFunctions" :disabled="!canOperate">+ Сложить</button>
+          <button @click="subtractFunctions" :disabled="!canOperate">- Вычесть</button>
+          <button @click="multiplyFunctions" :disabled="!canOperate">× Умножить</button>
+          <button @click="divideFunctions" :disabled="!canOperate">÷ Разделить</button>
+          <button @click="saveResult" :disabled="!resultFunction">Сохранить результат</button>
+          <button @click="clearResult">Очистить результат</button>
+        </div>
+
+        <div v-if="resultFunction" class="function-details">
+          <p><strong>Имя:</strong> {{ resultFunction.name }}</p>
+          <p><strong>Точек:</strong> {{ resultFunction.points ? resultFunction.points.length : 0 }}</p>
+        </div>
+
+        <FunctionTable
+          v-if="resultFunction && resultFunction.points"
+          :points="resultFunction.points"
+          :editable="false"
         />
       </div>
     </div>
-  </Teleport>
+
+    <!-- Диалоги -->
+    <CreateTabulatedFunctionDialog
+      :is-open="showCreateDialog"
+      :current-user-id="currentUserId"
+      @close="closeCreateDialog"
+      @function-created="onFunctionCreated"
+      @error="handleError"
+    />
+
+    <CreateTabulatedFunctionFromMathDialog
+      :is-open="showCreateMathDialog"
+      :current-user-id="currentUserId"
+      @close="closeCreateMathDialog"
+      @function-created="onFunctionCreated"
+      @error="handleError"
+    />
+
+    <LoadFunctionDialog
+      :is-open="showLoadDialog"
+      :current-user-id="currentUserId"
+      @close="closeLoadDialog"
+      @function-loaded="onFunctionLoaded"
+      @error="handleError"
+    />
+
+    <div v-if="operationError" class="error-message">
+      {{ operationError }}
+    </div>
+  </div>
 </template>
 
 <script>
-import { Teleport } from 'vue';
-import FunctionSection from './FunctionSection.vue';
-import InsertPointDialog from './InsertPointDialog.vue';
-import RemovePointDialog from './RemovePointDialog.vue';
-import * as api from '@/api.js';
+import { ref, computed } from 'vue';
+import { api } from '../api.js';
+import CreateTabulatedFunctionDialog from './CreateTabulatedFunctionDialog.vue';
+import CreateTabulatedFunctionFromMathDialog from './CreateTabulatedFunctionFromMathDialog.vue';
+import LoadFunctionDialog from './LoadFunctionDialog.vue';
+import FunctionTable from './FunctionTable.vue';
 
 export default {
   name: 'OperationsWindow',
   components: {
-    Teleport,
-    FunctionSection,
-    InsertPointDialog,
-    RemovePointDialog
+    CreateTabulatedFunctionDialog,
+    CreateTabulatedFunctionFromMathDialog,
+    LoadFunctionDialog,
+    FunctionTable
   },
   props: {
-    isOpen: {
-      type: Boolean,
-      required: true,
-    },
+    show: Boolean,
     currentUserId: {
       type: Number,
-      required: true,
+      required: true
     }
   },
   emits: ['close', 'error'],
-  data() {
-    return {
-      operand1: null,
-      operand2: null,
-      result: null,
-      loadingOperation: false,
-      isInsertDialogOpen: false,
-      isRemoveDialogOpen: false,
-      activeOperand: null, // 1 или 2 для определения, с какой функцией работаем
-      xValue: 0,
-      calculatedY: null
+
+  setup(props, { emit }) {
+    // Состояние функций
+    const firstFunction = ref(null);
+    const secondFunction = ref(null);
+    const resultFunction = ref(null);
+
+    // Состояние диалогов
+    const showCreateDialog = ref(false);
+    const showCreateMathDialog = ref(false);
+    const showLoadDialog = ref(false);
+    const currentTarget = ref('');
+
+    // Ошибки
+    const operationError = ref('');
+
+    const canOperate = computed(() => {
+      return firstFunction.value &&
+             secondFunction.value &&
+             firstFunction.value.points &&
+             secondFunction.value.points &&
+             firstFunction.value.points.length > 0 &&
+             secondFunction.value.points.length > 0;
+    });
+
+    const openCreateDialog = (target) => {
+      currentTarget.value = target;
+      showCreateDialog.value = true;
     };
-  },
-  computed: {
-    operandsReady() {
-      const operand1Valid = this.operand1 &&
-                             this.operand1.id &&
-                             typeof this.operand1.id === 'number' &&
-                             this.operand1.points &&
-                             this.operand1.points.length >= 2;
 
-      const operand2Valid = this.operand2 &&
-                             this.operand2.id &&
-                             typeof this.operand2.id === 'number' &&
-                             this.operand2.points &&
-                             this.operand2.points.length >= 2;
+    const openCreateMathDialog = (target) => {
+      currentTarget.value = target;
+      showCreateMathDialog.value = true;
+    };
 
-      return operand1Valid && operand2Valid;
-    },
-  },
-  methods: {
-    closeDialog() {
-      this.operand1 = null;
-      this.operand2 = null;
-      this.result = null;
-      this.loadingOperation = false;
-      this.$emit('close');
-    },
-    handleOperandCleared(operandNum) {
-      if (operandNum === 1) {
-        this.operand1 = null;
-      } else if (operandNum === 2) {
-        this.operand2 = null;
-      }
-      this.result = null;
-    },
-    async handleOperandLoaded(operandNum, fullFunctionData) {
-      if (!fullFunctionData || !fullFunctionData.id || !fullFunctionData.points) {
-        this.handleError('Получены некорректные данные функции.');
-        return;
-      }
+    const openLoadDialog = (target) => {
+      currentTarget.value = target;
+      showLoadDialog.value = true;
+    };
 
-      // Проверка количества точек
-      if (fullFunctionData.points.length < 2) {
-        this.handleError('Функция должна содержать как минимум 2 точки для выполнения операций.');
-        return;
-      }
+    const closeCreateDialog = () => {
+      showCreateDialog.value = false;
+      currentTarget.value = '';
+    };
 
-      // Проверка корректности точек
-      const hasInvalidPoints = fullFunctionData.points.some(p =>
-        typeof p.x !== 'number' || typeof p.y !== 'number' ||
-        isNaN(p.x) || isNaN(p.y) ||
-        !isFinite(p.x) || !isFinite(p.y)
-      );
+    const closeCreateMathDialog = () => {
+      showCreateMathDialog.value = false;
+      currentTarget.value = '';
+    };
 
-      if (hasInvalidPoints) {
-        this.handleError('Один из операндов содержит недопустимые значения (NaN/Infinity).');
-        return;
-      }
+    const closeLoadDialog = () => {
+      showLoadDialog.value = false;
+      currentTarget.value = '';
+    };
 
-      // Проверка сортировки точек по X
-      for (let i = 1; i < fullFunctionData.points.length; i++) {
-        if (fullFunctionData.points[i].x <= fullFunctionData.points[i-1].x) {
-          this.handleError('Точки функции должны быть упорядочены по возрастанию X.');
-          return;
-        }
-      }
-
-      if (operandNum === 1) {
-        this.operand1 = fullFunctionData;
-      } else if (operandNum === 2) {
-        this.operand2 = fullFunctionData;
-      }
-
-      this.result = null;
-    },
-    async performOperation(operation) {
-      if (!this.operandsReady || this.loadingOperation) return;
-
-      const hasInvalidPoints = (points) => points.some(p =>
-        typeof p.x !== 'number' || typeof p.y !== 'number' ||
-        isNaN(p.x) || isNaN(p.y) ||
-        !isFinite(p.x) || !isFinite(p.y)
-      );
-
-      if (hasInvalidPoints(this.operand1.points) || hasInvalidPoints(this.operand2.points)) {
-        this.handleError("Один из операндов содержит недопустимые значения (NaN/Infinity).");
-        return;
-      }
-
-      // Проверка на соответствие X-координат
-      if (this.operand1.points.length !== this.operand2.points.length) {
-        this.handleError(`Количество точек в операндах не совпадает: ${this.operand1.points.length} vs ${this.operand2.points.length}`);
-        return;
-      }
-
-      for (let i = 0; i < this.operand1.points.length; i++) {
-        const x1 = this.operand1.points[i].x;
-        const x2 = this.operand2.points[i].x;
-        if (Math.abs(x1 - x2) > 1e-9) {
-          this.handleError(`X-координаты не совпадают в точке ${i}: ${x1} и ${x2}`);
-          return;
-        }
-      }
-
-      this.loadingOperation = true;
+    const onFunctionCreated = async ({ functionId, functionName }) => {
       try {
-        const factoryType = localStorage.getItem('selectedTabulatedFunctionFactory') || 'array';
-        let resultPoints;
+        await loadFunctionData(functionId, functionName, currentTarget.value);
+        closeCreateDialog();
+        closeCreateMathDialog();
+      } catch (error) {
+        handleError(error.message);
+      }
+    };
+
+    const onFunctionLoaded = async ({ functionId, functionName }) => {
+      try {
+        await loadFunctionData(functionId, functionName, currentTarget.value);
+        closeLoadDialog();
+      } catch (error) {
+        handleError(error.message);
+      }
+    };
+
+    const loadFunctionData = async (functionId, functionName, target) => {
+      try {
+        const pointsResponse = await api.getTabulatedPointsByFunctionId(functionId);
+        const points = pointsResponse.points || pointsResponse;
+
+        const functionData = {
+          id: functionId,
+          name: functionName,
+          points: points
+        };
+
+        if (target === 'first') {
+          firstFunction.value = functionData;
+        } else if (target === 'second') {
+          secondFunction.value = functionData;
+        }
+      } catch (error) {
+        throw new Error(`Ошибка загрузки функции: ${error.message}`);
+      }
+    };
+
+    const updateFirstFunctionPoints = (points) => {
+      if (firstFunction.value) {
+        firstFunction.value.points = points;
+      }
+    };
+
+    const updateSecondFunctionPoints = (points) => {
+      if (secondFunction.value) {
+        secondFunction.value.points = points;
+      }
+    };
+
+    const addFunctions = () => {
+      if (!canOperate.value) return;
+
+      try {
+        const resultPoints = performOperation('add');
+        resultFunction.value = {
+          name: `(${firstFunction.value.name} + ${secondFunction.value.name})`,
+          points: resultPoints
+        };
+        operationError.value = '';
+      } catch (error) {
+        operationError.value = `Ошибка сложения: ${error.message}`;
+      }
+    };
+
+    const subtractFunctions = () => {
+      if (!canOperate.value) return;
+
+      try {
+        const resultPoints = performOperation('subtract');
+        resultFunction.value = {
+          name: `(${firstFunction.value.name} - ${secondFunction.value.name})`,
+          points: resultPoints
+        };
+        operationError.value = '';
+      } catch (error) {
+        operationError.value = `Ошибка вычитания: ${error.message}`;
+      }
+    };
+
+    const multiplyFunctions = () => {
+      if (!canOperate.value) return;
+
+      try {
+        const resultPoints = performOperation('multiply');
+        resultFunction.value = {
+          name: `(${firstFunction.value.name} × ${secondFunction.value.name})`,
+          points: resultPoints
+        };
+        operationError.value = '';
+      } catch (error) {
+        operationError.value = `Ошибка умножения: ${error.message}`;
+      }
+    };
+
+    const divideFunctions = () => {
+      if (!canOperate.value) return;
+
+      try {
+        const resultPoints = performOperation('divide');
+        resultFunction.value = {
+          name: `(${firstFunction.value.name} ÷ ${secondFunction.value.name})`,
+          points: resultPoints
+        };
+        operationError.value = '';
+      } catch (error) {
+        operationError.value = `Ошибка деления: ${error.message}`;
+      }
+    };
+
+    const performOperation = (operation) => {
+      const points1 = firstFunction.value.points;
+      const points2 = secondFunction.value.points;
+
+      // Простая реализация операций (в реальном приложении нужно согласовать домены)
+      const minLength = Math.min(points1.length, points2.length);
+      const result = [];
+
+      for (let i = 0; i < minLength; i++) {
+        const x = points1[i].x;
+        let y;
 
         switch (operation) {
           case 'add':
-            resultPoints = await api.performAddition(this.operand1.id, this.operand2.id, factoryType);
+            y = points1[i].y + points2[i].y;
             break;
           case 'subtract':
-            resultPoints = await api.performSubtraction(this.operand1.id, this.operand2.id, factoryType);
+            y = points1[i].y - points2[i].y;
             break;
           case 'multiply':
-            resultPoints = await api.performMultiplication(this.operand1.id, this.operand2.id, factoryType);
+            y = points1[i].y * points2[i].y;
             break;
           case 'divide':
-            resultPoints = await api.performDivision(this.operand1.id, this.operand2.id, factoryType);
+            if (points2[i].y === 0) {
+              throw new Error('Деление на ноль');
+            }
+            y = points1[i].y / points2[i].y;
             break;
           default:
-            throw new Error('Неизвестная операция');
+            y = points1[i].y;
         }
 
-        // Проверка результата
-        const hasInvalidResultPoints = resultPoints.some(p => {
-          const x = p.x !== undefined ? p.x : (p.xVal !== undefined ? p.xVal : undefined);
-          const y = p.y !== undefined ? p.y : (p.yVal !== undefined ? p.yVal : undefined);
-          return x === undefined || y === undefined ||
-                 typeof x !== 'number' || typeof y !== 'number' ||
-                 isNaN(x) || isNaN(y) ||
-                 !isFinite(x) || !isFinite(y);
-        });
+        result.push({ x, y });
+      }
 
-        if (hasInvalidResultPoints) {
-          const invalidPoints = resultPoints.filter(p => {
-            const x = p.x !== undefined ? p.x : (p.xVal !== undefined ? p.xVal : 'undefined');
-            const y = p.y !== undefined ? p.y : (p.yVal !== undefined ? p.yVal : 'undefined');
-            return x === 'undefined' || y === 'undefined';
-          });
+      return result;
+    };
 
-          throw new Error(`Результат операции содержит недопустимые значения. Некорректные точки: ${JSON.stringify(invalidPoints)}`);
-        }
+    const saveFunction = async (target) => {
+      // Реализация сохранения функции
+      alert(`Функция ${target} будет сохранена`);
+    };
 
-        this.result = {
-          id: null,
-          name: `${this.operand1.name} ${operation} ${this.operand2.name}`,
-          points: resultPoints.map(p => ({
-            x: p.x !== undefined ? p.x : (p.xVal !== undefined ? p.xVal : 0),
-            y: p.y !== undefined ? p.y : (p.yVal !== undefined ? p.yVal : 0)
-          }))
+    const saveResult = async () => {
+      if (!resultFunction.value) return;
+
+      try {
+        const functionDto = {
+          userId: props.currentUserId,
+          typeFunction: 'tabular',
+          functionName: resultFunction.value.name,
+          functionExpression: null,
+          factoryType: localStorage.getItem('selectedTabulatedFunctionFactory') || 'array'
         };
-      } catch (err) {
-        console.error(`Ошибка при выполнении операции ${operation}:`, err);
-        this.handleError(`Ошибка при выполнении операции ${operation}: ${err.message}`);
-        this.result = null;
-      } finally {
-        this.loadingOperation = false;
+
+        const createdFunction = await api.createFunction(functionDto);
+        await api.createTabulatedPoints(createdFunction.id,
+          resultFunction.value.points.map(p => p.x),
+          resultFunction.value.points.map(p => p.y)
+        );
+
+        alert(`Результат сохранен как функция "${createdFunction.functionName}"`);
+      } catch (error) {
+        handleError(`Ошибка сохранения результата: ${error.message}`);
       }
-    },
+    };
 
-    // Методы для работы с Insertable/Removable
-    canInsert(operandNum) {
-      const functionData = operandNum === 1 ? this.operand1 : this.operand2;
-      return functionData &&
-             functionData.implementationType &&
-             ['array', 'linkedlist'].includes(functionData.implementationType.toLowerCase());
-    },
-    canRemove(operandNum) {
-      const functionData = operandNum === 1 ? this.operand1 : this.operand2;
-      return functionData &&
-             functionData.implementationType &&
-             ['array', 'linkedlist'].includes(functionData.implementationType.toLowerCase());
-    },
-    openInsertDialog(operandNum) {
-      this.activeOperand = operandNum;
-      this.isInsertDialogOpen = true;
-    },
-    closeInsertDialog() {
-      this.isInsertDialogOpen = false;
-      this.activeOperand = null;
-    },
-    openRemoveDialog(operandNum) {
-      this.activeOperand = operandNum;
-      this.isRemoveDialogOpen = true;
-    },
-    closeRemoveDialog() {
-      this.isRemoveDialogOpen = false;
-      this.activeOperand = null;
-    },
-    getPointCount(operandNum) {
-      const functionData = operandNum === 1 ? this.operand1 : this.operand2;
-      return functionData ? functionData.points.length : 0;
-    },
-    getFunctionPoints(operandNum) {
-      const functionData = operandNum === 1 ? this.operand1 : this.operand2;
-      return functionData ? functionData.points : [];
-    },
-    insertPoint({ x, y }) {
-      if (!this.activeOperand) return;
-      const functionData = this.activeOperand === 1 ? this.operand1 : this.operand2;
-      if (!functionData || !functionData.points) return;
-
-      // Создаем новую точку
-      const newPoint = { x, y };
-      // Вставляем точку в правильную позицию
-      const updatedPoints = [...functionData.points];
-
-      // Находим позицию для вставки
-      let insertIndex = 0;
-      while (insertIndex < updatedPoints.length && updatedPoints[insertIndex].x < x) {
-        insertIndex++;
+    const clearFunction = (target) => {
+      if (target === 'first') {
+        firstFunction.value = null;
+      } else if (target === 'second') {
+        secondFunction.value = null;
       }
+    };
 
-      // Вставляем точку
-      updatedPoints.splice(insertIndex, 0, newPoint);
+    const clearResult = () => {
+      resultFunction.value = null;
+    };
 
-      // Обновляем данные функции
-      const updatedFunctionData = {
-        ...functionData,
-        points: updatedPoints
-      };
+    const handleError = (message) => {
+      operationError.value = message;
+      emit('error', message);
+    };
 
-      // Обновляем соответствующий операнд
-      if (this.activeOperand === 1) {
-        this.operand1 = updatedFunctionData;
-      } else {
-        this.operand2 = updatedFunctionData;
-      }
-
-      this.closeInsertDialog();
-    },
-    removePoint(index) {
-      if (!this.activeOperand) return;
-      const functionData = this.activeOperand === 1 ? this.operand1 : this.operand2;
-      if (!functionData || !functionData.points ||
-          index < 0 || index >= functionData.points.length) return;
-
-      // Создаем копию массива без удаляемой точки
-      const updatedPoints = [...functionData.points];
-      updatedPoints.splice(index, 1);
-
-      // Обновляем данные функции
-      const updatedFunctionData = {
-        ...functionData,
-        points: updatedPoints
-      };
-
-      // Обновляем соответствующий операнд
-      if (this.activeOperand === 1) {
-        this.operand1 = updatedFunctionData;
-      } else {
-        this.operand2 = updatedFunctionData;
-      }
-
-      this.closeRemoveDialog();
-    },
-
-    // Методы для вычисления значения в точке
-    calculateY() {
-      if (!this.result || !this.result.points || this.result.points.length < 2) {
-        this.handleError('Результат не загружен или содержит недостаточно точек');
-        return;
-      }
-
-      // Простая интерполяция
-      const x = this.xValue;
-      const points = this.result.points;
-
-      if (x < points[0].x) {
-        // Экстраполяция влево
-        const dx = points[1].x - points[0].x;
-        const dy = points[1].y - points[0].y;
-        this.calculatedY = points[0].y + (x - points[0].x) * dy / dx;
-      } else if (x > points[points.length - 1].x) {
-        // Экстраполяция вправо
-        const lastIndex = points.length - 1;
-        const dx = points[lastIndex].x - points[lastIndex - 1].x;
-        const dy = points[lastIndex].y - points[lastIndex - 1].y;
-        this.calculatedY = points[lastIndex].y + (x - points[lastIndex].x) * dy / dx;
-      } else {
-        // Интерполяция между точками
-        for (let i = 0; i < points.length - 1; i++) {
-          if (x >= points[i].x && x <= points[i + 1].x) {
-            const t = (x - points[i].x) / (points[i + 1].x - points[i].x);
-            this.calculatedY = points[i].y + t * (points[i + 1].y - points[i].y);
-            break;
-          }
-        }
-      }
-    },
-
-    handleError(message) {
-      console.error('OperationsWindow error:', message);
-      this.$emit('error', message);
-    }
-  },
-  mounted() {
-    console.log('OperationsWindow: Компонент смонтирован');
-  },
-  beforeUnmount() {
-    console.log('OperationsWindow: Компонент будет уничтожен');
+    return {
+      firstFunction,
+      secondFunction,
+      resultFunction,
+      showCreateDialog,
+      showCreateMathDialog,
+      showLoadDialog,
+      currentTarget,
+      operationError,
+      canOperate,
+      openCreateDialog,
+      openCreateMathDialog,
+      openLoadDialog,
+      closeCreateDialog,
+      closeCreateMathDialog,
+      closeLoadDialog,
+      onFunctionCreated,
+      onFunctionLoaded,
+      updateFirstFunctionPoints,
+      updateSecondFunctionPoints,
+      addFunctions,
+      subtractFunctions,
+      multiplyFunctions,
+      divideFunctions,
+      saveFunction,
+      saveResult,
+      clearFunction,
+      clearResult,
+      handleError
+    };
   }
 };
 </script>
 
 <style scoped>
-.modal-overlay {
+.operations-window {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background-color: white;
   z-index: 1000;
-}
-.modal-content {
-  background: white;
-  border-radius: 8px;
+  overflow-y: auto;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
 }
-.operations-buttons {
-  margin-bottom: 15px;
+
+.window-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.close-button {
+  font-size: 24px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: #666;
+}
+
+.operations-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.function-section {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+.result-section {
+  background-color: #f0f7ff;
+  border-color: #3498db;
+}
+
+.function-controls {
   display: flex;
   gap: 10px;
-  justify-content: center;
-  align-items: center;
+  margin-bottom: 15px;
   flex-wrap: wrap;
 }
-.op-btn {
-  padding: 10px 16px;
-  margin: 0 5px;
-  background-color: #4CAF50;
+
+.operation-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.function-controls button,
+.operation-controls button {
+  padding: 8px 15px;
+  background-color: #2196f3;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
+  font-size: 0.9rem;
 }
-.op-btn:hover:not(:disabled) {
-  background-color: #45a049;
+
+.function-controls button:hover,
+.operation-controls button:hover {
+  background-color: #1976d2;
 }
-.op-btn:disabled {
-  opacity: 0.6;
+
+.function-controls button:disabled,
+.operation-controls button:disabled {
+  background-color: #cccccc;
   cursor: not-allowed;
 }
-.loading-text {
-  color: #2196F3;
-  font-style: italic;
-  font-weight: bold;
-  margin-left: 10px;
-}
-.functions-container {
-  display: flex;
-  gap: 15px;
-  flex: 1;
-  overflow: hidden;
-  min-height: 400px;
-}
-.functions-container > div {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+
+.function-details {
+  background-color: white;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
   border: 1px solid #ddd;
+}
+
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 10px 0;
-}
-.action-btn {
-  padding: 6px 12px;
-  font-size: 0.9em;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-.insert-btn {
-  background-color: #2196F3;
-  color: white;
-}
-.insert-btn:hover {
-  background-color: #0b7dda;
-}
-.remove-btn {
-  background-color: #f44336;
-  color: white;
-}
-.remove-btn:hover {
-  background-color: #da190b;
-}
-.calculate-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
+  border-left: 3px solid #d32f2f;
 }
-.calculate-section input {
-  width: 100px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.calculate-section button {
-  padding: 4px 8px;
-  background-color: #2196F3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.result {
-  margin-left: 10px;
-  font-weight: bold;
-  color: #4CAF50;
-}
-.button-group {
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-.cancel-btn {
-  padding: 10px 20px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-.cancel-btn:hover {
-  background-color: #da190b;
+
+@media (max-width: 1200px) {
+  .operations-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

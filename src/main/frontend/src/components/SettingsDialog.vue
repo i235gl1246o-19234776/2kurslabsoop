@@ -2,16 +2,44 @@
   <div v-if="isOpen" class="modal-overlay" @click="closeDialog">
     <div class="modal-content" @click.stop>
       <h2>Настройки</h2>
-      <div class="input-section">
-        <label for="factorySelect">Выберите фабрику для создания табулированных функций:</label>
-        <select
-          id="factorySelect"
-          v-model="selectedFactoryKey"
-        >
-          <option value="array">ArrayTabulatedFunctionFactory (на основе массива)</option>
-          <option value="linkedlist">LinkedListTabulatedFunctionFactory (на основе связного списка)</option>
-        </select>
+
+      <div class="settings-section">
+        <h3>Фабрика табулированных функций</h3>
+        <div class="setting-group">
+          <label>
+            <input
+              type="radio"
+              v-model="selectedFactory"
+              value="array"
+            />
+            Массив
+          </label>
+          <label>
+            <input
+              type="radio"
+              v-model="selectedFactory"
+              value="linkedlist"
+            />
+            Связный список
+          </label>
+        </div>
       </div>
+
+      <div class="settings-section">
+        <h3>Настройки отображения</h3>
+        <div class="setting-group">
+          <label>
+            Количество точек для предпросмотра:
+            <input
+              type="number"
+              v-model.number="previewPoints"
+              min="5"
+              max="50"
+            />
+          </label>
+        </div>
+      </div>
+
       <div class="button-group">
         <button @click="saveSettings" class="save-btn">Сохранить</button>
         <button @click="closeDialog" class="cancel-btn">Отмена</button>
@@ -19,6 +47,7 @@
     </div>
   </div>
 </template>
+
 <script>
 export default {
   name: 'SettingsDialog',
@@ -28,26 +57,40 @@ export default {
       required: true
     }
   },
-  emits: ['close', 'error'],
+  emits: ['close'],
+
   data() {
     return {
-      selectedFactoryKey: 'array' // Значение по умолчанию
+      selectedFactory: 'array',
+      previewPoints: 10
     };
   },
-  created() {
-    // Загружаем сохранённую фабрику при создании компонента
-    const savedFactory = localStorage.getItem('selectedTabulatedFunctionFactory');
-    if (savedFactory) {
-      this.selectedFactoryKey = savedFactory;
-    }
+
+  mounted() {
+    this.loadSettings();
   },
+
   methods: {
-    saveSettings() {
-      // Сохраняем выбранный ключ фабрики в localStorage
-      localStorage.setItem('selectedTabulatedFunctionFactory', this.selectedFactoryKey);
-      console.log(`Выбрана фабрика: ${this.selectedFactoryKey}`);
-      this.$emit('close');
+    loadSettings() {
+      const savedFactory = localStorage.getItem('selectedTabulatedFunctionFactory');
+      const savedPreviewPoints = localStorage.getItem('previewPoints');
+
+      if (savedFactory) {
+        this.selectedFactory = savedFactory;
+      }
+
+      if (savedPreviewPoints) {
+        this.previewPoints = parseInt(savedPreviewPoints);
+      }
     },
+
+    saveSettings() {
+      localStorage.setItem('selectedTabulatedFunctionFactory', this.selectedFactory);
+      localStorage.setItem('previewPoints', this.previewPoints.toString());
+      alert('Настройки сохранены!');
+      this.closeDialog();
+    },
+
     closeDialog() {
       this.$emit('close');
     }
@@ -74,34 +117,45 @@ export default {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  min-width: 400px;
+  min-width: 500px;
   max-width: 90%;
   max-height: 90vh;
   overflow-y: auto;
 }
 
-.input-section {
+.settings-section {
   margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
 }
 
-.input-section label {
-  display: block;
-  margin-bottom: 5px;
+.settings-section h3 {
+  margin-bottom: 10px;
+  color: #333;
 }
 
-.input-section select {
-  width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setting-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 .button-group {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .save-btn {
-  background-color: #2196F3;
+  background-color: #4CAF50;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -110,7 +164,7 @@ export default {
 }
 
 .save-btn:hover {
-  background-color: #1976D2;
+  background-color: #45a049;
 }
 
 .cancel-btn {

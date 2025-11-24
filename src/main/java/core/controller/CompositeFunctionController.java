@@ -1,22 +1,21 @@
-// src/main/java/core/controller/CompositeFunctionController.java
 package core.controller;
 
 import core.entity.FunctionEntity;
 import core.entity.UserEntity;
 import core.repository.FunctionRepository;
 import core.repository.UserRepository;
-import core.dto.CompositeFunctionDto;
 import core.dto.FunctionDto;
+import core.dto.CompositeFunctionDto;
 import functions.CompositeFunction;
 import functions.MathFunction;
 import core.utils.MathFunctionRegistry;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,7 +63,8 @@ public class CompositeFunctionController {
             FunctionEntity functionEntity = new FunctionEntity();
             functionEntity.setUser(user);
             functionEntity.setTypeFunction(FunctionEntity.FunctionType.analytic);
-            functionEntity.setFunctionName(compositeClassName);
+            functionEntity.setFunctionName(compositeDto.getCustomName() != null ?
+                    compositeDto.getCustomName() : compositeClassName);
             functionEntity.setFunctionExpression(
                     compositeDto.getOuterFunctionName() + "(" + compositeDto.getBaseFunctionName() + "(x))"
             );
@@ -77,7 +77,7 @@ public class CompositeFunctionController {
             resultDto.setId(savedEntity.getId());
             resultDto.setUserId(user.getId());
             resultDto.setTypeFunction("analytic");
-            resultDto.setFunctionName(compositeClassName);
+            resultDto.setFunctionName(functionEntity.getFunctionName());
             resultDto.setFunctionExpression(functionEntity.getFunctionExpression());
 
             // Возвращаем результат
