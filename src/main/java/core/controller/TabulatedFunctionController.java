@@ -67,34 +67,41 @@ public class TabulatedFunctionController {
         return hasAccess;
     }
 
-
     @GetMapping("/function/{functionId}")
     public ResponseEntity<List<TabulatedFunctionDto>> getAllPointsByFunctionId(@PathVariable Long functionId) {
-        log.info("Запрос на получение всех точек для функции ID: {}", functionId);
+        log.info("Запрос на получение всех точек для функции с ID: {}", functionId);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            log.warn("Попытка доступа без аутентификации к точкам функции ID: {}", functionId);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                log.warn("Попытка доступа без аутентификации к точкам функции с ID: {}", functionId);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            Optional<FunctionEntity> functionOpt = functionRepository.findById(functionId);
+            if (functionOpt.isEmpty()) {
+                log.warn("Функция с ID {} не найдена при запросе точек", functionId);
+                return ResponseEntity.notFound().build();
+            }
+
+            if (!hasAccessToFunction(functionId)) {
+                log.warn("Пользователь '{}' пытается получить точки функции {}, к которой не имеет доступа", auth.getName(), functionId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(functionId);
+            List<TabulatedFunctionDto> pointDtos = points.stream()
+                    .map(point -> new TabulatedFunctionDto(point.getId(), point.getFunction().getId(), point.getXVal(), point.getYVal()))
+                    .collect(Collectors.toList());
+
+            log.info("Получено {} точек для функции с ID: {}", pointDtos.size(), functionId);
+            return ResponseEntity.ok(pointDtos);
+
+        } catch (Exception e) {
+            log.error("Внутренняя ошибка при загрузке точек функции с ID: {}", functionId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of(new TabulatedFunctionDto(null, null, 0.0, 0.0))); // Или просто body(null)
         }
-
-        Optional<FunctionEntity> functionOpt = functionRepository.findById(functionId);
-        if (functionOpt.isEmpty()) {
-            log.warn("Функция с ID {} не найдена при запросе точек", functionId);
-            return ResponseEntity.notFound().build();
-        }
-
-        if (!hasAccessToFunction(functionId)) {
-            log.warn("Пользователь '{}' пытается получить точки функции {}, к которой не имеет доступа", auth.getName(), functionId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(functionId);
-        List<TabulatedFunctionDto> pointDtos = points.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        log.info("Возвращено {} точек для функции ID: {}", pointDtos.size(), functionId);
-        return ResponseEntity.ok(pointDtos);
     }
 
     @GetMapping("/function/{functionId}/x/{xValue}")

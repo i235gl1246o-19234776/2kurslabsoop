@@ -1,54 +1,68 @@
+<!-- src/main/frontend/src/components/ui/InsertPointDialog.vue -->
 <template>
   <div v-if="isOpen" class="modal-overlay" @click="closeDialog">
     <div class="modal-content" @click.stop>
-      <h2>Настройки</h2>
+      <h2>Вставка новой точки</h2>
       <div class="input-section">
-        <label for="factorySelect">Выберите фабрику для создания табулированных функций:</label>
-        <select
-          id="factorySelect"
-          v-model="selectedFactoryKey"
-        >
-          <option value="array">ArrayTabulatedFunctionFactory (на основе массива)</option>
-          <option value="linkedlist">LinkedListTabulatedFunctionFactory (на основе связного списка)</option>
-        </select>
+        <label for="xInput">Значение X:</label>
+        <input
+          id="xInput"
+          v-model.number="xValue"
+          type="number"
+          step="any"
+          placeholder="Введите X"
+        />
+        <label for="yInput">Значение Y:</label>
+        <input
+          id="yInput"
+          v-model.number="yValue"
+          type="number"
+          step="any"
+          placeholder="Введите Y"
+        />
       </div>
       <div class="button-group">
-        <button @click="saveSettings" class="save-btn">Сохранить</button>
+        <button @click="insertPoint" class="create-btn">Вставить точку</button>
         <button @click="closeDialog" class="cancel-btn">Отмена</button>
       </div>
     </div>
   </div>
 </template>
+
 <script>
 export default {
-  name: 'SettingsDialog',
+  name: 'InsertPointDialog',
   props: {
     isOpen: {
       type: Boolean,
       required: true
     }
   },
-  emits: ['close', 'error'],
+  emits: ['close', 'point-inserted'],
   data() {
     return {
-      selectedFactoryKey: 'array' // Значение по умолчанию
+      xValue: 0,
+      yValue: 0
     };
   },
-  created() {
-    // Загружаем сохранённую фабрику при создании компонента
-    const savedFactory = localStorage.getItem('selectedTabulatedFunctionFactory');
-    if (savedFactory) {
-      this.selectedFactoryKey = savedFactory;
-    }
-  },
   methods: {
-    saveSettings() {
-      // Сохраняем выбранный ключ фабрики в localStorage
-      localStorage.setItem('selectedTabulatedFunctionFactory', this.selectedFactoryKey);
-      console.log(`Выбрана фабрика: ${this.selectedFactoryKey}`);
-      this.$emit('close');
+    insertPoint() {
+      if (typeof this.xValue !== 'number' || typeof this.yValue !== 'number' ||
+          isNaN(this.xValue) || isNaN(this.yValue) ||
+          !isFinite(this.xValue) || !isFinite(this.yValue)) {
+        alert('Пожалуйста, введите корректные числовые значения для X и Y.');
+        return;
+      }
+
+      this.$emit('point-inserted', {
+        x: this.xValue,
+        y: this.yValue
+      });
+      this.closeDialog();
     },
     closeDialog() {
+      this.xValue = 0;
+      this.yValue = 0;
       this.$emit('close');
     }
   }
@@ -68,7 +82,6 @@ export default {
   align-items: center;
   z-index: 1000;
 }
-
 .modal-content {
   background-color: white;
   padding: 20px;
@@ -79,28 +92,24 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
 }
-
 .input-section {
   margin-bottom: 20px;
 }
-
 .input-section label {
   display: block;
   margin-bottom: 5px;
 }
-
-.input-section select {
+.input-section input {
   width: 100%;
   padding: 8px;
+  margin-bottom: 10px;
   box-sizing: border-box;
 }
-
 .button-group {
   display: flex;
   justify-content: space-between;
 }
-
-.save-btn {
+.create-btn {
   background-color: #2196F3;
   color: white;
   padding: 10px 20px;
@@ -108,11 +117,9 @@ export default {
   border-radius: 4px;
   cursor: pointer;
 }
-
-.save-btn:hover {
-  background-color: #1976D2;
+.create-btn:hover {
+  background-color: #0b7dda;
 }
-
 .cancel-btn {
   background-color: #f44336;
   color: white;
@@ -121,7 +128,6 @@ export default {
   border-radius: 4px;
   cursor: pointer;
 }
-
 .cancel-btn:hover {
   background-color: #da190b;
 }

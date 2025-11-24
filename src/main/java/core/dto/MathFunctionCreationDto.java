@@ -26,7 +26,6 @@ public class MathFunctionCreationDto {
     @JsonProperty("userId")
     private Long userId;
 
-    // --- НОВОЕ поле для выбора фабрики ---
-    @JsonProperty("factoryType") // Может быть "array" или "linkedlist"
-    private String factoryType = "array"; // Значение по умолчанию
+    @JsonProperty("factoryType")
+    private String factoryType = "array";
 }

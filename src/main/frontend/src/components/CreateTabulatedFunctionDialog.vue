@@ -1,4 +1,3 @@
-<!-- src/components/ui/CreateTabulatedFunctionDialog.vue -->
 <template>
   <div v-if="isOpen" class="modal-overlay" @click="closeDialog">
     <div class="modal-content" @click.stop>
@@ -57,7 +56,9 @@
         </table>
         <div class="button-group">
           <!-- Кнопка "Создать" -->
-          <button @click="createFunction" class="create-btn">Создать</button>
+          <button @click="createFunction" :disabled="isCreating" class="create-btn">
+            {{ isCreating ? 'Создание...' : 'Создать' }}
+          </button>
           <!-- Кнопка "Отмена" -->
           <button @click="closeDialog" class="cancel-btn">Отмена</button>
         </div>
@@ -72,21 +73,28 @@
 </template>
 
 <script>
+import * as api from '@/api.js'; // Импортируем api для вызова сервера
+
 export default {
   name: 'CreateTabulatedFunctionDialog',
   props: {
     isOpen: {
       type: Boolean,
       required: true
+    },
+    currentUserId: { // Добавляем пропс для ID пользователя
+      type: Number,
+      required: true
     }
   },
-  emits: ['close', 'function-created'], // События для родителя
+  emits: ['close', 'function-created', 'error'], // Добавляем 'error' в emits
   data() {
     return {
       pointCountInput: 5, // Значение по умолчанию
       maxPoints: 1000, // Максимальное количество точек
       points: [], // Массив для хранения точек {x, y}
-      errorMessage: ''
+      errorMessage: '',
+      isCreating: false // Флаг для состояния создания
     };
   },
   computed: {
@@ -107,6 +115,7 @@ export default {
     isOpen(isOpen) {
       if (!isOpen) {
         this.points = [];
+        this.isCreating = false; // Сбрасываем флаг при закрытии
       }
     }
   },
@@ -125,6 +134,7 @@ export default {
       this.points = [];
       this.pointCountInput = 5;
       this.errorMessage = '';
+      this.isCreating = false;
       this.$emit('close');
     },
     validatePoints() {
@@ -145,26 +155,70 @@ export default {
       }
       return true;
     },
-    createFunction() {
+    async createFunction() {
+      if (this.isCreating) return; // Предотвращаем повторный клик
+
       if (!this.validatePoints()) {
         return; // Если валидация не прошла, не создаем функцию
       }
+
+      this.isCreating = true; // Устанавливаем флаг создания
+      this.errorMessage = ''; // Сбрасываем предыдущую ошибку
 
       // Подготовим массивы x и y
       const xValues = this.points.map(p => p.x);
       const yValues = this.points.map(p => p.y);
 
-      // Здесь должна быть логика вызова фабрики.
-      // Пока что просто эмитим событие с данными.
-      // В следующем задании мы подключим фабрику.
-      console.log("Подготовленные массивы X:", xValues);
-      console.log("Подготовленные массивы Y:", yValues);
+      try {
+        // 1. Подготовить DTO для создания функции (без точек)
+        const functionDto = {
+          userId: this.currentUserId, // Используем переданный ID пользователя
+          typeFunction: 'tabular',
+          functionName: `TabulatedFunction_${Date.now()}`, // Сгенерировать имя
+          functionExpression: null,
+          // --- ДОБАВЛЕНО: factoryType из localStorage ---
+          factoryType: localStorage.getItem('selectedTabulatedFunctionFactory') || 'array'
+          // ---
+        };
 
-      // Эмитим событие с созданными массивами
-      this.$emit('function-created', { xValues, yValues });
+        console.log("Отправляем DTO на бэкенд (X/Y):", functionDto);
 
-      // Закрываем диалог после успешного создания
-      this.closeDialog();
+        // 2. Вызвать API для создания функции (это создаст FunctionEntity)
+        // api.createFunction уже возвращает JSON при успехе и бросает ошибку при неудаче
+        const createdFunctionData = await api.createFunction(functionDto); // <-- Присваиваем JSON напрямую
+
+        const newFunctionId = createdFunctionData.id; // <-- Работаем с JSON
+        // Проверяем, что сервер вернул объект с id
+        if (typeof newFunctionId !== 'number') {
+            throw new Error(`Сервер вернул некорректный ID функции (X/Y): ${newFunctionId}`);
+        }
+
+        // 3. Вызвать API для создания точек
+        await api.createTabulatedPoints(newFunctionId, xValues, yValues); // <-- Вызов метода для создания точек
+
+        console.log(`Функция с ID ${newFunctionId} и точками успешно создана.`);
+
+        // 4. Испустить событие с ID и именем
+        this.$emit('function-created', {
+            functionId: newFunctionId, // <-- Прямое соответствие
+            functionName: createdFunctionData.functionName
+        });
+
+        // 5. Закрыть диалог
+        this.closeDialog();
+
+        // 6. Показать сообщение об успехе
+        alert(`Функция "${createdFunctionData.functionName}" (ID: ${newFunctionId}) успешно создана из X/Y!`);
+
+      } catch (error) {
+        console.error('Ошибка при создании функции из X/Y:', error);
+        // Передаём ошибку родительскому компоненту (App.vue или FunctionSection.vue) для отображения через ErrorModal
+        this.$emit('error', error.message);
+        // Не закрываем диалог, чтобы пользователь видел ошибку
+        this.errorMessage = `Ошибка при создании функции: ${error.message}`;
+      } finally {
+        this.isCreating = false; // Сбрасываем флаг в любом случае
+      }
     }
   }
 };
@@ -239,6 +293,7 @@ export default {
 .button-group {
   display: flex;
   justify-content: space-between;
+  margin-top: 10px;
 }
 
 .create-btn {
@@ -250,8 +305,13 @@ export default {
   cursor: pointer;
 }
 
-.create-btn:hover {
+.create-btn:hover:not(:disabled) {
   background-color: #45a049;
+}
+
+.create-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
 .cancel-btn {

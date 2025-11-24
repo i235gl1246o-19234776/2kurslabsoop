@@ -43,7 +43,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Разрешаем запросы с порта Vite (по умолчанию 5173)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5175"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
         // Разрешаем все методы (GET, POST, PUT, DELETE, OPTIONS и т.д.)
         configuration.setAllowedMethods(Arrays.asList("*"));
         // Разрешаем все заголовки

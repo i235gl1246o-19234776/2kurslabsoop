@@ -1,5 +1,6 @@
 package core.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import java.util.List;
 @Data
@@ -13,7 +14,9 @@ public class FunctionDto {
     private String functionName;
     private String functionExpression;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL) // Добавьте аннотацию
     private List<Long> tabulatedPointIds;
+    @JsonInclude(JsonInclude.Include.NON_NULL) // Добавьте аннотацию
     private List<Long> operationIds;
 
 }

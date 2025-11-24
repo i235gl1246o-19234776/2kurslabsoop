@@ -47,95 +47,69 @@ public class FunctionController {
     }
 
     @PostMapping("/from-math")
-    public ResponseEntity<FunctionDto> createFunctionFromMath(@RequestBody MathFunctionCreationDto dto) {
+    public ResponseEntity<FunctionDto> createTabulatedFunctionFromMath(@RequestBody MathFunctionCreationDto dto) {
         log.info("Запрос на создание табулированной функции из MathFunction: {}", dto);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            log.warn("Попытка создания функции из MathFunction без аутентификации");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String currentUsername = auth.getName();
-        UserEntity currentUser = userRepository.findByName(currentUsername);
-        if (currentUser == null) {
-            log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-        if (!currentUser.getId().equals(dto.getUserId())) {
-            log.warn("Пользователь '{}' пытается создать функцию для другого пользователя (ожидаемый ID: {}, полученный в DTO: {})", currentUsername, currentUser.getId(), dto.getUserId());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
+        MathFunction mathFunction;
         try {
-            // 1. Получаем MathFunction по имени
-            MathFunction mathFunction = MathFunctionRegistry.getFunctionByName(dto.getMathFunctionName());
-            if (mathFunction == null) {
-                throw new IllegalArgumentException("Функция с именем '" + dto.getMathFunctionName() + "' не найдена.");
-            }
-
-            if (MathFunctionRegistry.isTabulatedFunction(mathFunction)) {
-                throw new IllegalArgumentException("Невозможно создать табулированную функцию из другой табулированной функции.");
-            }
-
-            if (dto.getXFrom() >= dto.getXTo()) {
-                throw new IllegalArgumentException("xFrom должен быть строго меньше xTo.");
-            }
-            if (dto.getCount() < 2) {
-                throw new IllegalArgumentException("Количество точек должно быть не менее 2.");
-            }
-
-            // --- ВЫБОР ФАБРИКИ НА ОСНОВЕ ПОЛЯ В DTO ---
-            TabulatedFunctionFactory factory;
-            String factoryType = dto.getFactoryType();
-            if ("linkedlist".equalsIgnoreCase(factoryType)) {
-                factory = new LinkedListTabulatedFunctionFactory();
-            } else { // По умолчанию или "array"
-                factory = new ArrayTabulatedFunctionFactory();
-            }
-
-            // 4. Используем выбранную фабрику для создания TabulatedFunction
-            TabulatedFunction tabulatedFunction = factory.create(mathFunction, dto.getXFrom(), dto.getXTo(), dto.getCount());
-
-            // 5. Создаём FunctionEntity (обёртка для табулированной функции)
-            FunctionEntity functionEntity = new FunctionEntity();
-            functionEntity.setFunctionName("FuncFromMath_" + dto.getMathFunctionName() + "_" + System.currentTimeMillis());
-            functionEntity.setTypeFunction(FunctionEntity.FunctionType.tabular);
-            functionEntity.setFunctionExpression(null);
-            functionEntity.setUser(currentUser);
-
-            // 6. Сохраняем FunctionEntity
-            FunctionEntity savedFunctionEntity = functionRepository.save(functionEntity);
-
-            // 7. Создаём точки для функции
-            for (int i = 0; i < tabulatedFunction.getCount(); i++) {
-                double x = tabulatedFunction.getX(i);
-                double y = tabulatedFunction.getY(i);
-
-                TabulatedFunctionEntity pointEntity = new TabulatedFunctionEntity();
-                pointEntity.setFunction(savedFunctionEntity);
-                pointEntity.setXVal(x);
-                pointEntity.setYVal(y);
-
-                tabulatedFunctionRepository.save(pointEntity);
-            }
-
-            // 8. Конвертируем FunctionEntity в FunctionDto и возвращаем
-            FunctionDto savedDto = convertToDto(savedFunctionEntity);
-            log.info("Табулированная функция из MathFunction создана и сохранена с ID: {}", savedDto.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
-
+            mathFunction = MathFunctionRegistry.getFunctionByName(dto.getMathFunctionName());
         } catch (IllegalArgumentException e) {
-            log.error("Ошибка при создании функции из MathFunction: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Непредвиденная ошибка при создании функции из MathFunction", e);
-            throw e;
+            log.error("MathFunction с именем '{}' не найдена: {}", dto.getMathFunctionName(), e.getMessage());
+            return ResponseEntity.badRequest().body(null);
         }
-    }
 
-// ... (остальные методы)
+        TabulatedFunctionFactory factory;
+        String factoryType = dto.getFactoryType();
+        if ("linkedlist".equalsIgnoreCase(factoryType)) {
+            factory = new LinkedListTabulatedFunctionFactory();
+            log.debug("Используется LinkedListTabulatedFunctionFactory");
+        } else { // По умолчанию или "array"
+            factory = new ArrayTabulatedFunctionFactory();
+            log.debug("Используется ArrayTabulatedFunctionFactory");
+        }
+
+        TabulatedFunction tabulatedFunction;
+        try {
+            tabulatedFunction = factory.create(mathFunction, dto.getXFrom(), dto.getXTo(), dto.getCount());
+        } catch (IllegalArgumentException e) {
+            log.error("Ошибка при создании табулированной функции: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        // 4. Создаём FunctionEntity (обёртка)
+        UserEntity currentUser = userRepository.findById(dto.getUserId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        FunctionEntity functionEntity = new FunctionEntity();
+        functionEntity.setFunctionName("FuncFromMath_" + dto.getMathFunctionName() + "_" + System.currentTimeMillis());
+        functionEntity.setTypeFunction(FunctionEntity.FunctionType.tabular);
+        functionEntity.setUser(currentUser);
+
+        // 5. Сохраняем FunctionEntity
+        FunctionEntity savedFunctionEntity = functionRepository.save(functionEntity);
+
+        // 6. Создаём точки для функции
+        for (int i = 0; i < tabulatedFunction.getCount(); i++) {
+            double x = tabulatedFunction.getX(i);
+            double y = tabulatedFunction.getY(i);
+
+            if (Double.isNaN(x) || Double.isNaN(y) ||
+                    !Double.isFinite(x) || !Double.isFinite(y)) {
+                throw new IllegalArgumentException(
+                        "Некорректные точки при создании табулированной функции: x=" + x + ", y=" + y);
+            }
+
+            TabulatedFunctionEntity pointEntity = new TabulatedFunctionEntity();
+            pointEntity.setFunction(savedFunctionEntity);
+            pointEntity.setXVal(x);
+            pointEntity.setYVal(y);
+
+            tabulatedFunctionRepository.save(pointEntity);
+        }
+
+        // 7. Конвертируем в DTO и возвращаем
+        FunctionDto savedDto = convertToDto(savedFunctionEntity);
+        log.info("Табулированная функция из MathFunction создана и сохранена с ID: {}", savedDto.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
+    }
 
     private boolean hasAccessToUser(Long targetUserId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -230,33 +204,82 @@ public class FunctionController {
         return ResponseEntity.ok(functionDtos);
     }
 
+    // В FunctionController.java
     @GetMapping("/{id}")
     public ResponseEntity<FunctionDto> getFunctionById(@PathVariable Long id) {
-        log.info("Запрос на получение функции с ID: {} (проверка аутентификации и авторизации)", id);
+        log.info("Запрос на получение функции с ID: {}", id);
+
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                log.warn("Попытка доступа без аутентификации к функции ID: {}", id);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            Optional<FunctionEntity> functionOpt = functionRepository.findById(id);
+            if (functionOpt.isPresent()) {
+                FunctionEntity op = functionOpt.get();
+                Long functionId = op.getFunction().getId();
+
+                if (!hasAccessToFunction(functionId)) {
+                    log.warn("Пользователь '{}' не имеет доступа к операции {}, принадлежащей функции {}", auth.getName(), id, functionId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+
+                FunctionDto operationDto = convertToDto(op);
+                log.info("Операция с ID {} найдена", id);
+                return ResponseEntity.ok(operationDto);
+            } else {
+                log.warn("Операция с ID {} не найдена", id);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("Внутренняя ошибка при получении функции с ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    private boolean hasAccessToFunction(Long functionId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
-            log.warn("Попытка доступа без аутентификации к функции ID: {}", id);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            log.warn("Проверка доступа: пользователь не аутентифицирован.");
+            return false;
         }
-        Optional<FunctionEntity> funcOpt = functionRepository.findById(id);
-        if (!funcOpt.isPresent()) {
-            log.warn("Функция с ID {} не найдена", id);
-            return ResponseEntity.notFound().build();
+
+        String currentRole = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("");
+        log.debug("Проверка доступа к функции {}: текущая роль = '{}'", functionId, currentRole);
+
+        if ("ROLE_ADMIN".equals(currentRole)) {
+            log.debug("Проверка доступа: доступ разрешён для администратора.");
+            return true;
         }
-        FunctionEntity func = funcOpt.get();
-        Long ownerId = func.getUser().getId();
-        if (!hasAccessToUser(ownerId)) {
-            log.warn("Пользователь '{}' не имеет доступа к функции {} принадлежащей пользователю {}", auth.getName(), id, ownerId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        String currentUsername = auth.getName();
+        UserEntity currentUser = userRepository.findByName(currentUsername);
+        if (currentUser == null) {
+            log.warn("Проверка доступа: аутентифицированный пользователь '{}' не найден в БД.", currentUsername);
+            return false;
         }
-        FunctionDto functionDto = convertToDto(func);
-        log.info("Функция с ID {} найдена и доступ разрешен", id);
-        return ResponseEntity.ok(functionDto);
+
+        Optional<FunctionEntity> functionOpt = functionRepository.findById(functionId);
+        if (functionOpt.isEmpty()) {
+            log.warn("Проверка доступа: функция с ID {} не найдена.", functionId);
+            return false;
+        }
+
+        UserEntity owner = functionOpt.get().getUser();
+        boolean hasAccess = owner.getId().equals(currentUser.getId());
+        log.debug("Проверка доступа: пользователь '{}' имеет доступ к функции {}: {}", currentUsername, functionId, hasAccess);
+        return hasAccess;
     }
 
     @PostMapping
     public ResponseEntity<FunctionDto> createFunction(@RequestBody FunctionDto functionDto) {
         log.info("Запрос на создание функции: {}", functionDto);
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             log.warn("Попытка создания функции без аутентификации");
@@ -306,6 +329,55 @@ public class FunctionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<FunctionDto>> getAvailableFunctionsForUser(@PathVariable Long userId) {
+        log.info("Запрос на получение функций для пользователя ID: {}", userId);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            log.warn("Попытка доступа без аутентификации к списку функций пользователя ID: {}", userId);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String currentUsername = auth.getName();
+        UserEntity currentUser = userRepository.findByName(currentUsername);
+        if (currentUser == null) {
+            log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        // Проверка прав: текущий пользователь - владелец или админ
+        if (!currentUser.getId().equals(userId) && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            log.warn("Пользователь '{}' не имеет прав на доступ к функциям пользователя с ID {}", currentUsername, userId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // Проверка, существует ли пользователь с ID userId
+        Optional<UserEntity> targetUserOpt = userRepository.findById(userId);
+        if (targetUserOpt.isEmpty()) {
+            log.warn("Попытка получить функции для несуществующего пользователя с ID: {}", userId);
+            return ResponseEntity.notFound().build(); // Возвращаем 404, а не 500
+        }
+
+        try {
+            // Используем существующий репозиторий для получения функций по ID пользователя
+            List<FunctionEntity> functions = functionRepository.findByUser_Id(userId);
+
+            // Конвертируем в DTO
+            List<FunctionDto> functionDtos = functions.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+            log.info("Возвращено {} функций для пользователя ID: {}", functionDtos.size(), userId);
+            return ResponseEntity.ok(functionDtos);
+        } catch (Exception e) {
+            log.error("Ошибка при получении функций для пользователя ID {}: {}", userId, e.getMessage(), e);
+            // Не возвращаем стектрейс в теле ответа в продакшене, это для отладки
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<FunctionDto> updateFunction(@PathVariable Long id, @RequestBody FunctionDto functionDtoDetails) {

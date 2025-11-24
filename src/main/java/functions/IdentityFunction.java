@@ -1,9 +1,12 @@
+// src/main/java/functions/IdentityFunction.java
 package functions;
 
-public class IdentityFunction implements MathFunction {
+import core.utils.FunctionInfo;
 
+@FunctionInfo(displayName = "Тождественная функция", priority = 20)
+public class IdentityFunction implements MathFunction {
     @Override
-    public double apply(double x){
+    public double apply(double x) {
         return x;
     }
 

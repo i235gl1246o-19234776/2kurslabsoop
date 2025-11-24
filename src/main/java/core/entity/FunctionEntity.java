@@ -56,6 +56,10 @@ public class FunctionEntity {
         return Objects.equals(getId(), that.getId());
     }
 
+    public FunctionEntity getFunction() {
+        return this; // Возвращает сам объект
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(getId());
