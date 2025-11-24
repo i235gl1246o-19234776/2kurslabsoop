@@ -1,4 +1,5 @@
 concurrent\WriteTask.class
+model\servlet\FunctionBlock.class
 concurrent\ReadWriteTaskExecutor.class
 io\FunctionsIO.class
 functions\LinkedListTabulatedFunction$Node.class
@@ -23,7 +24,9 @@ functions\factory\ArrayTabulatedFunctionFactory.class
 io\ArrayTabulatedFunctionXmlSerialization.class
 model\service\TabulatedFunctionService.class
 model\servlet\UserServlet.class
+model\dto\request\CompositeFunctionRequestDTO.class
 model\entity\SearchFunctionResult.class
+model\dto\response\IntegrationResultDTO.class
 model\servlet\SearchFunctionServlet.class
 concurrent\ReadTask.class
 operations\TestParralellism2000.class
@@ -34,6 +37,8 @@ io\TabulatedFunctionFileWriter.class
 functions\ArrayTabulatedFunction.class
 operations\RightSteppingDifferentialOperator.class
 model\dto\PointDTO.class
+model\entity\Point.class
+model\service\IntegrationService.class
 Main.class
 functions\ConstantFunction.class
 exception\ArrayIsNotSortedException.class
@@ -50,6 +55,7 @@ model\entity\UserRole.class
 functions\RungeKuttaFunction.class
 model\servlet\FunctionServlet.class
 model\entity\Operation.class
+model\servlet\CompositeFunctionStructure.class
 repository\dao\TabulatedFunctionRepository.class
 io\TabulatedFunctionFileInputStream.class
 functions\LinkedListTabulatedFunction$1.class
@@ -59,7 +65,9 @@ repository\dao\OperationRepository.class
 io\LinkedListTabulatedFunctionSerialization.class
 model\dto\response\FunctionResponseDTO.class
 functions\UnmodifiableTabulatedFunction.class
+model\servlet\IntegrationResult.class
 model\entity\TabulatedFunction.class
+model\service\CompositeFunctionService.class
 model\dto\request\FunctionRequestDTO.class
 model\dto\DTOTransformService.class
 functions\UnitFunction.class
@@ -69,7 +77,9 @@ functions\TabulatedFunction.class
 concurrent\SynchronizedTabulatedFunction.class
 functions\Point.class
 operations\DifferentialOperator.class
+model\servlet\CompositeFunctionServlet.class
 model\dto\request\TabulatedFunctionRequestDTO.class
+model\servlet\IntegrationServlet.class
 functions\MockTabulatedFunction.class
 repository\dao\UserRepository.class
 functions\Removable.class
@@ -79,6 +89,7 @@ repository\dao\FunctionRepository.class
 model\dto\response\SearchFunctionResponseDTO.class
 concurrent\MultiplyingTaskExecutor.class
 io\TabulatedFunctionFileReader.class
+model\dto\request\IntegrationRequestDTO.class
 functions\NewtonMethod.class
 model\servlet\AuthFilter.class
 model\dto\response\ExecuteOperationResponseDTO.class
@@ -103,10 +114,12 @@ repository\SqlLoader.class
 model\service\FunctionService$Condition.class
 operations\TabulatedFunctionOperationService.class
 functions\ArrayTabulatedFunction$1.class
+functions\FunctionDescription.class
 model\entity\Function.class
 model\servlet\RegisterServlet.class
 model\dto\response\UserResponseDTO.class
 concurrent\SynchronizedTabulatedFunction$Operation.class
 operations\SimpsonIntegral.class
+model\dto\response\CompositeFunctionResponseDTO.class
 concurrent\MultiplyingTask.class
 operations\LeftSteppingDifferentialOperator$1.class

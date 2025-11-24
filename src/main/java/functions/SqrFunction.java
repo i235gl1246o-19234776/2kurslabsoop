@@ -1,5 +1,10 @@
 package functions;
 
+@FunctionDescription(
+        displayName = "Квадратичная функция",
+        displayPriority = 1
+)
+
 public class SqrFunction implements MathFunction{
 
     @Override

@@ -20,12 +20,16 @@ public class TabulatedFunction {
     }
 }*/
 package model.entity;
+
+import java.util.List;
+
 //('tabular', 'analytic')
 public class TabulatedFunction {
     private Long id;
     private Long functionId;
     private Double xVal;
     private Double yVal;
+    private List<Point> points;
 
     public TabulatedFunction() {
     }
@@ -105,5 +109,8 @@ public class TabulatedFunction {
                 ", xVal=" + xVal +
                 ", yVal=" + yVal +
                 '}';
+    }
+    public List<Point> getPoints() {
+        return points;
     }
 }

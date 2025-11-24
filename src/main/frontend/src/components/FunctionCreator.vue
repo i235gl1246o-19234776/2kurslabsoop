@@ -1,4 +1,3 @@
-<!-- src/components/FunctionCreator.vue -->
 <template>
   <div class="creator">
     <!-- Крестик для закрытия окна -->
@@ -85,6 +84,16 @@
         <option value="analytic">Аналитическая</option>
       </select>
 
+      <!-- Кнопки JSON -->
+      <div class="json-controls">
+        <button @click="loadFromJson" class="json-button secondary">
+          <i class="fas fa-upload"></i> Загрузить из JSON
+        </button>
+        <button @click="saveAsJson" class="json-button secondary" :disabled="!canExport">
+          <i class="fas fa-download"></i> Сохранить как JSON
+        </button>
+      </div>
+
       <button @click="createFunctionFromArrays" class="create-button">Создать</button>
     </div>
 
@@ -126,6 +135,16 @@
         <option value="tabular">Табулированная</option>
         <option value="analytic">Аналитическая</option>
       </select>
+
+      <!-- Кнопки JSON -->
+      <div class="json-controls">
+        <button @click="loadFromJson" class="json-button secondary">
+          <i class="fas fa-upload"></i> Загрузить из JSON
+        </button>
+        <button @click="saveAsJson" class="json-button secondary" :disabled="!canExport">
+          <i class="fas fa-download"></i> Сохранить как JSON
+        </button>
+      </div>
 
       <button @click="createFunctionFromMathFunction" class="create-button">Создать</button>
     </div>
@@ -190,6 +209,14 @@ const functionMap = {
 
 // Сортированный список названий функций
 const sortedFunctionNames = computed(() => Object.keys(functionMap));
+
+// Вычисляемое свойство: можно ли экспортировать
+const canExport = computed(() => {
+  return (
+    (activeTab.value === 'fromArrays' && points.value.length > 0 && functionName.value) ||
+    (activeTab.value === 'fromFunction' && functionNameFromFunction.value)
+  );
+});
 
 // Устанавливаем тип функции как табулированную, если создаем для операций
 watch(() => props.isForOperation, (isForOperation) => {
@@ -268,7 +295,7 @@ const validateFunctionNameFromFunction = () => {
 // --- КОНЕЦ ФУНКЦИЙ ВАЛИДАЦИИ ---
 
 const generateTable = () => {
-  if (!validatePointCount()) return; // Проверяем перед генерацией
+  if (!validatePointCount()) return;
 
   if (pointCount.value > 100) {
     if (!confirm(`Вы ввели ${pointCount.value} точек. Это может быть неудобно. Продолжить?`)) {
@@ -276,16 +303,14 @@ const generateTable = () => {
     }
   }
   points.value = Array.from({ length: pointCount.value }, () => ({ x: 0, y: 0 }));
-  pointErrors.value = {}; // Сбрасываем ошибки точек
+  pointErrors.value = {};
 };
 
 // --- ФУНКЦИЯ СОЗДАНИЯ ФУНКЦИИ ИЗ МАССИВОВ ---
 const createFunctionFromArrays = async () => {
-  // Проверяем валидацию перед отправкой
   const isPointCountValid = validatePointCount();
   const isFunctionNameValid = validateFunctionName();
 
-  // Валидация всех точек
   let allPointsValid = true;
   points.value.forEach((point, index) => {
     const xValid = validatePointValue(point, 'x', index);
@@ -334,7 +359,6 @@ const createFunctionFromArrays = async () => {
         await api.createTabulatedPoints(functionId, point.x, point.y);
     }
 
-    // Эмитим событие с данными о созданной функции
     emit('function-created', {
       points: points.value,
       functionId: functionId,
@@ -358,7 +382,6 @@ const createFunctionFromArrays = async () => {
 
 // --- ФУНКЦИЯ СОЗДАНИЯ ФУНКЦИИ ИЗ MATH FUNCTION ---
 const createFunctionFromMathFunction = async () => {
-  // Валидация
   const isPointCountValid = validatePointCountFromFunction();
   const isFunctionNameValid = validateFunctionNameFromFunction();
   const isIntervalValid = startXFromFunction.value < endXFromFunction.value;
@@ -383,7 +406,6 @@ const createFunctionFromMathFunction = async () => {
   const mathFunctionName = functionMap[selectedFunctionName.value];
 
   try {
-    // 1. Создаём функцию
     const functionData = {
       functionName: currentFunctionName,
       functionExpression: functionExpressionFromFunction.value,
@@ -392,7 +414,6 @@ const createFunctionFromMathFunction = async () => {
 
     await api.createFunction(functionData);
 
-    // 2. Получаем её ID
     const userId = api.getStoredUserId();
     const allFunctions = await api.getFunctionsByUserId(userId);
     const createdFunction = allFunctions
@@ -408,10 +429,8 @@ const createFunctionFromMathFunction = async () => {
       throw new Error("Получен некорректный ID функции.");
     }
 
-    // 3. Получаем тип фабрики
     const factoryType = localStorage.getItem('tabulatedFunctionFactory') || 'array';
 
-    // 4. Вычисляем и сохраняем точки
     await api.calculateAndSaveTabulatedPoints(
       functionId,
       mathFunctionName,
@@ -421,15 +440,13 @@ const createFunctionFromMathFunction = async () => {
       factoryType
     );
 
-    // 5. Эмитим событие с данными
     emit('function-created', {
-      points: [], // Точки генерируются на сервере
+      points: [],
       functionId: functionId,
       functionName: currentFunctionName
     });
 
     alert("Функция и точки успешно созданы из MathFunction!");
-    // Сброс полей
     functionNameFromFunction.value = "";
     functionExpressionFromFunction.value = "";
     typeFunctionFromFunction.value = "tabular";
@@ -443,6 +460,97 @@ const createFunctionFromMathFunction = async () => {
     console.error("Create from function error:", e);
     showError(e.message || 'Неизвестная ошибка при создании функции.');
   }
+};
+
+// --- JSON IMPORT / EXPORT ---
+const loadFromJson = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+
+        if (!data.functionName) {
+          throw new Error('Отсутствует название функции');
+        }
+
+        activeTab.value = 'fromArrays';
+        functionName.value = data.functionName;
+        functionExpression.value = data.functionExpression || '';
+        typeFunction.value = data.typeFunction || 'tabular';
+
+        if (Array.isArray(data.points) && data.points.length > 0) {
+          points.value = data.points
+            .map(p => ({ x: parseFloat(p.x), y: parseFloat(p.y) }))
+            .filter(p => !isNaN(p.x) && !isNaN(p.y));
+          pointCount.value = points.value.length;
+        } else {
+          points.value = [];
+          pointCount.value = 0;
+        }
+
+        pointErrors.value = {};
+        pointCountError.value = '';
+        functionNameError.value = '';
+
+        alert('Данные успешно загружены из JSON!');
+      } catch (error) {
+        console.error('Ошибка загрузки JSON:', error);
+        showError('Ошибка при загрузке JSON: ' + (error.message || 'некорректный формат'));
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  input.click();
+};
+
+const saveAsJson = () => {
+  let data;
+
+  if (activeTab.value === 'fromArrays') {
+    if (!functionName.value || points.value.length === 0) {
+      showError('Недостаточно данных для экспорта');
+      return;
+    }
+    data = {
+      functionName: functionName.value,
+      functionExpression: functionExpression.value,
+      typeFunction: typeFunction.value,
+      points: points.value.map(p => ({ x: p.x, y: p.y }))
+    };
+  } else {
+    if (!functionNameFromFunction.value) {
+      showError('Укажите название функции');
+      return;
+    }
+    data = {
+      functionName: functionNameFromFunction.value,
+      functionExpression: functionExpressionFromFunction.value,
+      typeFunction: typeFunctionFromFunction.value,
+      mathFunctionName: selectedFunctionName.value,
+      pointCount: pointCountFromFunction.value,
+      startX: startXFromFunction.value,
+      endX: endXFromFunction.value
+    };
+  }
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${data.functionName || 'function'}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 </script>
 
@@ -574,7 +682,7 @@ table th {
   background-color: #f5f5f5;
 }
 
-/* --- СТИЛИ ДЛЯ ВАЛИДАЦИИ --- */
+/* Стили для валидации */
 .error-input {
   border: 2px solid #d32f2f !important;
 }
@@ -586,7 +694,38 @@ table th {
   margin-top: 0.25rem;
   min-height: 1.2em;
 }
-/* --- КОНЕЦ СТИЛЕЙ --- */
+
+/* Стили для JSON кнопок */
+.json-controls {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.json-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  background: #ecf0f1;
+  color: #2c3e50;
+  transition: all 0.2s;
+}
+
+.json-button:hover {
+  background: #bdc3c7;
+}
+
+.json-button:disabled {
+  background: #ddd;
+  cursor: not-allowed;
+}
 
 @media (max-width: 600px) {
   .creator {

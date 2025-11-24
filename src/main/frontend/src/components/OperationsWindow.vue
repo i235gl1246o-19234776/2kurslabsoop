@@ -6,165 +6,260 @@
       <button class="close-button" @click="$emit('close')">&times;</button>
     </div>
 
-    <div class="functions-container">
-      <!-- Функция A -->
-      <div class="function-section">
-        <h3>Функция A</h3>
-        <div class="function-controls">
-          <button @click="createFunction('A')">Создать</button>
-          <button @click="openFunctionSelector('A')">Загрузить</button>
-          <button @click="saveFunctionPoints('A')" :disabled="!selectedFunctionA || !hasUnsavedChangesA">Сохранить изменения</button>
+    <!-- Вкладки для переключения между операциями и интерполяцией -->
+    <div class="tabs-section">
+      <div class="tabs">
+        <button
+          class="tab-button"
+          :class="{ active: activeTab === 'operations' }"
+          @click="activeTab = 'operations'"
+        >
+          Элементарные операции
+        </button>
+        <button
+          class="tab-button"
+          :class="{ active: activeTab === 'interpolation' }"
+          @click="activeTab = 'interpolation'"
+        >
+          Интерполяция функций
+        </button>
+      </div>
+    </div>
+
+    <!-- Секция элементарных операций -->
+    <div v-if="activeTab === 'operations'" class="operations-content">
+      <div class="functions-container">
+        <!-- Функция A -->
+        <div class="function-section">
+          <h3>Функция A</h3>
+          <div class="function-controls">
+            <button @click="createFunction('A')">Создать</button>
+            <button @click="openFunctionSelector('A')">Загрузить</button>
+            <button @click="saveFunctionPoints('A')" :disabled="!selectedFunctionA || !hasUnsavedChangesA">Сохранить изменения</button>
+          </div>
+
+          <div v-if="selectedFunctionA" class="function-details">
+            <p><strong>Имя:</strong> {{ selectedFunctionA.functionName }}</p>
+            <p><strong>ID:</strong> {{ selectedFunctionA.functionId }}</p>
+            <p><strong>Точек:</strong> {{ functionAPoints.length }}</p>
+            <p v-if="functionCompatibility.aError" class="error-message">{{ functionCompatibility.aError }}</p>
+            <button @click="clearFunction('A')" class="clear-button">Очистить</button>
+          </div>
+
+          <!-- Таблица точек для функции A -->
+          <div class="function-table">
+            <h4>Точки функции</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>X</th>
+                  <th>Y</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(point, index) in functionAPoints" :key="index">
+                  <td>{{ getXValue(point, index) }}</td>
+                  <td>
+                    <input
+                      type="number"
+                      :value="getYValue(point, index)"
+                      @input="event => handleYInput('A', index, event.target.value)"
+                      @change="event => setYValue('A', index, parseFloat(event.target.value))"
+                      class="point-y-input"
+                      :disabled="!selectedFunctionA"
+                    />
+                  </td>
+                </tr>
+                <tr v-if="functionAPoints.length === 0 && !loadingPointsA">
+                  <td colspan="2" class="empty-table">Нет точек для отображения</td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-if="hasDuplicateX('A')" class="error-message">
+              Ошибка: обнаружены дублирующиеся X-значения.
+              Для корректной работы операций X-значения должны быть уникальными и упорядоченными.
+            </div>
+          </div>
         </div>
 
-        <div v-if="selectedFunctionA" class="function-details">
-          <p><strong>Имя:</strong> {{ selectedFunctionA.functionName }}</p>
-          <p><strong>ID:</strong> {{ selectedFunctionA.functionId }}</p>
-          <p><strong>Точек:</strong> {{ functionAPoints.length }}</p>
-          <p v-if="functionCompatibility.aError" class="error-message">{{ functionCompatibility.aError }}</p>
-          <button @click="clearFunction('A')" class="clear-button">Очистить</button>
-        </div>
+        <!-- Функция B -->
+        <div class="function-section">
+          <h3>Функция B</h3>
+          <div class="function-controls">
+            <button @click="createFunction('B')">Создать</button>
+            <button @click="openFunctionSelector('B')">Загрузить</button>
+            <button @click="saveFunctionPoints('B')" :disabled="!selectedFunctionB || !hasUnsavedChangesB">Сохранить изменения</button>
+          </div>
 
-        <!-- Таблица точек для функции A -->
-        <div class="function-table">
-          <h4>Точки функции</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>X</th>
-                <th>Y</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(point, index) in functionAPoints" :key="index">
-                <td>{{ getXValue(point, index) }}</td>
-                <td>
-                  <input
-                    type="number"
-                    :value="getYValue(point, index)"
-                    @input="event => handleYInput('A', index, event.target.value)"
-                    @change="event => setYValue('A', index, parseFloat(event.target.value))"
-                    class="point-y-input"
-                    :disabled="!selectedFunctionA"
-                  />
-                </td>
-              </tr>
-              <tr v-if="functionAPoints.length === 0 && !loadingPointsA">
-                <td colspan="2" class="empty-table">Нет точек для отображения</td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-if="hasDuplicateX('A')" class="error-message">
-            Ошибка: обнаружены дублирующиеся X-значения.
-            Для корректной работы операций X-значения должны быть уникальными и упорядоченными.
+          <div v-if="selectedFunctionB" class="function-details">
+            <p><strong>Имя:</strong> {{ selectedFunctionB.functionName }}</p>
+            <p><strong>ID:</strong> {{ selectedFunctionB.functionId }}</p>
+            <p><strong>Точек:</strong> {{ functionBPoints.length }}</p>
+            <p v-if="functionCompatibility.bError" class="error-message">{{ functionCompatibility.bError }}</p>
+            <button @click="clearFunction('B')" class="clear-button">Очистить</button>
+          </div>
+
+          <!-- Таблица точек для функции B -->
+          <div class="function-table">
+            <h4>Точки функции</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>X</th>
+                  <th>Y</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(point, index) in functionBPoints" :key="index">
+                  <td>{{ getXValue(point, index) }}</td>
+                  <td>
+                    <input
+                      type="number"
+                      :value="getYValue(point, index)"
+                      @input="event => handleYInput('B', index, event.target.value)"
+                      @change="event => setYValue('B', index, parseFloat(event.target.value))"
+                      class="point-y-input"
+                      :disabled="!selectedFunctionB"
+                    />
+                  </td>
+                </tr>
+                <tr v-if="functionBPoints.length === 0 && !loadingPointsB">
+                  <td colspan="2" class="empty-table">Нет точек для отображения</td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-if="hasDuplicateX('B')" class="error-message">
+              Ошибка: обнаружены дублирующиеся X-значения.
+              Для корректной работы операций X-значения должны быть уникальными и упорядоченными.
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Функция B -->
-      <div class="function-section">
-        <h3>Функция B</h3>
-        <div class="function-controls">
-          <button @click="createFunction('B')">Создать</button>
-          <button @click="openFunctionSelector('B')">Загрузить</button>
-          <button @click="saveFunctionPoints('B')" :disabled="!selectedFunctionB || !hasUnsavedChangesB">Сохранить изменения</button>
-        </div>
+      <div class="compatibility-warning" v-if="functionCompatibility.warning">
+        <p class="warning-message">⚠️ {{ functionCompatibility.warning }}</p>
+      </div>
 
-        <div v-if="selectedFunctionB" class="function-details">
-          <p><strong>Имя:</strong> {{ selectedFunctionB.functionName }}</p>
-          <p><strong>ID:</strong> {{ selectedFunctionB.functionId }}</p>
-          <p><strong>Точек:</strong> {{ functionBPoints.length }}</p>
-          <p v-if="functionCompatibility.bError" class="error-message">{{ functionCompatibility.bError }}</p>
-          <button @click="clearFunction('B')" class="clear-button">Очистить</button>
+      <div class="operations-section">
+        <h3>Доступные операции</h3>
+        <div class="operations-grid">
+          <button
+            @click="executeOperation('add')"
+            :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
+            class="operation-button add"
+            :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
+          >
+            Сложить (A + B)
+          </button>
+          <button
+            @click="executeOperation('subtract')"
+            :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
+            class="operation-button subtract"
+            :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
+          >
+            Вычесть (A - B)
+          </button>
+          <button
+            @click="executeOperation('multiply')"
+            :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
+            class="operation-button multiply"
+            :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
+          >
+            Умножить (A × B)
+          </button>
+          <button
+            @click="executeOperation('divide')"
+            :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
+            class="operation-button divide"
+            :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
+          >
+            Разделить (A ÷ B)
+          </button>
         </div>
+        <p v-if="!isCompatible" class="compatibility-message">
+          Для выполнения операций функции должны иметь одинаковое количество точек и совпадающие X-значения
+        </p>
+        <p v-if="hasDuplicateX('A') || hasDuplicateX('B')" class="compatibility-message" style="color: #d32f2f;">
+          Операции невозможны из-за дублирующихся X-значений в таблицах функций
+        </p>
+      </div>
+    </div>
 
-        <!-- Таблица точек для функции B -->
-        <div class="function-table">
-          <h4>Точки функции</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>X</th>
-                <th>Y</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(point, index) in functionBPoints" :key="index">
-                <td>{{ getXValue(point, index) }}</td>
-                <td>
-                  <input
-                    type="number"
-                    :value="getYValue(point, index)"
-                    @input="event => handleYInput('B', index, event.target.value)"
-                    @change="event => setYValue('B', index, parseFloat(event.target.value))"
-                    class="point-y-input"
-                    :disabled="!selectedFunctionB"
-                  />
-                </td>
-              </tr>
-              <tr v-if="functionBPoints.length === 0 && !loadingPointsB">
-                <td colspan="2" class="empty-table">Нет точек для отображения</td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-if="hasDuplicateX('B')" class="error-message">
-            Ошибка: обнаружены дублирующиеся X-значения.
-            Для корректной работы операций X-значения должны быть уникальными и упорядоченными.
+    <!-- Секция интерполяции -->
+    <div v-if="activeTab === 'interpolation'" class="interpolation-content">
+      <div class="interpolation-controls">
+        <div class="interpolation-source">
+          <h3>Исходная функция</h3>
+          <div class="function-controls">
+            <button @click="createFunction('source')">Создать</button>
+            <button @click="openFunctionSelector('source')">Загрузить</button>
+            <button @click="saveFunctionPoints('source')" :disabled="!selectedSourceFunction || !hasUnsavedChangesSource">Сохранить изменения</button>
+          </div>
+
+          <div v-if="selectedSourceFunction" class="function-details">
+            <p><strong>Имя:</strong> {{ selectedSourceFunction.functionName }}</p>
+            <p><strong>ID:</strong> {{ selectedSourceFunction.functionId }}</p>
+            <p><strong>Точек:</strong> {{ sourceFunctionPoints.length }}</p>
+            <button @click="clearFunction('source')" class="clear-button">Очистить</button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="compatibility-warning" v-if="functionCompatibility.warning">
-      <p class="warning-message">⚠️ {{ functionCompatibility.warning }}</p>
-    </div>
+        <div class="interpolation-params">
+          <h3>Параметры интерполяции</h3>
+          <div class="param-group">
+            <label>Метод интерполяции:</label>
+            <select v-model="interpolationMethod">
+              <option value="linear">Линейная</option>
+              <option value="lagrange">Полином Лагранжа</option>
+              <option value="newton">Полином Ньютона</option>
+              <option value="cubic_spline">Кубический сплайн</option>
+            </select>
+          </div>
 
-    <div class="operations-section">
-      <h3>Доступные операции</h3>
-      <div class="operations-grid">
-        <button
-          @click="executeOperation('add')"
-          :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
-          class="operation-button add"
-          :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
-        >
-          Сложить (A + B)
-        </button>
-        <button
-          @click="executeOperation('subtract')"
-          :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
-          class="operation-button subtract"
-          :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
-        >
-          Вычесть (A - B)
-        </button>
-        <button
-          @click="executeOperation('multiply')"
-          :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
-          class="operation-button multiply"
-          :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
-        >
-          Умножить (A × B)
-        </button>
-        <button
-          @click="executeOperation('divide')"
-          :disabled="!canExecute || !isCompatible || hasDuplicateX('A') || hasDuplicateX('B')"
-          class="operation-button divide"
-          :title="!isCompatible ? 'Функции несовместимы для операций' : ''"
-        >
-          Разделить (A ÷ B)
-        </button>
+          <div class="param-group">
+            <label>Диапазон интерполяции:</label>
+            <div class="range-inputs">
+              <input type="number" v-model="interpolationRange.start" placeholder="Начало" step="any">
+              <span>до</span>
+              <input type="number" v-model="interpolationRange.end" placeholder="Конец" step="any">
+            </div>
+          </div>
+
+          <div class="param-group">
+            <label>Количество точек:</label>
+            <input type="number" v-model="interpolationPointsCount" min="2" max="1000">
+          </div>
+
+          <div class="param-group">
+            <label>Шаг интерполяции:</label>
+            <input type="number" v-model="interpolationStep" step="any" :disabled="interpolationPointsCount > 0">
+            <span class="hint">или укажите количество точек</span>
+          </div>
+
+          <button
+            @click="executeInterpolation"
+            :disabled="!selectedSourceFunction || sourceFunctionPoints.length < 2"
+            class="interpolation-button"
+          >
+            Выполнить интерполяцию
+          </button>
+        </div>
       </div>
-      <p v-if="!isCompatible" class="compatibility-message">
-        Для выполнения операций функции должны иметь одинаковое количество точек и совпадающие X-значения
-      </p>
-      <p v-if="hasDuplicateX('A') || hasDuplicateX('B')" class="compatibility-message" style="color: #d32f2f;">
-        Операции невозможны из-за дублирующихся X-значений в таблицах функций
-      </p>
+
+      <div v-if="interpolationError" class="error-message interpolation-error">
+        {{ interpolationError }}
+      </div>
     </div>
 
     <!-- Таблица для результата -->
     <div class="result-section">
-      <h3>Результат операции</h3>
+      <h3>Результат {{ activeTab === 'operations' ? 'операции' : 'интерполяции' }}</h3>
+
+      <!-- График результата -->
+      <div v-if="resultPoints.length > 0" class="result-chart">
+        <canvas ref="chartCanvas" width="800" height="400"></canvas>
+      </div>
+
       <div class="result-table">
         <table>
           <thead>
@@ -173,10 +268,10 @@
               <th>Y</th>
             </tr>
           </thead>
-            <tbody>
+          <tbody>
             <tr v-for="(point, index) in resultPoints" :key="index">
-              <td>{{ point.x }}</td>
-              <td>{{ point.y }}</td>
+              <td>{{ point.x.toFixed(4) }}</td>
+              <td>{{ point.y.toFixed(6) }}</td>
             </tr>
             <tr v-if="resultPoints.length === 0">
               <td colspan="2" class="empty-table">Результат отсутствует</td>
@@ -186,8 +281,13 @@
       </div>
 
       <div class="result-actions">
-        <button @click="saveResult" class="save-button" :disabled="resultPoints.length === 0">Сохранить результат</button>
+        <button @click="saveResult" class="save-button" :disabled="resultPoints.length === 0">
+          Сохранить результат
+        </button>
         <button @click="clearResult" class="clear-button">Очистить результат</button>
+        <button v-if="resultPoints.length > 0" @click="exportToCSV" class="export-button">
+          Экспорт в CSV
+        </button>
       </div>
     </div>
 
@@ -195,7 +295,7 @@
     <div v-if="showFunctionSelector" class="modal-overlay" @click="closeFunctionSelector">
       <div class="function-selector-modal" @click.stop>
         <div class="modal-header">
-          <h3>Выберите функцию для {{ selectorTarget }}</h3>
+          <h3>Выберите функцию для {{ getSelectorTargetName(selectorTarget) }}</h3>
           <button class="close-button" @click="closeFunctionSelector">&times;</button>
         </div>
         <div class="modal-body">
@@ -228,27 +328,46 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { api } from '../api.js';
 
+// Основные ссылки
+const activeTab = ref('operations');
 const selectedFunctionA = ref(null);
 const selectedFunctionB = ref(null);
+const selectedSourceFunction = ref(null);
 const functionAPoints = ref([]);
 const functionBPoints = ref([]);
+const sourceFunctionPoints = ref([]);
 const resultPoints = ref([]);
 const resultName = ref('');
 const resultFunctionId = ref(null);
 const resultOperationType = ref(null);
+
+// Интерполяция
+const interpolationMethod = ref('linear');
+const interpolationRange = ref({ start: null, end: null });
+const interpolationPointsCount = ref(50);
+const interpolationStep = ref(null);
+const interpolationError = ref('');
+
+// График
+const chartCanvas = ref(null);
+let chartInstance = null;
+
+// Остальные ссылки остаются без изменений
 const availableFunctions = ref([]);
 const showFunctionSelector = ref(false);
 const selectorTarget = ref(null);
 const loadingFunctions = ref(false);
 const loadingPointsA = ref(false);
 const loadingPointsB = ref(false);
+const loadingSourcePoints = ref(false);
 const factoryType = ref(localStorage.getItem('tabulatedFunctionFactory') || 'array');
 const originalPointsA = ref([]);
 const originalPointsB = ref([]);
-const tempYValues = ref({ A: {}, B: {} });
+const originalSourcePoints = ref([]);
+const tempYValues = ref({ A: {}, B: {}, source: {} });
 
 // Состояние для проверки возможности выполнения операции
 const canExecute = ref(false);
@@ -267,28 +386,10 @@ const operationTypeMap = {
   divide: 4
 };
 
-// Проверка наличия дубликатов X-значений
-const hasDuplicateX = (target) => {
-  const points = target === 'A' ? functionAPoints.value : functionBPoints.value;
-  const xValues = new Set();
-
-  for (const point of points) {
-    const x = getXValue(point);
-    if (xValues.has(x)) {
-      return true;
-    }
-    xValues.add(x);
-  }
-  return false;
-};
-
-// Вычисляемые свойства для отслеживания изменений
+// Вычисляемые свойства
 const hasUnsavedChangesA = computed(() => {
   if (!selectedFunctionA.value || functionAPoints.value.length === 0) return false;
-
-  // Проверяем изменения в временных значениях
   if (Object.keys(tempYValues.value.A).length > 0) return true;
-
   return functionAPoints.value.some((point, index) => {
     const originalPoint = originalPointsA.value[index];
     return originalPoint && Math.abs(getYValue(point, index) - originalPoint.getY()) > 0.0001;
@@ -297,26 +398,106 @@ const hasUnsavedChangesA = computed(() => {
 
 const hasUnsavedChangesB = computed(() => {
   if (!selectedFunctionB.value || functionBPoints.value.length === 0) return false;
-
-  // Проверяем изменения в временных значениях
   if (Object.keys(tempYValues.value.B).length > 0) return true;
-
   return functionBPoints.value.some((point, index) => {
     const originalPoint = originalPointsB.value[index];
     return originalPoint && Math.abs(getYValue(point, index) - originalPoint.getY()) > 0.0001;
   });
 });
 
-// Вычисляемое свойство для совместимости
-const isCompatible = computed(() => {
-  return functionCompatibility.value.isCompatible &&
-         !hasDuplicateX('A') &&
-         !hasDuplicateX('B');
+const hasUnsavedChangesSource = computed(() => {
+  if (!selectedSourceFunction.value || sourceFunctionPoints.value.length === 0) return false;
+  if (Object.keys(tempYValues.value.source).length > 0) return true;
+  return sourceFunctionPoints.value.some((point, index) => {
+    const originalPoint = originalSourcePoints.value[index];
+    return originalPoint && Math.abs(getYValue(point, index) - originalPoint.getY()) > 0.0001;
+  });
 });
+
+const isCompatible = computed(() => functionCompatibility.value.isCompatible);
+
+// Методы для работы с функциями
+const createPointObject = (x, y) => {
+  if (factoryType.value === 'class') {
+    return new window.TabulatedFunctionPoint(x, y);
+  } else {
+    return { getX: () => x, getY: () => y };
+  }
+};
+
+const getXValue = (point, index) => {
+  if (typeof point === 'object' && point !== null) {
+    if (typeof point.getX === 'function') {
+      return point.getX();
+    } else if (point.x !== undefined) {
+      return point.x;
+    }
+  }
+  return point;
+};
+
+const getYValue = (point, index) => {
+  const target = index !== undefined ? index.toString() : 'current';
+
+  if (typeof point === 'object' && point !== null) {
+    if (tempYValues.value[selectorTarget.value]?.[target] !== undefined) {
+      return tempYValues.value[selectorTarget.value][target];
+    }
+    if (typeof point.getY === 'function') {
+      return point.getY();
+    } else if (point.y !== undefined) {
+      return point.y;
+    }
+  }
+  return point;
+};
+
+const handleYInput = (target, index, value) => {
+  if (!tempYValues.value[target]) {
+    tempYValues.value[target] = {};
+  }
+  tempYValues.value[target][index] = parseFloat(value) || 0;
+};
+
+const setYValue = (target, index, value) => {
+  const pointsArray = target === 'A' ? functionAPoints.value :
+                     target === 'B' ? functionBPoints.value :
+                     sourceFunctionPoints.value;
+
+  if (index >= 0 && index < pointsArray.length) {
+    const point = pointsArray[index];
+    if (typeof point === 'object' && point !== null && typeof point.setY === 'function') {
+      point.setY(value);
+    }
+
+    // Очищаем временное значение
+    if (tempYValues.value[target]?.[index] !== undefined) {
+      delete tempYValues.value[target][index];
+    }
+  }
+};
+
+const hasDuplicateX = (target) => {
+  const points = target === 'A' ? functionAPoints.value :
+                target === 'B' ? functionBPoints.value :
+                sourceFunctionPoints.value;
+
+  const xValues = points.map(point => getXValue(point));
+  const uniqueXValues = new Set(xValues);
+  return xValues.length !== uniqueXValues.size;
+};
+
+// ДОБАВЛЕННЫЙ МЕТОД: Обновление возможности выполнения операций
+const updateCanExecute = () => {
+  canExecute.value = selectedFunctionA.value !== null &&
+                    selectedFunctionB.value !== null &&
+                    functionAPoints.value.length > 0 &&
+                    functionBPoints.value.length > 0;
+};
 
 // Проверка совместимости функций
 const checkFunctionCompatibility = () => {
-  if (!selectedFunctionA.value || !selectedFunctionB.value) {
+  if (functionAPoints.value.length === 0 || functionBPoints.value.length === 0) {
     functionCompatibility.value = {
       isCompatible: false,
       warning: '',
@@ -326,190 +507,86 @@ const checkFunctionCompatibility = () => {
     return;
   }
 
-  let isCompatible = true;
-  let warning = '';
-  let aError = '';
-  let bError = '';
+  const xValuesA = functionAPoints.value.map(point => getXValue(point));
+  const xValuesB = functionBPoints.value.map(point => getXValue(point));
 
-  // Проверка наличия дубликатов X
-  if (hasDuplicateX('A')) {
-    aError = 'Дублирующиеся X-значения в функции A';
-    isCompatible = false;
-  }
-
-  if (hasDuplicateX('B')) {
-    bError = 'Дублирующиеся X-значения в функции B';
-    isCompatible = false;
-  }
-
-  // Проверка количества точек
-  if (!hasDuplicateX('A') && !hasDuplicateX('B') &&
-      functionAPoints.value.length !== functionBPoints.value.length) {
-    isCompatible = false;
-    warning = `Функции имеют разное количество точек (A: ${functionAPoints.value.length}, B: ${functionBPoints.value.length}). Операции могут быть некорректными.`;
-  }
-
-  // Проверка совпадения X-значений
-  let xValuesMatch = true;
-  if (functionAPoints.value.length > 0 && functionBPoints.value.length > 0 &&
-      !hasDuplicateX('A') && !hasDuplicateX('B')) {
-    // Сортируем точки по X для корректного сравнения
-    const sortedAPoints = [...functionAPoints.value].sort((a, b) => getXValue(a) - getXValue(b));
-    const sortedBPoints = [...functionBPoints.value].sort((a, b) => getXValue(a) - getXValue(b));
-
-    for (let i = 0; i < sortedAPoints.length; i++) {
-      const pointA = sortedAPoints[i];
-      const pointB = sortedBPoints[i];
-
-      if (!pointB || Math.abs(getXValue(pointA) - getXValue(pointB)) > 0.0001) {
-        xValuesMatch = false;
-        break;
-      }
-    }
-  }
-
-  if (!xValuesMatch && !hasDuplicateX('A') && !hasDuplicateX('B')) {
-    isCompatible = false;
-    if (warning) {
-      warning += ' Кроме того, ';
-    }
-    warning += 'X-значения точек не совпадают. Операции могут быть некорректными.';
-  }
-
-  // Проверка на пустые функции
-  if (functionAPoints.value.length === 0) {
-    aError = 'Функция не содержит точек';
-    isCompatible = false;
-  }
-
-  if (functionBPoints.value.length === 0) {
-    bError = 'Функция не содержит точек';
-    isCompatible = false;
-  }
+  // Проверяем совпадение X-значений
+  const allXMatch = xValuesA.length === xValuesB.length &&
+                   xValuesA.every((x, i) => Math.abs(x - xValuesB[i]) < 0.0001);
 
   functionCompatibility.value = {
-    isCompatible,
-    warning: warning || '',
-    aError,
-    bError
+    isCompatible: allXMatch,
+    warning: allXMatch ? '' : 'Функции имеют разные X-значения. Для операций требуется полное совпадение X-сетки.',
+    aError: '',
+    bError: ''
   };
 };
 
-// Слушатель события создания функции
-const handleFunctionCreated = (event) => {
-  const { operand, points, functionId, functionName } = event.detail;
-
-  if (!functionId) {
-    console.error('Function created without ID', event.detail);
-    alert('Ошибка: не удалось получить ID созданной функции');
-    return;
-  }
-
-  // Загружаем точки функции напрямую
-  loadFunctionPoints(functionId, operand);
+// Методы для работы с модальными окнами
+const createFunction = (target) => {
+  selectorTarget.value = target;
+  showFunctionSelector.value = false;
+  window.dispatchEvent(new CustomEvent('create-function', { detail: target }));
 };
 
-// Обработчик ввода значения Y
-const handleYInput = (target, index, value) => {
-  // Сохраняем временное значение
-  if (!tempYValues.value[target]) {
-    tempYValues.value[target] = {};
-  }
-  tempYValues.value[target][index] = value;
-};
-
-// Сохранение изменений точек функции
-const saveFunctionPoints = async (target) => {
-  if (target === 'A' && (!selectedFunctionA.value || !hasUnsavedChangesA.value)) return;
-  if (target === 'B' && (!selectedFunctionB.value || !hasUnsavedChangesB.value)) return;
+const openFunctionSelector = async (target) => {
+  selectorTarget.value = target;
+  loadingFunctions.value = true;
+  showFunctionSelector.value = true;
 
   try {
-    const functionData = target === 'A' ? selectedFunctionA.value : selectedFunctionB.value;
-    const points = target === 'A' ? functionAPoints.value : functionBPoints.value;
-    const originalPoints = target === 'A' ? originalPointsA.value : originalPointsB.value;
-
-    // Проверка наличия дубликатов X перед сохранением
-    const xValues = new Set();
-    for (const point of points) {
-      const x = getXValue(point);
-      if (xValues.has(x)) {
-        alert('Невозможно сохранить функцию: обнаружены дублирующиеся X-значения.');
-        return;
-      }
-      xValues.add(x);
-    }
-
-    // Обновляем точки функции
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i];
-      const originalPoint = originalPoints[i];
-
-      // Получаем значение Y: сначала проверяем временные значения, потом оригинальные
-      let newYValue = getYValue(point, i);
-      if (tempYValues.value[target] && tempYValues.value[target][i] !== undefined) {
-        newYValue = parseFloat(tempYValues.value[target][i]);
-      }
-
-      // Обновляем точку в базе
-      await api.createTabulatedPoints(
-        functionData.functionId,
-        getXValue(point, i),
-        newYValue
-      );
-
-      // Обновляем Y в объекте точки
-      if (typeof point.setY === 'function') {
-        point.setY(newYValue);
-      }
-    }
-
-    // Обновляем оригинальные точки после сохранения
-    const updatedPoints = points.map((point, i) => {
-      let newYValue = getYValue(point, i);
-      if (tempYValues.value[target] && tempYValues.value[target][i] !== undefined) {
-        newYValue = parseFloat(tempYValues.value[target][i]);
-      }
-      return createPointObject(getXValue(point, i), newYValue);
-    });
-
-    if (target === 'A') {
-      originalPointsA.value = updatedPoints;
-      // Очищаем временные значения
-      tempYValues.value.A = {};
-    } else if (target === 'B') {
-      originalPointsB.value = updatedPoints;
-      // Очищаем временные значения
-      tempYValues.value.B = {};
-    }
-
-    alert(`Изменения для функции "${functionData.functionName}" успешно сохранены!`);
-  } catch (e) {
-    console.error(`Error saving changes for function ${target}:`, e);
-    alert(`Ошибка сохранения изменений: ${e.message}`);
+    const userId = api.getStoredUserId();
+    const functions = await api.getFunctionsByUserId(userId);
+    availableFunctions.value = functions.filter(f => f.typeFunction === 'tabular');
+  } catch (error) {
+    console.error('Error loading functions:', error);
+    availableFunctions.value = [];
+  } finally {
+    loadingFunctions.value = false;
   }
 };
 
-// Загрузка точек функции по ID
+const closeFunctionSelector = () => {
+  showFunctionSelector.value = false;
+  selectorTarget.value = null;
+};
+
+const selectFunction = (func) => {
+  if (selectorTarget.value === 'A') {
+    loadFunctionPoints(func.functionId, 'A');
+  } else if (selectorTarget.value === 'B') {
+    loadFunctionPoints(func.functionId, 'B');
+  } else if (selectorTarget.value === 'source') {
+    loadFunctionPoints(func.functionId, 'source');
+  }
+  closeFunctionSelector();
+};
+
+const getSelectorTargetName = (target) => {
+  const names = {
+    'A': 'Функция A',
+    'B': 'Функция B',
+    'source': 'Исходная функция'
+  };
+  return names[target] || target;
+};
+
+// Загрузка точек функции
 const loadFunctionPoints = async (functionId, target) => {
   try {
     console.log(`Загрузка точек для функции ID=${functionId}, target=${target}`);
 
     if (target === 'A') loadingPointsA.value = true;
     if (target === 'B') loadingPointsB.value = true;
+    if (target === 'source') loadingSourcePoints.value = true;
 
-    // Получаем точки функции
     const pointsResponse = await api.getTabulatedPointsByFunctionId(functionId);
-
-    // Создаем объекты точек с методами getX и getY
     const points = pointsResponse.map(p => createPointObject(
       parseFloat(p.xval),
       parseFloat(p.yval)
     ));
-
-    // Сортируем точки по X-значению
     const sortedPoints = [...points].sort((a, b) => a.getX() - b.getX());
 
-    // Получаем данные о функции из списка доступных функций
     const userId = api.getStoredUserId();
     const allFunctions = await api.getFunctionsByUserId(userId);
     const functionData = allFunctions.find(f => f.functionId === functionId);
@@ -518,28 +595,37 @@ const loadFunctionPoints = async (functionId, target) => {
       throw new Error(`Функция с ID ${functionId} не найдена`);
     }
 
-    // Добавляем количество точек для отображения
     functionData.pointCount = points.length;
 
-    // Обновляем состояние в зависимости от цели
     if (target === 'A') {
       selectedFunctionA.value = functionData;
       functionAPoints.value = [...sortedPoints];
-      // Сохраняем оригинальные точки для отслеживания изменений
       originalPointsA.value = sortedPoints.map(p => createPointObject(p.getX(), p.getY()));
-      // Очищаем временные значения
       tempYValues.value.A = {};
     } else if (target === 'B') {
       selectedFunctionB.value = functionData;
       functionBPoints.value = [...sortedPoints];
-      // Сохраняем оригинальные точки для отслеживания изменений
       originalPointsB.value = sortedPoints.map(p => createPointObject(p.getX(), p.getY()));
-      // Очищаем временные значения
       tempYValues.value.B = {};
+    } else if (target === 'source') {
+      selectedSourceFunction.value = functionData;
+      sourceFunctionPoints.value = [...sortedPoints];
+      originalSourcePoints.value = sortedPoints.map(p => createPointObject(p.getX(), p.getY()));
+      tempYValues.value.source = {};
+
+      // Автоматически устанавливаем диапазон интерполяции
+      if (sortedPoints.length > 0) {
+        const xValues = sortedPoints.map(p => p.getX());
+        interpolationRange.value.start = Math.min(...xValues);
+        interpolationRange.value.end = Math.max(...xValues);
+      }
     }
 
-    checkFunctionCompatibility();
-    updateCanExecute();
+    if (target === 'A' || target === 'B') {
+      checkFunctionCompatibility();
+      updateCanExecute();
+    }
+
     console.log(`Успешно загружены данные для функции ${target} с ID=${functionId}`);
 
   } catch (e) {
@@ -548,375 +634,58 @@ const loadFunctionPoints = async (functionId, target) => {
   } finally {
     if (target === 'A') loadingPointsA.value = false;
     if (target === 'B') loadingPointsB.value = false;
+    if (target === 'source') loadingSourcePoints.value = false;
   }
 };
 
-// Создание объекта точки с методами getX и getY
-const createPointObject = (x, y) => {
-  return {
-    _x: x,
-    _y: y,
-    getX: function() { return this._x; },
-    getY: function() { return this._y; },
-    setY: function(newValue) { this._y = newValue; }
-  };
-};
+// Сохранение измененных точек
+const saveFunctionPoints = async (target) => {
+  const functionData = target === 'A' ? selectedFunctionA.value :
+                      target === 'B' ? selectedFunctionB.value :
+                      selectedSourceFunction.value;
 
-// Получение X-значения через метод getX()
-const getXValue = (point, index = null) => {
-  if (point && typeof point.getX === 'function') {
-    return point.getX();
+  const points = target === 'A' ? functionAPoints.value :
+                target === 'B' ? functionBPoints.value :
+                sourceFunctionPoints.value;
+
+  if (!functionData) {
+    alert('Функция не выбрана');
+    return;
   }
-  return point.x !== undefined ? point.x : (index !== null ? `Точка ${index + 1}` : 0);
-};
-
-// Получение Y-значения через метод getY() или из временных значений
-const getYValue = (point, index) => {
-  if (selectorTarget.value === 'A' && tempYValues.value.A[index] !== undefined) {
-    return tempYValues.value.A[index];
-  }
-  if (selectorTarget.value === 'B' && tempYValues.value.B[index] !== undefined) {
-    return tempYValues.value.B[index];
-  }
-
-  if (point && typeof point.getY === 'function') {
-    return point.getY();
-  }
-  return point.y !== undefined ? point.y : 0;
-};
-
-// Установка Y-значения через метод setY() с сохранением в оригинальные точки
-const setYValue = (target, index, newValue) => {
-  if (isNaN(newValue)) return;
-
-  if (target === 'A' && functionAPoints.value[index]) {
-    if (typeof functionAPoints.value[index].setY === 'function') {
-      functionAPoints.value[index].setY(newValue);
-    }
-    console.log(`Значение Y для функции A, точки ${index} изменено на ${newValue}`);
-  } else if (target === 'B' && functionBPoints.value[index]) {
-    if (typeof functionBPoints.value[index].setY === 'function') {
-      functionBPoints.value[index].setY(newValue);
-    }
-    console.log(`Значение Y для функции B, точки ${index} изменено на ${newValue}`);
-  }
-
-  // Обновляем совместимость после изменения
-  checkFunctionCompatibility();
-};
-
-// Выполнение операции (execute) с учетом изменений
-const executeOperation = async (operation) => {
-  if (!canExecute.value || !isCompatible.value || hasDuplicateX('A') || hasDuplicateX('B')) return;
 
   try {
-    // Проверяем совместимость еще раз перед выполнением
-    if (!isCompatible.value && !confirm('Функции не полностью совместимы. Продолжить выполнение операции?')) {
-      return;
+    // Удаляем все старые точки
+    await api.deleteTabulatedPointsByFunctionId(functionData.functionId);
+
+    // Добавляем новые точки
+    for (const point of points) {
+      await api.createTabulatedPoints(
+        functionData.functionId,
+        getXValue(point),
+        getYValue(point)
+      );
     }
 
-    // Проверка наличия дубликатов X
-    if (hasDuplicateX('A') || hasDuplicateX('B')) {
-      alert('Невозможно выполнить операцию: обнаружены дублирующиеся X-значения в таблицах функций.');
-      return;
+    // Обновляем оригинальные точки
+    if (target === 'A') {
+      originalPointsA.value = points.map(p => createPointObject(getXValue(p), getYValue(p)));
+      tempYValues.value.A = {};
+    } else if (target === 'B') {
+      originalPointsB.value = points.map(p => createPointObject(getXValue(p), getYValue(p)));
+      tempYValues.value.B = {};
+    } else if (target === 'source') {
+      originalSourcePoints.value = points.map(p => createPointObject(getXValue(p), getYValue(p)));
+      tempYValues.value.source = {};
     }
 
-    let functionAPointsForOperation = [...functionAPoints.value];
-    let functionBPointsForOperation = [...functionBPoints.value];
-
-    // Применяем временные изменения для операции, если они есть
-    if (Object.keys(tempYValues.value.A).length > 0) {
-      functionAPointsForOperation = functionAPoints.value.map((point, i) => {
-        const newY = tempYValues.value.A[i] !== undefined ? parseFloat(tempYValues.value.A[i]) : getYValue(point, i);
-        return createPointObject(getXValue(point, i), newY);
-      });
-    }
-
-    if (Object.keys(tempYValues.value.B).length > 0) {
-      functionBPointsForOperation = functionBPoints.value.map((point, i) => {
-        const newY = tempYValues.value.B[i] !== undefined ? parseFloat(tempYValues.value.B[i]) : getYValue(point, i);
-        return createPointObject(getXValue(point, i), newY);
-      });
-    }
-
-    // Сортируем точки по X для корректного выполнения операции
-    functionAPointsForOperation = [...functionAPointsForOperation].sort((a, b) => a.getX() - b.getX());
-    functionBPointsForOperation = [...functionBPointsForOperation].sort((a, b) => a.getX() - b.getX());
-
-    // Если есть несохраненные изменения, сначала сохраняем их
-    if (hasUnsavedChangesA.value || hasUnsavedChangesB.value) {
-      const shouldSave = confirm('Есть несохраненные изменения. Сохранить их перед выполнением операции?');
-
-      if (shouldSave) {
-        if (hasUnsavedChangesA.value) {
-          await saveFunctionPoints('A');
-          await loadFunctionPoints(selectedFunctionA.value.functionId, 'A');
-          functionAPointsForOperation = [...functionAPoints.value];
-        }
-        if (hasUnsavedChangesB.value) {
-          await saveFunctionPoints('B');
-          await loadFunctionPoints(selectedFunctionB.value.functionId, 'B');
-          functionBPointsForOperation = [...functionBPoints.value];
-        }
-      } else {
-        // Если пользователь не хочет сохранять изменения в базу,
-        // выполняем операцию с локальными данными без сохранения
-        console.log('Выполнение операции с локальными несохраненными данными');
-      }
-    }
-
-    // Проверяем совместимость локальных данных
-    let isLocallyCompatible = true;
-    let localWarning = '';
-
-    if (functionAPointsForOperation.length !== functionBPointsForOperation.length) {
-      isLocallyCompatible = false;
-      localWarning = `Локальные данные имеют разное количество точек (A: ${functionAPointsForOperation.length}, B: ${functionBPointsForOperation.length})`;
-    } else {
-      for (let i = 0; i < functionAPointsForOperation.length; i++) {
-        if (Math.abs(functionAPointsForOperation[i].getX() - functionBPointsForOperation[i].getX()) > 0.0001) {
-          isLocallyCompatible = false;
-          localWarning = 'Локальные X-значения точек не совпадают';
-          break;
-        }
-      }
-    }
-
-    if (!isLocallyCompatible && !confirm(`Предупреждение: ${localWarning}. Продолжить выполнение операции?`)) {
-      return;
-    }
-
-    console.log('Выполнение операции:', {
-      operation,
-      factoryType: factoryType.value,
-      usingLocalData: hasUnsavedChangesA.value || hasUnsavedChangesB.value
-    });
-
-    let response;
-    try {
-      // Если есть несохраненные изменения и пользователь не хочет их сохранять,
-      // выполняем операцию локально на клиенте
-      if ((hasUnsavedChangesA.value || hasUnsavedChangesB.value) && !confirm('Есть несохраненные изменения. Сохранить их перед выполнением операции?')) {
-        response = {
-          points: performLocalOperation(functionAPointsForOperation, functionBPointsForOperation, operation),
-          functionId: null
-        };
-        console.log('Локальное выполнение операции:', response);
-      } else {
-        // Стандартное выполнение через сервер
-        response = await api.executeOperation(
-          selectedFunctionA.value.functionId,
-          selectedFunctionB.value.functionId,
-          operation,
-          factoryType.value
-        );
-      }
-    } catch (err) {
-      console.error('Ошибка при выполнении операции:', err);
-
-      // Если ошибка 500 и используем linked-list, пробуем array
-      if (factoryType.value === 'linked-list' &&
-          (err.status === 500 || err.message.includes('Internal Server Error') || err.message.includes('Внутренняя ошибка сервера'))) {
-        console.warn('Переключение на array фабрику из-за ошибки linked-list');
-
-        try {
-          response = await api.executeOperation(
-            selectedFunctionA.value.functionId,
-            selectedFunctionB.value.functionId,
-            operation,
-            'array'
-          );
-          // Сохраняем успешный тип фабрики
-          factoryType.value = 'array';
-          localStorage.setItem('tabulatedFunctionFactory', 'array');
-          alert('Произошла ошибка с linked-list фабрикой. Переключено на array фабрику.');
-        } catch (fallbackErr) {
-          console.error('Ошибка при выполнении операции с array фабрикой:', fallbackErr);
-
-          // Последняя попытка - выполнить локально
-          if (confirm('Ошибка сервера. Попробовать выполнить операцию локально с текущими данными?')) {
-            response = {
-              points: performLocalOperation(functionAPointsForOperation, functionBPointsForOperation, operation),
-              functionId: null
-            };
-            console.log('Локальное выполнение операции после ошибки сервера:', response);
-          } else {
-            throw fallbackErr;
-          }
-        }
-      } else {
-        throw err;
-      }
-    }
-
-    // Формируем имя результата
-    const operationNames = {
-      add: 'сложение',
-      subtract: 'вычитание',
-      multiply: 'умножение',
-      divide: 'деление'
-    };
-
-    resultName.value = `Результат_${operationNames[operation]}_${selectedFunctionA.value.functionName}_и_${selectedFunctionB.value.functionName}`;
-    resultPoints.value = response.points.map(p => ({
-      x: parseFloat(p.x !== undefined ? p.x : p.xval),
-      y: parseFloat(p.y !== undefined ? p.y : p.yval)
-    }));
-    resultFunctionId.value = response.functionId || null;
-    resultOperationType.value = operationTypeMap[operation];
-
-    console.log('Операция успешно выполнена:', response);
-    alert(`Операция "${operationNames[operation]}" успешно выполнена!`);
-
-  } catch (e) {
-    console.error('Operation execution error:', e);
-
-    // Попытка получить детальное сообщение об ошибке
-    let errorMessage = e.message;
-    if (e.response && e.response.data && e.response.data.message) {
-      errorMessage = e.response.data.message;
-    } else if (e.response && e.response.data && e.response.data.error) {
-      errorMessage = e.response.data.error;
-    } else if (e.error) {
-      errorMessage = e.error;
-    }
-
-    console.log('Обработанное сообщение об ошибке:', errorMessage);
-
-    // Анализируем типичные ошибки
-    if (errorMessage.includes('different number of points') ||
-        errorMessage.includes('разное количество точек') ||
-        errorMessage.includes('количество точек не совпадает')) {
-      alert('Ошибка: Функции имеют разное количество точек. Операции над функциями требуют совпадения количества точек.');
-    } else if (errorMessage.includes('x values do not match') ||
-               errorMessage.includes('X-значения не совпадают') ||
-               errorMessage.includes('значения x не совпадают')) {
-      alert('Ошибка: X-значения точек функций не совпадают. Для операций необходимо, чтобы X-значения были идентичны.');
-    } else if (errorMessage.includes('division by zero') ||
-               errorMessage.includes('деление на ноль') ||
-               errorMessage.includes('на ноль')) {
-      alert('Ошибка: Попытка деления на ноль. Проверьте значения Y второй функции.');
-    } else if (errorMessage.includes('Internal Server Error') ||
-               errorMessage.includes('Внутренняя ошибка сервера')) {
-      alert('Внутренняя ошибка сервера. Попробуйте использовать другую фабрику (array вместо linked-list) в настройках.');
-    } else {
-      alert(`Ошибка выполнения операции: ${errorMessage}`);
-    }
+    alert('Изменения успешно сохранены!');
+  } catch (error) {
+    console.error('Error saving points:', error);
+    alert(`Ошибка сохранения: ${error.message}`);
   }
 };
 
-// Локальное выполнение операции на клиенте
-const performLocalOperation = (pointsA, pointsB, operation) => {
-  // Сортируем точки по X перед выполнением операции
-  const sortedPointsA = [...pointsA].sort((a, b) => a.getX() - b.getX());
-  const sortedPointsB = [...pointsB].sort((a, b) => a.getX() - b.getX());
-
-  if (sortedPointsA.length !== sortedPointsB.length) {
-    throw new Error('Функции имеют разное количество точек');
-  }
-
-  return sortedPointsA.map((pointA, i) => {
-    const pointB = sortedPointsB[i];
-    const x = pointA.getX();
-    let y;
-
-    switch (operation) {
-      case 'add':
-        y = pointA.getY() + pointB.getY();
-        break;
-      case 'subtract':
-        y = pointA.getY() - pointB.getY();
-        break;
-      case 'multiply':
-        y = pointA.getY() * pointB.getY();
-        break;
-      case 'divide':
-        if (Math.abs(pointB.getY()) < 0.0001) {
-          throw new Error('Деление на ноль в точке с x = ' + x);
-        }
-        y = pointA.getY() / pointB.getY();
-        break;
-      default:
-        throw new Error('Неизвестная операция: ' + operation);
-    }
-
-    return { x, y };
-  });
-};
-
-// Загрузка всех функций пользователя
-const loadAvailableFunctions = async () => {
-  try {
-    loadingFunctions.value = true;
-    const userId = api.getStoredUserId();
-    const functions = await api.getFunctionsByUserId(userId);
-
-    // Загружаем количество точек для каждой функции
-    const functionsWithPoints = await Promise.all(functions.map(async (func) => {
-      try {
-        const points = await api.getTabulatedPointsByFunctionId(func.functionId);
-        return {
-          ...func,
-          pointCount: points.length
-        };
-      } catch (e) {
-        console.warn(`Не удалось загрузить точки для функции ID=${func.functionId}`, e);
-        return {
-          ...func,
-          pointCount: 0
-        };
-      }
-    }));
-
-    availableFunctions.value = functionsWithPoints;
-  } catch (e) {
-    console.error('Error loading available functions:', e);
-    availableFunctions.value = [];
-    alert(`Ошибка загрузки списка функций: ${e.message}`);
-  } finally {
-    loadingFunctions.value = false;
-  }
-};
-
-// Обновление возможности выполнения операции
-const updateCanExecute = () => {
-  canExecute.value = !!(
-    selectedFunctionA.value &&
-    selectedFunctionB.value &&
-    functionAPoints.value.length > 0 &&
-    functionBPoints.value.length > 0 &&
-    !hasDuplicateX('A') &&
-    !hasDuplicateX('B')
-  );
-};
-
-// Открытие селектора функций
-const openFunctionSelector = (target) => {
-  selectorTarget.value = target;
-  showFunctionSelector.value = true;
-  loadAvailableFunctions();
-};
-
-// Закрытие селектора функций
-const closeFunctionSelector = () => {
-  showFunctionSelector.value = false;
-  selectorTarget.value = null;
-};
-
-// Выбор функции из списка
-const selectFunction = (func) => {
-  loadFunctionPoints(func.functionId, selectorTarget.value);
-  closeFunctionSelector();
-};
-
-// Создание новой функции
-const createFunction = (operand) => {
-  window.dispatchEvent(new CustomEvent('open-create-function', {
-    detail: { operand }
-  }));
-};
-
-// Очистка выбранной функции
+// Очистка функции
 const clearFunction = (target) => {
   if (target === 'A') {
     selectedFunctionA.value = null;
@@ -928,12 +697,199 @@ const clearFunction = (target) => {
     functionBPoints.value = [];
     originalPointsB.value = [];
     tempYValues.value.B = {};
+  } else if (target === 'source') {
+    selectedSourceFunction.value = null;
+    sourceFunctionPoints.value = [];
+    originalSourcePoints.value = [];
+    tempYValues.value.source = {};
+    interpolationRange.value = { start: null, end: null };
   }
-  checkFunctionCompatibility();
-  updateCanExecute();
+
+  if (target === 'A' || target === 'B') {
+    checkFunctionCompatibility();
+    updateCanExecute();
+  }
 };
 
-// Сохранение результата (operations)
+// Выполнение операций
+const executeOperation = async (operation) => {
+  if (!selectedFunctionA.value || !selectedFunctionB.value) {
+    alert('Выберите обе функции для выполнения операции');
+    return;
+  }
+
+  if (!isCompatible.value) {
+    alert('Функции несовместимы для выполнения операций');
+    return;
+  }
+
+  try {
+    const functionIdA = selectedFunctionA.value.functionId;
+    const functionIdB = selectedFunctionB.value.functionId;
+    const operationTypeId = operationTypeMap[operation];
+
+    const result = await api.performOperation(functionIdA, functionIdB, operationTypeId);
+
+    resultPoints.value = result.points.map(p => ({
+      x: parseFloat(p.x),
+      y: parseFloat(p.y)
+    }));
+
+    resultName.value = `Результат_${operation}_${selectedFunctionA.value.functionName}_${selectedFunctionB.value.functionName}`;
+    resultOperationType.value = operationTypeId;
+
+    updateChart();
+
+    alert(`Операция выполнена успешно! Создано ${resultPoints.value.length} точек.`);
+
+  } catch (error) {
+    console.error('Operation error:', error);
+    alert(`Ошибка выполнения операции: ${error.message}`);
+  }
+};
+
+// Интерполяция
+const executeInterpolation = async () => {
+  if (!selectedSourceFunction.value || sourceFunctionPoints.value.length < 2) {
+    interpolationError.value = 'Выберите исходную функцию с как минимум 2 точками';
+    return;
+  }
+
+  try {
+    interpolationError.value = '';
+
+    // Определяем диапазон интерполяции
+    let start = interpolationRange.value.start;
+    let end = interpolationRange.value.end;
+
+    if (start === null || end === null) {
+      // Автоматически определяем диапазон по точкам функции
+      const xValues = sourceFunctionPoints.value.map(p => getXValue(p));
+      start = Math.min(...xValues);
+      end = Math.max(...xValues);
+      interpolationRange.value = { start, end };
+    }
+
+    if (start >= end) {
+      interpolationError.value = 'Начало диапазона должно быть меньше конца';
+      return;
+    }
+
+    // Определяем шаг или количество точек
+    let step;
+    if (interpolationPointsCount.value > 0) {
+      step = (end - start) / (interpolationPointsCount.value - 1);
+    } else if (interpolationStep.value > 0) {
+      step = interpolationStep.value;
+    } else {
+      interpolationError.value = 'Укажите количество точек или шаг интерполяции';
+      return;
+    }
+
+    // Выполняем интерполяцию через API
+    const response = await api.interpolateFunction(
+      selectedSourceFunction.value.functionId,
+      interpolationMethod.value,
+      start,
+      end,
+      step,
+      interpolationPointsCount.value
+    );
+
+    resultPoints.value = response.points.map(p => ({
+      x: parseFloat(p.x),
+      y: parseFloat(p.y)
+    }));
+
+    resultName.value = `Интерполяция_${interpolationMethod.value}_${selectedSourceFunction.value.functionName}`;
+    resultOperationType.value = 5; // Тип операции для интерполяции
+
+    // Обновляем график
+    updateChart();
+
+    alert(`Интерполяция выполнена успешно! Создано ${resultPoints.value.length} точек.`);
+
+  } catch (error) {
+    console.error('Interpolation error:', error);
+    interpolationError.value = `Ошибка интерполяции: ${error.message}`;
+  }
+};
+
+// Методы для работы с графиком
+const updateChart = () => {
+  if (!chartCanvas.value || resultPoints.value.length === 0) return;
+
+  // Уничтожаем предыдущий график
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  const ctx = chartCanvas.value.getContext('2d');
+
+  // Сортируем точки по X для корректного отображения
+  const sortedPoints = [...resultPoints.value].sort((a, b) => a.x - b.x);
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sortedPoints.map(p => p.x.toFixed(2)),
+      datasets: [{
+        label: resultName.value,
+        data: sortedPoints.map(p => p.y),
+        borderColor: '#2196f3',
+        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        title: {
+          display: true,
+          text: resultName.value
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'X'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Y'
+          }
+        }
+      }
+    }
+  });
+};
+
+const exportToCSV = () => {
+  if (resultPoints.value.length === 0) return;
+
+  const headers = ['X', 'Y'];
+  const csvContent = [
+    headers.join(','),
+    ...resultPoints.value.map(point =>
+      [point.x.toFixed(6), point.y.toFixed(6)].join(',')
+    )
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${resultName.value}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+// Сохранение результата
 const saveResult = async () => {
   if (resultPoints.value.length === 0) {
     alert('Нет данных для сохранения');
@@ -941,17 +897,14 @@ const saveResult = async () => {
   }
 
   try {
-    // Сначала создаем функцию для результата
     const functionData = {
       functionName: resultName.value,
-      functionExpression: `Результат операции "${resultName.value}"`,
+      functionExpression: `Результат ${activeTab.value === 'operations' ? 'операции' : 'интерполяции'} "${resultName.value}"`,
       typeFunction: 'tabular'
     };
 
-    // Создаем функцию
     await api.createFunction(functionData);
 
-    // Получаем ID созданной функции
     const userId = api.getStoredUserId();
     const allFunctions = await api.getFunctionsByUserId(userId);
 
@@ -964,29 +917,30 @@ const saveResult = async () => {
     }
 
     const functionId = createdFunction.functionId;
-    console.log('Найден ID созданной функции:', functionId);
 
     // Сохраняем точки
     for (const point of resultPoints.value) {
       await api.createTabulatedPoints(functionId, point.x, point.y);
     }
 
-    // Теперь отправляем запрос на operations API
-    const operationsResponse = await fetch('http://localhost:8080/yourapp/api/operations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${api.getStoredCredentials()}`
-      },
-      body: JSON.stringify({
-        functionId: functionId,
-        operationsTypeId: resultOperationType.value
-      })
-    });
+    // Сохраняем операцию в истории
+    if (resultOperationType.value) {
+      const operationsResponse = await fetch('http://localhost:8080/yourapp/api/operations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${api.getStoredCredentials()}`
+        },
+        body: JSON.stringify({
+          functionId: functionId,
+          operationsTypeId: resultOperationType.value
+        })
+      });
 
-    if (!operationsResponse.ok) {
-      const errorData = await operationsResponse.json();
-      throw new Error(errorData.error || errorData.message || 'Ошибка сохранения операции');
+      if (!operationsResponse.ok) {
+        const errorData = await operationsResponse.json();
+        throw new Error(errorData.error || errorData.message || 'Ошибка сохранения операции');
+      }
     }
 
     resultFunctionId.value = functionId;
@@ -1004,41 +958,256 @@ const clearResult = () => {
   resultName.value = '';
   resultFunctionId.value = null;
   resultOperationType.value = null;
+
+  if (chartInstance) {
+    chartInstance.destroy();
+    chartInstance = null;
+  }
 };
+
+// Обработчик события создания функции
+const handleFunctionCreated = (event) => {
+  const { operand, functionId, functionName, points } = event.detail;
+
+  if (operand === selectorTarget.value) {
+    if (operand === 'A') {
+      selectedFunctionA.value = { functionId, functionName };
+      functionAPoints.value = points.map(p => createPointObject(p.x, p.y));
+      originalPointsA.value = [...functionAPoints.value];
+    } else if (operand === 'B') {
+      selectedFunctionB.value = { functionId, functionName };
+      functionBPoints.value = points.map(p => createPointObject(p.x, p.y));
+      originalPointsB.value = [...functionBPoints.value];
+    } else if (operand === 'source') {
+      selectedSourceFunction.value = { functionId, functionName };
+      sourceFunctionPoints.value = points.map(p => createPointObject(p.x, p.y));
+      originalSourcePoints.value = [...sourceFunctionPoints.value];
+    }
+
+    if (operand === 'A' || operand === 'B') {
+      checkFunctionCompatibility();
+      updateCanExecute();
+    }
+  }
+};
+
+// Watchers
+watch(resultPoints, () => {
+  if (resultPoints.value.length > 0) {
+    nextTick(() => {
+      updateChart();
+    });
+  }
+});
+
+watch([functionAPoints, functionBPoints], () => {
+  checkFunctionCompatibility();
+  updateCanExecute();
+});
 
 // Инициализация
 onMounted(() => {
-  window.addEventListener('function-created', handleFunctionCreated);
+  window.addEventListener('operation-function-created', handleFunctionCreated);
 
-  // Проверяем совместимость при изменении точек
-  watch([functionAPoints, functionBPoints], () => {
-    checkFunctionCompatibility();
-  });
-
-  // Добавляем обработчик для закрытия модального окна на ESC
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && showFunctionSelector.value) {
       closeFunctionSelector();
     }
   });
+
+  // Инициализируем проверку
+  updateCanExecute();
+  checkFunctionCompatibility();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('function-created', handleFunctionCreated);
+  window.removeEventListener('operation-function-created', handleFunctionCreated);
   window.removeEventListener('keydown', (e) => {
     if (e.key === 'Escape' && showFunctionSelector.value) {
       closeFunctionSelector();
     }
   });
-});
 
-// Инициализируем проверку
-updateCanExecute();
-checkFunctionCompatibility();
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+});
 </script>
 
 <style scoped>
-/* Стили остаются без изменений */
+/* Новые стили для вкладок */
+.tabs-section {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.tab-button.active {
+  color: #2196f3;
+  border-bottom-color: #2196f3;
+  background-color: #f8fdff;
+}
+
+/* Стили для секции интерполяции */
+.interpolation-content {
+  padding: 20px 0;
+}
+
+.interpolation-controls {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.interpolation-source,
+.interpolation-params {
+  flex: 1;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.param-group {
+  margin-bottom: 15px;
+}
+
+.param-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.param-group select,
+.param-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-inputs input {
+  flex: 1;
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  display: block;
+}
+
+.interpolation-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #9c27b0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.interpolation-button:hover:not(:disabled) {
+  background-color: #7b1fa2;
+}
+
+.interpolation-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.interpolation-error {
+  background-color: #ffebee;
+  border: 1px solid #f44336;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 15px 0;
+}
+
+/* Стили для графика */
+.result-chart {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  text-align: center;
+}
+
+.result-chart canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Стили для кнопки экспорта */
+.export-button {
+  background-color: #607d8b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.export-button:hover {
+  background-color: #546e7a;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .interpolation-controls {
+    flex-direction: column;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+
+  .tab-button.active {
+    border-left-color: #2196f3;
+    border-bottom-color: transparent;
+  }
+}
+
+/* Остальные существующие стили остаются без изменений */
 .operations-window {
   position: relative;
   padding: 20px;
@@ -1229,6 +1398,8 @@ checkFunctionCompatibility();
 
 .result-table {
   background-color: white;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .result-actions {
@@ -1236,6 +1407,7 @@ checkFunctionCompatibility();
   gap: 15px;
   margin-top: 15px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .save-button, .clear-button {
@@ -1307,7 +1479,7 @@ table td {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.function-section, .operations-section, .result-section {
+.function-section, .operations-section, .result-section, .interpolation-controls {
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -1365,6 +1537,9 @@ table td {
 }
 
 .function-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 15px;
   border-bottom: 1px solid #eee;
   cursor: pointer;

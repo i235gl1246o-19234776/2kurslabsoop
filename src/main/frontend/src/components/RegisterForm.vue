@@ -14,7 +14,7 @@
     </div>
 
     <form @submit.prevent="register">
-      <input v-model="username" type="text" placeholder="Имя пользователя" required />
+      <input v-model="name" type="text" placeholder="Имя пользователя" required />
       <input v-model="password" type="password" placeholder="Пароль" required />
       <button type="submit">Зарегистрироваться</button>
     </form>
@@ -27,7 +27,7 @@ import { ref, inject } from 'vue';
 import { api } from '../api.js';
 
 const showError = inject('showError');
-const username = ref('');
+const name = ref('');
 const password = ref('');
 const showServerError = ref(false); // Флаг для отображения ошибки 500
 
@@ -37,7 +37,7 @@ const register = async () => {
   try {
     console.log('🔧 Отправка запроса на регистрацию...');
 
-    await api.register(username.value, password.value);
+    await api.register(name.value, password.value);
     emit('register-success');
 
   } catch (e) {
