@@ -36,7 +36,7 @@ const handleResponse = async (response) => {
 
 // --- Хранилище данных аутентификации ---
 let storedCredentials = null;
-let storedUserId = null; // <-- НОВОЕ: храним userId
+let storedUserId = null;
 
 // --- Экспортируем объект api ---
 export const api = {
@@ -68,7 +68,7 @@ export const api = {
 
     // Сохраняем credentials и userId для последующих запросов
     storedCredentials = credentials;
-    storedUserId = userData.id; // <-- СОХРАНЯЕМ userId из ответа
+    storedUserId = userData.id;
 
     return userData;
   },
@@ -76,7 +76,7 @@ export const api = {
   // --- Выход (очистка credentials и userId) ---
   logout: () => {
     storedCredentials = null;
-    storedUserId = null; // <-- ОЧИЩАЕМ userId
+    storedUserId = null;
   },
 
   // --- Проверка аутентификации ---
@@ -111,7 +111,6 @@ export const api = {
   },
 
   // --- Создание функции: POST /api/functions (требует аутентификации) ---
-  // Тело запроса: { "functionName": "...", "functionExpression": "...", "typeFunction": "...", "userId": ... }
   createFunction: async (functionData) => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
@@ -121,12 +120,11 @@ export const api = {
       throw new Error('User ID not available. Please log in again.');
     }
 
-    // --- ДОБАВЛЯЕМ userId в тело запроса ---
     const bodyData = {
         functionName: functionData.functionName,
         functionExpression: functionData.functionExpression,
         typeFunction: functionData.typeFunction,
-        userId: storedUserId, // <-- ДОБАВЛЕНО
+        userId: storedUserId,
     };
 
     const response = await fetch('/api/functions', {
@@ -142,26 +140,24 @@ export const api = {
   },
 
   // --- Создание табулированных точек: POST /api/tabulated-points (требует аутентификации) ---
-  // Тело запроса: { "functionId": ..., "xval": ..., "yval": ... }
-  createTabulatedPoints: async (functionId, xval, yval) => { // <-- Изменим сигнатуру функции
+  createTabulatedPoints: async (functionId, xval, yval) => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
     }
 
-    // Формируем тело запроса в нужном формате
     const pointData = {
-        functionId: functionId, // <-- Обратите внимание на регистр: functionId
-        xval: xval,           // <-- Обратите внимание на регистр: xval
-        yval: yval            // <-- Обратите внимание на регистр: yval
+        functionId: functionId,
+        xval: xval,
+        yval: yval
     };
 
-    const response = await fetch('/api/tabulated-points', { // <-- Правильный URL с дефисом
+    const response = await fetch('/api/tabulated-points', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${storedCredentials}`,
       },
-      body: JSON.stringify(pointData), // <-- Отправляем сформированный объект
+      body: JSON.stringify(pointData),
     });
 
     return handleResponse(response);
@@ -201,45 +197,43 @@ export const api = {
     return handleResponse(response);
   },
 
-  // --- Вычисление и сохранение табулированных точек из MathFunction: POST /api/tabulated-points/calculate (требует аутентификации) ---
-  // Тело запроса: { "functionId": 123, "mathFunctionName": "SqrFunction", "start": 0.0, "end": 10.0, "count": 100 }
+  // --- Вычисление и сохранение табулированных точек из MathFunction ---
   calculateAndSaveTabulatedPoints: async (functionId, mathFunctionName, start, end, count, factoryType) => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
     }
 
-    // Формируем тело запроса
     const calculateData = {
         functionId: functionId,
-        mathFunctionName: mathFunctionName, // Имя функции, как оно зарегистрировано на сервере
+        mathFunctionName: mathFunctionName,
         start: start,
         end: end,
         count: count,
         factoryType: factoryType
     };
 
-    const response = await fetch('/api/tabulated-points/calculate', { // <-- НОВЫЙ URL
+    const response = await fetch('/api/tabulated-points/calculate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${storedCredentials}`,
       },
-      body: JSON.stringify(calculateData), // <-- Отправляем сформированный объект
+      body: JSON.stringify(calculateData),
     });
 
     return handleResponse(response);
   },
 
-  // --- Получение функций пользователя: GET /api/functions?userId={userId} (требует аутентификации) ---
+  // --- Получение функций пользователя: GET /api/functions?userId={userId} ---
   getFunctionsByUserId: async (userId) => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
     }
 
-    const response = await fetch(`/api/functions?userId=${userId}`, { // <-- URL с параметром userId
+    const response = await fetch(`/api/functions?userId=${userId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${storedCredentials}`, // Требуется аутентификация
+        'Authorization': `Basic ${storedCredentials}`,
       },
     });
 
@@ -252,7 +246,7 @@ export const api = {
       throw new Error('Not authenticated. Please log in first.');
     }
 
-    const response = await fetch('/api/functions/all', { // <-- URL для получения всех функций
+    const response = await fetch('/api/functions/all', {
       method: 'GET',
       headers: {
         'Authorization': `Basic ${storedCredentials}`,
@@ -262,7 +256,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  // --- НОВОЕ: Получение табулированных точек по functionId ---
+  // --- Получение табулированных точек по functionId ---
   getTabulatedPointsByFunctionId: async (functionId) => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
@@ -278,7 +272,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  // --- НОВОЕ: Выполнение операции над двумя табулированными функциями ---
+  // --- Выполнение операции над двумя табулированными функциями ---
   executeOperation: async (functionIdA, functionIdB, operation, factoryType = 'array') => {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
@@ -287,8 +281,58 @@ export const api = {
     const payload = {
       functionIdA,
       functionIdB,
-      operation,        // "add", "subtract", "multiply", "divide"
-      factoryType       // "array" или "linked-list"
+      operation,
+      factoryType
+    };
+
+    const response = await fetch('/api/operations/execute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${storedCredentials}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return handleResponse(response);
+  },
+
+  // --- Интерполяция табулированной функции ---
+  interpolateFunction: async (functionId, method, start, end, step, pointCount) => {
+    if (!storedCredentials) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+
+    const payload = {
+      method,
+      start,
+      end,
+      step,
+      pointCount
+    };
+
+    const response = await fetch(`/api/functions/${functionId}/interpolate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${storedCredentials}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return handleResponse(response);
+  },
+
+  // --- Выполнение операции над двумя функциями ---
+  performOperation: async (functionIdA, functionIdB, operationTypeId) => {
+    if (!storedCredentials) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+
+    const payload = {
+      functionIdA,
+      functionIdB,
+      operationTypeId
     };
 
     const response = await fetch('/api/operations/execute', {
@@ -391,48 +435,54 @@ export const api = {
     return handleResponse(response);
   },
 
-  // --- Вычисление определенного интеграла ---
-  calculateIntegral: async (functionId, a, b, n, threadCount) => {
+  // --- ВЫЧИСЛЕНИЕ ОПРЕДЕЛЕННОГО ИНТЕГРАЛА (ИСПРАВЛЕННЫЙ МЕТОД) ---
+  calculateIntegral: async function(functionId, a, b, steps, threadCount) {
     if (!storedCredentials) {
       throw new Error('Not authenticated. Please log in first.');
     }
 
     const payload = {
-      functionId,
-      a,
-      b,
-      n,
-      threadCount
+      functionId: functionId,
+      a: parseFloat(a),
+      b: parseFloat(b),
+      steps: parseInt(steps),
+      threadCount: parseInt(threadCount)
     };
 
     const response = await fetch('/api/integration', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${storedCredentials}`,
+        'Authorization': `Basic ${storedCredentials}` // Исправлено: Basic вместо Bearer
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
-    return handleResponse(response);
+    return handleResponse(response); // Используем общий обработчик ответов
   },
 
   // --- Создание составной функции ---
-  createCompositeFunction: async (functionData) => {
-    if (!storedCredentials) {
-      throw new Error('Not authenticated. Please log in first.');
-    }
+  // В api.js добавьте метод для создания составной функции
+  createCompositeFunction: async function(functionData) {
+      try {
+          const response = await fetch('/api/composite-functions', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(functionData)
+          });
 
-    const response = await fetch('/api/composite-functions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${storedCredentials}`,
-      },
-      body: JSON.stringify(functionData),
-    });
+          if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+          }
 
-    return handleResponse(response);
+          return await response.json();
+      } catch (error) {
+          console.error('Error creating composite function:', error);
+          throw error;
+      }
   },
 
   // --- Удаление функции ---

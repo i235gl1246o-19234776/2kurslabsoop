@@ -1,4 +1,3 @@
-<!-- src/components/DifferentiationWindow.vue -->
 <template>
   <div v-if="show" class="differentiation-window">
     <div class="window-header">
@@ -13,7 +12,13 @@
         <div class="function-controls">
           <button @click="createFunction('source')">Создать</button>
           <button @click="openFunctionSelector('source')">Загрузить</button>
-          <button @click="saveFunction('source')" :disabled="!sourceFunction || !hasUnsavedChanges">Сохранить изменения</button>
+          <button @click="loadFunctionFromJson">Загрузить из JSON</button>
+          <button @click="exportFunctionToJson" :disabled="!sourceFunction || sourcePoints.length === 0">
+            Экспорт в JSON
+          </button>
+          <button @click="saveFunction('source')" :disabled="!sourceFunction || !hasUnsavedChanges">
+            Сохранить изменения
+          </button>
         </div>
         <div v-if="sourceFunction" class="function-details">
           <p><strong>Имя:</strong> {{ sourceFunction.functionName || 'Ручная функция' }}</p>
@@ -69,6 +74,9 @@
             Дифференцировать
           </button>
           <button @click="saveResult" :disabled="resultPoints.length === 0" class="save-button">Сохранить результат</button>
+          <button @click="exportResultToJson" :disabled="resultPoints.length === 0" class="export-button">
+            Экспорт в JSON
+          </button>
           <button @click="clearResult" class="clear-button">Очистить результат</button>
         </div>
         <div class="result-table">
@@ -81,8 +89,8 @@
             </thead>
             <tbody>
               <tr v-for="(point, index) in resultPoints" :key="index">
-                <td>{{ point.x }}</td>
-                <td>{{ point.y }}</td>
+                <td>{{ point.x.toFixed(4) }}</td>
+                <td>{{ point.y.toFixed(6) }}</td>
               </tr>
               <tr v-if="resultPoints.length === 0">
                 <td colspan="2" class="empty-table">Результат отсутствует</td>
@@ -130,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { api } from '../api.js';
 
 const props = defineProps({
@@ -161,13 +169,13 @@ const createPointObject = (x, y) => ({
 
 const getXValue = (point, index = null) => {
   if (point && typeof point.getX === 'function') return point.getX();
-  return point.x !== undefined ? point.x : (index !== null ? `Точка ${index + 1}` : 0);
+  return point?.x ?? (index !== null ? `Точка ${index + 1}` : 0);
 };
 
 const getYValue = (point, index) => {
   if (tempYValues.value[index] !== undefined) return tempYValues.value[index];
   if (point && typeof point.getY === 'function') return point.getY();
-  return point.y !== undefined ? point.y : 0;
+  return point?.y ?? 0;
 };
 
 const handleYInput = (target, index, value) => {
@@ -231,7 +239,7 @@ const loadFunctionPoints = async (functionId, target) => {
     sourceError.value = '';
   } catch (e) {
     console.error('Ошибка загрузки функции:', e);
-    emit('show-error', e.message || 'Неизвестная ошибка');
+    alert(e.message || 'Неизвестная ошибка');
   }
 };
 
@@ -264,7 +272,7 @@ const loadAvailableFunctions = async () => {
   } catch (e) {
     console.error('Ошибка загрузки функций:', e);
     availableFunctions.value = [];
-    emit('show-error', e.message || 'Не удалось загрузить функции');
+    alert(e.message || 'Не удалось загрузить функции');
   } finally {
     loadingFunctions.value = false;
   }
@@ -286,7 +294,6 @@ const handleFunctionCreated = (event) => {
   if (functionId) {
     loadFunctionPoints(functionId, 'source');
   } else {
-    // локальная функция без ID
     const pointObjects = points.map(p => createPointObject(p.x, p.y));
     sourceFunction.value = { functionName: 'Новая функция (локальная)', functionId: null };
     sourcePoints.value = [...pointObjects];
@@ -299,7 +306,6 @@ const handleFunctionCreated = (event) => {
 const saveFunction = async (target) => {
   if (!sourceFunction.value || !hasUnsavedChanges.value) return;
 
-  // Проверка дубликатов X
   const xValues = new Set();
   for (const point of sourcePoints.value) {
     const x = getXValue(point);
@@ -311,7 +317,7 @@ const saveFunction = async (target) => {
   }
 
   try {
-    const functionName = sourceFunction.value.functionName || `Функция_${new Date().getTime()}`;
+    const functionName = sourceFunction.value.functionName || `Функция_${Date.now()}`;
     const funcMeta = await api.createFunction({
       functionName,
       functionExpression: 'manual',
@@ -319,18 +325,17 @@ const saveFunction = async (target) => {
     });
 
     for (let i = 0; i < sourcePoints.value.length; i++) {
-      const point = sourcePoints.value[i];
-      let yVal = getYValue(point, i);
-      if (tempYValues.value[i] !== undefined) {
-        yVal = parseFloat(tempYValues.value[i]);
-      }
-      await api.createTabulatedPoints(funcMeta.functionId, getXValue(point, i), yVal);
+      const yVal = tempYValues.value[i] !== undefined
+        ? parseFloat(tempYValues.value[i])
+        : getYValue(sourcePoints.value[i], i);
+      await api.createTabulatedPoints(funcMeta.functionId, getXValue(sourcePoints.value[i], i), yVal);
     }
 
     sourceFunction.value.functionId = funcMeta.functionId;
     originalPoints.value = sourcePoints.value.map((p, i) => {
-      let y = getYValue(p, i);
-      if (tempYValues.value[i] !== undefined) y = parseFloat(tempYValues.value[i]);
+      const y = tempYValues.value[i] !== undefined
+        ? parseFloat(tempYValues.value[i])
+        : getYValue(p, i);
       return createPointObject(getXValue(p, i), y);
     });
     tempYValues.value = {};
@@ -339,6 +344,94 @@ const saveFunction = async (target) => {
     console.error('Ошибка сохранения:', e);
     alert(`Ошибка сохранения функции: ${e.message}`);
   }
+};
+
+// --- JSON import/export ---
+const loadFunctionFromJson = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!data.functionName) throw new Error('Отсутствует functionName');
+        if (!Array.isArray(data.points) || data.points.length === 0) throw new Error('Нет точек');
+        const points = data.points.map(p => {
+          const x = parseFloat(p.x);
+          const y = parseFloat(p.y);
+          if (isNaN(x) || isNaN(y)) throw new Error('Некорректные x/y');
+          return createPointObject(x, y);
+        });
+        const sorted = [...points].sort((a, b) => a.getX() - b.getX());
+        const fakeFunc = {
+          functionId: null,
+          functionName: data.functionName,
+          typeFunction: 'tabular',
+          pointCount: points.length
+        };
+        sourceFunction.value = fakeFunc;
+        sourcePoints.value = [...sorted];
+        originalPoints.value = sorted.map(p => createPointObject(p.getX(), p.getY()));
+        tempYValues.value = {};
+        sourceError.value = '';
+        alert(`Функция "${data.functionName}" загружена из JSON!`);
+      } catch (err) {
+        alert('Ошибка загрузки JSON: ' + (err.message || 'некорректный файл'));
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+};
+
+const exportFunctionToJson = () => {
+  if (!sourceFunction.value || sourcePoints.value.length === 0) return;
+
+  const currentPoints = sourcePoints.value.map((p, i) => ({
+    x: getXValue(p, i),
+    y: getYValue(p, i)
+  }));
+
+  const json = JSON.stringify({
+    functionName: sourceFunction.value.functionName,
+    typeFunction: 'tabular',
+    points: currentPoints
+  }, null, 2);
+
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${sourceFunction.value.functionName || 'function'}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportResultToJson = () => {
+  if (resultPoints.value.length === 0) return;
+
+  const jsonData = {
+    functionName: `Производная от ${sourceFunction.value?.functionName || 'неизвестной функции'}`,
+    typeFunction: 'tabular',
+    points: resultPoints.value.map(p => ({
+      x: p.x,
+      y: p.y
+    }))
+  };
+
+  const jsonStr = JSON.stringify(jsonData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `derivative_${sourceFunction.value?.functionName || 'result'}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
 // Дифференцирование
@@ -358,17 +451,10 @@ const differentiate = async () => {
   pointsForDiff.sort((a, b) => a.getX() - b.getX());
 
   try {
-    const factoryType = localStorage.getItem('tabulatedFunctionFactory') || 'array';
-    const hasUnsaved = hasUnsavedChanges.value;
-
-    let response;
-    if (!sourceFunction.value.functionId || hasUnsaved) {
-      // Локальное дифференцирование
-      response = {
-        points: performLocalDifferentiation(pointsForDiff)
-      };
+    let resultPts;
+    if (!sourceFunction.value?.functionId || hasUnsavedChanges.value) {
+      resultPts = performLocalDifferentiation(pointsForDiff);
     } else {
-      // Серверное
       const res = await fetch('/api/operations/differentiate', {
         method: 'POST',
         headers: {
@@ -377,20 +463,21 @@ const differentiate = async () => {
         },
         body: JSON.stringify({
           functionId: sourceFunction.value.functionId,
-          factoryType
+          factoryType: localStorage.getItem('tabulatedFunctionFactory') || 'array'
         })
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'Ошибка сервера');
       }
-      response = await res.json();
+      const response = await res.json();
+      resultPts = response.points.map(p => ({
+        x: parseFloat(p.x !== undefined ? p.x : p.xval),
+        y: parseFloat(p.y !== undefined ? p.y : p.yval)
+      }));
     }
 
-    resultPoints.value = response.points.map(p => ({
-      x: parseFloat(p.x !== undefined ? p.x : p.xval),
-      y: parseFloat(p.y !== undefined ? p.y : p.yval)
-    }));
+    resultPoints.value = resultPts;
   } catch (e) {
     console.error('Ошибка дифференцирования:', e);
     alert(`Ошибка: ${e.message}`);
@@ -435,8 +522,7 @@ const saveResult = async () => {
   }
 
   try {
-    const userId = api.getStoredUserId();
-    const functionName = `Производная_${new Date().toLocaleTimeString()}`;
+    const functionName = `Производная от ${sourceFunction.value?.functionName || 'неизвестной функции'}`;
     const funcMeta = await api.createFunction({
       functionName,
       functionExpression: 'Производная',
@@ -460,16 +546,9 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('function-created', handleFunctionCreated);
 });
-
-// Инициализация
-watch([sourcePoints], () => {
-  sourceError.value = '';
-});
 </script>
 
 <style scoped>
-@import url('./OperationsWindow.vue?scoped'); /* условно — для общих стилей */
-
 .differentiation-window {
   position: relative;
   padding: 20px;
@@ -533,11 +612,20 @@ watch([sourcePoints], () => {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+.function-controls button:nth-child(3) {
+  background-color: #9c27b0;
+}
+.function-controls button:nth-child(4) {
+  background-color: #607d8b;
+}
 .function-controls button:hover {
   background-color: #1976d2;
 }
-.operation-button.derivative {
-  background-color: #9c27b0;
+.function-controls button:nth-child(3):hover {
+  background-color: #7b1fa2;
+}
+.function-controls button:nth-child(4):hover {
+  background-color: #546e7a;
 }
 .function-details {
   background-color: white;
@@ -621,6 +709,13 @@ table td {
 .save-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+.export-button {
+  background-color: #607d8b;
+  color: white;
+}
+.export-button:hover {
+  background-color: #546e7a;
 }
 .modal-overlay {
   position: fixed;

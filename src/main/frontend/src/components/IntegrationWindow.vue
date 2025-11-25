@@ -111,7 +111,7 @@
               <p><strong>Значение интеграла:</strong> {{ formattedResult }}</p>
               <p><strong>Время выполнения:</strong> {{ executionTime }} мс</p>
               <p><strong>Количество потоков:</strong> {{ threadCount }}</p>
-              <p><strong>Метод:</strong> Параллельный метод Симпсона</p>
+              <p><strong>Метод:</strong> Параллельный метод трапеций</p>
             </div>
 
             <div class="performance-chart" v-if="performanceData.length > 0">
@@ -306,6 +306,8 @@ const loadFunctionPoints = async () => {
 }
 
 // Вычисление интеграла
+// В методе calculateIntegral в IntegrationWindow.vue
+// В методе calculateIntegral
 const calculateIntegral = async () => {
   if (!canCalculate.value) return
 
@@ -315,13 +317,12 @@ const calculateIntegral = async () => {
   try {
     const startTime = performance.now()
 
-    // Выполняем вычисление на сервере
     const result = await api.calculateIntegral(
       selectedFunctionId.value,
-      integrationStart.value,
-      integrationEnd.value,
-      integrationSteps.value,
-      threadCount.value
+      parseFloat(integrationStart.value),
+      parseFloat(integrationEnd.value),
+      parseInt(integrationSteps.value),
+      parseInt(threadCount.value)
     )
 
     const endTime = performance.now()
@@ -336,12 +337,10 @@ const calculateIntegral = async () => {
       result: calculationResult.value
     })
 
-    // Обновляем график производительности
     renderPerformanceChart()
 
-    console.log('Результат интегрирования:', result)
+    console.log('Результат интегрирования (метод трапеций):', result)
 
-    // Прокручиваем к результатам после вычисления
     setTimeout(() => {
       scrollToBottom()
     }, 100)

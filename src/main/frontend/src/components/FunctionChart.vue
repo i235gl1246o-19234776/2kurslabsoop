@@ -39,13 +39,21 @@ Chart.register(
 const props = defineProps({
   points: {
     type: Array,
-    default: () => []
+    required: true
   },
   showSlider: {
     type: Boolean,
     default: false
+  },
+  chartTitle: {
+    type: String,
+    default: ''
+  },
+  xAxisScale: { // ← НОВЫЙ ПРОПС
+    type: Number,
+    default: 1.0
   }
-});
+})
 
 const emit = defineEmits(['point-selected', 'range-changed']);
 

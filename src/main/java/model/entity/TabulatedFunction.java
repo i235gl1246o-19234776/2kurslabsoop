@@ -113,4 +113,12 @@ public class TabulatedFunction {
     public List<Point> getPoints() {
         return points;
     }
+
+    public double getXval() {
+        return xVal;
+    }
+
+    public double getYval() {
+        return yVal;
+    }
 }

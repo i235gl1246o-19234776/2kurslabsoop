@@ -4,6 +4,14 @@ public class PointDTO {
     private double x;
     private double y;
 
+    public PointDTO(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public PointDTO() {
+    }
+
     public double getX() {
         return x;
     }

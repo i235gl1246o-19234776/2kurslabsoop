@@ -1,4 +1,3 @@
-// IntegrationRequestDTO.java
 package model.dto.request;
 
 public class IntegrationRequestDTO {
@@ -49,4 +48,3 @@ public class IntegrationRequestDTO {
         this.threadCount = threadCount;
     }
 }
-

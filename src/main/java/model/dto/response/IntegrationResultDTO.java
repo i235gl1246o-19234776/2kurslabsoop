@@ -1,6 +1,5 @@
 package model.dto.response;
 
-
 public class IntegrationResultDTO {
     private double value;
     private double executionTimeMs;

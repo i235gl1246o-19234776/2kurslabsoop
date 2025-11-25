@@ -16,6 +16,7 @@ io\TabulatedFunctionJsonIO.class
 operations\MiddleSteppingDifferentialOperator.class
 operations\SteppingDifferentialOperator.class
 model\servlet\AuthServlet.class
+operations\TrapezoidalIntegral.class
 model\service\OperationService.class
 model\entity\User.class
 functions\Insertable.class
@@ -30,6 +31,7 @@ model\dto\response\IntegrationResultDTO.class
 model\servlet\SearchFunctionServlet.class
 concurrent\ReadTask.class
 operations\TestParralellism2000.class
+functions\InterpolationOperations.class
 model\service\FunctionService$SearchQueryBuilder.class
 operations\TabulatedDifferentialOperator.class
 operations\ParallelIntegrator.class

@@ -2,12 +2,10 @@ package model.service;
 
 import functions.*;
 import functions.factory.ArrayTabulatedFunctionFactory;
-import functions.factory.LinkedListTabulatedFunctionFactory;
 import functions.factory.TabulatedFunctionFactory;
 import model.dto.request.IntegrationRequestDTO;
 import model.dto.response.IntegrationResultDTO;
 import model.entity.Function;
-import model.entity.Point;
 import model.entity.TabulatedFunction;
 import repository.dao.FunctionRepository;
 import repository.dao.TabulatedFunctionRepository;
@@ -21,19 +19,14 @@ import java.util.stream.Collectors;
 
 public class IntegrationService {
     private final FunctionRepository functionRepository;
-    private final TabulatedFunctionRepository pointRepository;
+    private final TabulatedFunctionRepository tabulatedFunctionRepository;
     private static final int MAX_THREADS = 16;
     private static final long MAX_STEPS = 1_000_000;
     private static final long MIN_STEPS = 10;
 
     public IntegrationService() {
         this.functionRepository = new FunctionRepository();
-        this.pointRepository = new TabulatedFunctionRepository();
-    }
-
-    public IntegrationService(FunctionRepository functionRepository, TabulatedFunctionRepository pointRepository) {
-        this.functionRepository = functionRepository;
-        this.pointRepository = pointRepository;
+        this.tabulatedFunctionRepository = new TabulatedFunctionRepository();
     }
 
     public IntegrationResultDTO calculateIntegral(IntegrationRequestDTO request, Long userId) throws SQLException {
@@ -43,27 +36,23 @@ public class IntegrationService {
         Function function = functionRepository.findById(request.getFunctionId(), userId)
                 .orElseThrow(() -> new SecurityException("Отказано в доступе к функции"));
 
-        if (!"tabular".equals(function.getTypeFunction())) {
-            throw new IllegalArgumentException("Интегрирование возможно только для табулированных функций");
-        }
-
-        // Получаем табулированную функцию (объект, содержащий точки)
-        Optional<TabulatedFunction> tabulatedFunctionOpt = pointRepository.findById(request.getFunctionId());
-        if (tabulatedFunctionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Функция не содержит точек для интегрирования");
-        }
-
-        TabulatedFunction tabulatedFunctionEntity = tabulatedFunctionOpt.get();
-
-        // Получаем точки из сущности
-        List<Point> points = tabulatedFunctionEntity.getPoints(); // предполагается, что есть такой метод
+        // Получаем точки функции
+        List<TabulatedFunction> points = tabulatedFunctionRepository.findAllByFunctionId(request.getFunctionId());
         if (points == null || points.isEmpty()) {
             throw new IllegalArgumentException("Функция не содержит точек для интегрирования");
         }
 
-        // Находим минимум и максимум по X
-        double minX = points.stream().mapToDouble(Point::getXval).min().orElse(Double.MAX_VALUE);
-        double maxX = points.stream().mapToDouble(Point::getXval).max().orElse(Double.MIN_VALUE);
+        // Сортируем точки по X и создаем массивы
+        List<TabulatedFunction> sortedPoints = points.stream()
+                .sorted(Comparator.comparingDouble(TabulatedFunction::getXval))
+                .collect(Collectors.toList());
+
+        double[] xValues = sortedPoints.stream().mapToDouble(TabulatedFunction::getXval).toArray();
+        double[] yValues = sortedPoints.stream().mapToDouble(TabulatedFunction::getYval).toArray();
+
+        // Проверяем границы интегрирования
+        double minX = xValues[0];
+        double maxX = xValues[xValues.length - 1];
 
         if (request.getA() < minX || request.getB() > maxX) {
             throw new IllegalArgumentException(String.format(
@@ -72,12 +61,15 @@ public class IntegrationService {
             ));
         }
 
-        AbstractTabulatedFunction tabulatedFunction = createTabulatedFunction(function, points);
+        // Создаем табулированную функцию
+        TabulatedFunctionFactory factory = new ArrayTabulatedFunctionFactory();
+        AbstractTabulatedFunction tabulatedFunction = (AbstractTabulatedFunction) factory.create(xValues, yValues);
 
         int threadCount = Math.min(MAX_THREADS, Math.max(1, request.getThreadCount()));
         long steps = Math.min(MAX_STEPS, Math.max(MIN_STEPS, request.getSteps()));
 
         long startTime = System.nanoTime();
+
         ParallelIntegrator.IntegrationResult result = ParallelIntegrator.integrateWithFixedPool(
                 tabulatedFunction,
                 request.getA(),
@@ -85,6 +77,7 @@ public class IntegrationService {
                 steps,
                 threadCount
         );
+
         long endTime = System.nanoTime();
 
         return new IntegrationResultDTO(
@@ -98,30 +91,6 @@ public class IntegrationService {
         );
     }
 
-    private AbstractTabulatedFunction createTabulatedFunction(Function function, List<Point> points) {
-        // Сортируем точки по возрастанию X
-        List<Point> sortedPoints = points.stream()
-                .sorted(Comparator.comparingDouble(Point::getXval))
-                .collect(Collectors.toList());
-
-        // Извлекаем массивы X и Y
-        double[] xValues = sortedPoints.stream().mapToDouble(Point::getXval).toArray();
-        double[] yValues = sortedPoints.stream().mapToDouble(Point::getYval).toArray();
-
-        // Выбираем фабрику
-        //String factoryType = function.getFactoryType();
-        String factoryType = "";
-        TabulatedFunctionFactory factory;
-
-        if ("linked-list".equals(factoryType)) {
-            factory = new LinkedListTabulatedFunctionFactory();
-        } else {
-            factory = new ArrayTabulatedFunctionFactory(); // по умолчанию
-        }
-
-        return (AbstractTabulatedFunction) factory.create(xValues, yValues);
-    }
-
     private void validateRequest(IntegrationRequestDTO request) {
         if (request == null) {
             throw new IllegalArgumentException("Запрос не может быть пустым");
@@ -131,16 +100,12 @@ public class IntegrationService {
             throw new IllegalArgumentException("Некорректный ID функции");
         }
 
-        if (request.getA() > request.getB()) {
-            throw new IllegalArgumentException("Левая граница интервала не может быть больше правой");
-        }
-
-        if (request.getA() == request.getB()) {
-            throw new IllegalArgumentException("Границы интервала не могут совпадать");
+        if (request.getA() >= request.getB()) {
+            throw new IllegalArgumentException("Левая граница интервала должна быть меньше правой");
         }
 
         if (request.getSteps() < MIN_STEPS) {
-            throw new IllegalArgumentException("Количество шагов должно быть больше " + MIN_STEPS);
+            throw new IllegalArgumentException("Количество шагов должно быть не менее " + MIN_STEPS);
         }
 
         if (request.getThreadCount() < 1) {
@@ -158,6 +123,6 @@ public class IntegrationService {
 
     public static int getOptimalThreadCount() {
         int processors = Runtime.getRuntime().availableProcessors();
-        return Math.min(MAX_THREADS, processors * 2);
+        return Math.min(MAX_THREADS, Math.max(1, processors));
     }
 }

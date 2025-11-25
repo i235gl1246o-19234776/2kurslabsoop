@@ -10,7 +10,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Logger;
@@ -37,7 +36,7 @@ public class IntegrationServlet extends AuthServlet {
             User user = getAuthenticatedUser(req);
             IntegrationRequestDTO requestDTO = objectMapper.readValue(req.getReader(), IntegrationRequestDTO.class);
 
-            // Вызываем единый метод сервиса с DTO и userId
+            // Вызываем метод сервиса
             IntegrationResultDTO result = integrationService.calculateIntegral(requestDTO, user.getId());
 
             resp.setStatus(HttpServletResponse.SC_OK);

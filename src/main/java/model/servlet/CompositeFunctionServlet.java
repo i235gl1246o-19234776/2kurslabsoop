@@ -1,79 +1,82 @@
 package model.servlet;
 
-import model.dto.request.CompositeFunctionRequestDTO;
-import model.dto.response.CompositeFunctionResponseDTO;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.dto.request.FunctionRequestDTO;
-import model.dto.response.FunctionResponseDTO;
-import model.entity.Function;
 import model.entity.User;
 import model.service.CompositeFunctionService;
-import model.service.FunctionService;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.List;
 
 @WebServlet("/api/composite-functions")
 public class CompositeFunctionServlet extends AuthServlet {
     private static final Logger logger = Logger.getLogger(CompositeFunctionServlet.class.getName());
-    private final CompositeFunctionService compositeFunctionService;
-    private final ObjectMapper objectMapper;
+    private final CompositeFunctionService service = new CompositeFunctionService();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    public CompositeFunctionServlet() {
-        this.compositeFunctionService = new CompositeFunctionService();
-        this.objectMapper = new ObjectMapper();
+    // Вспомогательный DTO, аналогичный CompositeFunctionDto из Spring
+    public static class CompositeRequest {
+        public Long userId;
+        public String baseFunctionName;
+        public String outerFunctionName;
+        public String customName;
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.setContentType("application/json; charset=UTF-8");
+
         if (!isAuthenticated(req)) {
-            sendUnauthorized(resp);
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"error\":\"Требуется авторизация\"}");
             return;
         }
 
         try {
             User user = getAuthenticatedUser(req);
-            CompositeFunctionRequestDTO request = objectMapper.readValue(req.getReader(), CompositeFunctionRequestDTO.class);
+            String body = req.getReader().lines().collect(java.util.stream.Collectors.joining());
+            CompositeRequest request = mapper.readValue(body, CompositeRequest.class);
 
-            // Проверяем валидность структуры
-            if (!compositeFunctionService.validateStructure(request.getFunctionExpression())) {
+            // Валидация
+            if (request.baseFunctionName == null || request.baseFunctionName.trim().isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Invalid composite function structure\"}");
+                resp.getWriter().write("{\"error\":\"baseFunctionName обязательно\"}");
+                return;
+            }
+            if (request.outerFunctionName == null || request.outerFunctionName.trim().isEmpty()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"outerFunctionName обязательно\"}");
+                return;
+            }
+            if (request.userId == null || !request.userId.equals(user.getId())) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"userId должен совпадать с авторизованным пользователем\"}");
                 return;
             }
 
-            // Создаем составную функцию
-            CompositeFunctionResponseDTO response = compositeFunctionService.createCompositeFunction(
-                    request.getFunctionName(),
-                    request.getTechnicalName(),
-                    request.getDescription(),
-                    request.getFunctionExpression(),
-                    user.getId()
-            );
+            // Конструируем выражение, как в контроллере
+            String expression = request.outerFunctionName + "(" + request.baseFunctionName + "(x))";
+            String functionName = (request.customName != null && !request.customName.trim().isEmpty())
+                    ? request.customName.trim()
+                    : "Composite_" + request.baseFunctionName.replaceAll("\\s+", "_") + "_" + request.outerFunctionName.replaceAll("\\s+", "_");
+
+            // Сохраняем
+            var result = service.createCompositeFunction(functionName, expression, "analytic", user.getId());
 
             resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.setContentType("application/json");
-            resp.getWriter().write(objectMapper.writeValueAsString(response));
+            resp.getWriter().write(mapper.writeValueAsString(result));
 
         } catch (SQLException e) {
-            logger.severe("Database error during composite function creation: " + e.getMessage());
+            logger.severe("DB error: " + e.getMessage());
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"error\":\"Database error during function creation\"}");
+            resp.getWriter().write("{\"error\":\"Ошибка базы данных\"}");
         } catch (Exception e) {
-            logger.severe("Error during composite function creation: " + e.getMessage());
+            logger.severe("Error: " + e.getMessage());
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Invalid function parameters\"}");
+            resp.getWriter().write("{\"error\":\"Некорректные данные: " + e.getMessage() + "\"}");
         }
     }
 }

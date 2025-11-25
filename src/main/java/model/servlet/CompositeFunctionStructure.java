@@ -2,7 +2,6 @@ package model.servlet;
 
 import java.util.List;
 
-// Структура составной функции
 public class CompositeFunctionStructure {
     private String type;
     private String name;
@@ -10,45 +9,31 @@ public class CompositeFunctionStructure {
     private String description;
     private List<FunctionBlock> blocks;
 
-    public String getType() {
-        return type;
-    }
+    // Конструкторы
+    public CompositeFunctionStructure() {}
 
-    public String getName() {
-        return name;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public List<FunctionBlock> getBlocks() {
-        return blocks;
-    }
-
-    public void setType(String type) {
+    public CompositeFunctionStructure(String type, String name, String displayName,
+                                      String description, List<FunctionBlock> blocks) {
         this.type = type;
-    }
-
-    public void setName(String name) {
         this.name = name;
-    }
-
-    public void setDisplayName(String displayName) {
         this.displayName = displayName;
-    }
-
-    public void setDescription(String description) {
         this.description = description;
-    }
-
-    public void setBlocks(List<FunctionBlock> blocks) {
         this.blocks = blocks;
     }
 
     // Геттеры и сеттеры
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public List<FunctionBlock> getBlocks() { return blocks; }
+    public void setBlocks(List<FunctionBlock> blocks) { this.blocks = blocks; }
 }
