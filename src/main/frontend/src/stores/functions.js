@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api, getMathFunctions } from '@/services/api'
+import { api } from '@/services/api'
 import { ElMessage } from 'element-plus'
 
 export const useFunctionsStore = defineStore('functions', () => {
@@ -57,36 +57,33 @@ export const useFunctionsStore = defineStore('functions', () => {
     }
   }
 
-  // stores/functions.js - ИСПРАВЛЕННАЯ ФУНКЦИЯ createFunction
-  // stores/functions.js - ИСПРАВЛЕННАЯ ФУНКЦИЯ createFunction
- // stores/functions.js - УБЕДИТЕСЬ ЧТО ИСПОЛЬЗУЕТСЯ ПРАВИЛЬНЫЙ ФОРМАТ
+
  async function createFunction(functionData) {
    try {
-     console.log('🔄 Создание функции:', JSON.stringify(functionData, null, 2))
+       // Сначала создаем функцию
+       const functionResponse = await api.post('/functions', {
+         userId: functionData.userId,
+         typeFunction: functionData.typeFunction || 'tabular',
+         functionName: functionData.name,
+         functionExpression: functionData.functionExpression || '',
+         tabulatedPointIds: [],
+         operationIds: []
+       });
 
-     // ПОДГОТАВЛИВАЕМ ДАННЫЕ В ФОРМАТЕ POSTMAN
-     const dataToSend = {
-       userId: functionData.userId, // Должен быть реальный userId, а не 1
-       typeFunction: functionData.typeFunction || 'tabular',
-       functionName: functionData.name, // Используем functionName вместо name
-       functionExpression: functionData.functionExpression || '', // Обязательное поле
-       tabulatedPointIds: [], // Обязательное поле
-       operationIds: [] // Обязательное поле
-     }
-
-     console.log('📤 Отправляемые данные на сервер:', JSON.stringify(dataToSend, null, 2))
-
-     const response = await api.post('/functions', dataToSend, {
-       headers: {
-         'Content-Type': 'application/json'
+       // Затем добавляем точки
+       if (functionData.points && functionData.points.length > 0) {
+         await api.post('/tabulated-points/', functionData.points.map(point => ({
+           functionId: functionResponse.data.id,
+           xVal: point.x,
+           yVal: point.y
+         })));
        }
-     })
 
-     console.log('✅ Функция создана:', response.data)
-     functions.value.push(response.data)
-     ElMessage.success('Функция создана успешно')
-     return response.data
+       // Обновляем функцию с точками
+       const updatedFunction = await api.get(`/functions/${functionResponse.data.id}`);
+       functions.value.push(updatedFunction.data);
 
+       return updatedFunction.data;
    } catch (error) {
      console.error('❌ Ошибка при создании функции:', error)
 
@@ -133,14 +130,10 @@ export const useFunctionsStore = defineStore('functions', () => {
 
       // ПОДГОТОВКА ДАННЫХ В ФОРМАТЕ POSTMAN
       const dataToSend = {
-        userId: mathFunctionData.userId || 1,
-        typeFunction: 'analytic',
-        functionName: mathFunctionData.name || `Функция ${mathFunctionData.mathFunctionName}`,
-        functionExpression: mathFunctionData.functionExpression || mathFunctionData.mathFunctionName,
-        mathFunctionName: mathFunctionData.mathFunctionName,
-        xFrom: mathFunctionData.xFrom,
-        xTo: mathFunctionData.xTo,
-        count: mathFunctionData.count,
+        userId: functionData.userId,
+        typeFunction: functionData.typeFunction || 'tabular',
+        name: functionData.name, // Используем name вместо functionName
+        functionExpression: functionData.functionExpression || '',
         tabulatedPointIds: [],
         operationIds: []
       }

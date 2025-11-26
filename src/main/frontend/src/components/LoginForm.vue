@@ -1,6 +1,6 @@
 <!-- src/components/LoginForm.vue -->
 <template>
-  <div class="form-container">
+  <div class="modal-content">
     <h2>Вход</h2>
     <form @submit.prevent="login">
       <input v-model="username" type="text" placeholder="Имя пользователя" required />

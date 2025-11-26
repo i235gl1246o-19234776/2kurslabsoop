@@ -6,12 +6,10 @@
         <h2>Настройки</h2>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
-
       <div class="settings-container">
         <div class="settings-section">
           <h3>Фабрика табулированных функций</h3>
           <p>Выберите реализацию для создания табулированных функций</p>
-
           <div class="factory-options">
             <div
               class="factory-option"
@@ -26,7 +24,6 @@
                 <p>Оптимальна для частого доступа к элементам по индексу</p>
               </div>
             </div>
-
             <div
               class="factory-option"
               :class="{ selected: selectedFactory === 'linkedlist' }"
@@ -42,11 +39,9 @@
             </div>
           </div>
         </div>
-
         <div class="settings-section">
           <h3>Тема оформления</h3>
           <p>Выберите цветовую схему интерфейса</p>
-
           <div class="theme-options">
             <div
               class="theme-option"
@@ -56,7 +51,6 @@
               <div class="theme-preview light-theme"></div>
               <span>Светлая тема</span>
             </div>
-
             <div
               class="theme-option"
               :class="{ selected: currentTheme === 'dark' }"
@@ -67,22 +61,18 @@
             </div>
           </div>
         </div>
-
         <div class="settings-section">
           <h3>Другие настройки</h3>
-
           <div class="setting-item">
             <label for="autoSave">Автоматическое сохранение</label>
             <input type="checkbox" id="autoSave" v-model="autoSave">
           </div>
-
           <div class="setting-item">
             <label for="maxPoints">Максимальное количество точек для отображения</label>
             <input type="number" id="maxPoints" v-model="maxPoints" min="10" max="1000">
           </div>
         </div>
       </div>
-
       <div class="modal-footer">
         <button class="cancel-btn" @click="$emit('close')">Отмена</button>
         <button class="save-btn" @click="saveSettings">Сохранить настройки</button>
@@ -90,14 +80,13 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
+import { api } from '../api.js';
 
 const props = defineProps({
   isOpen: Boolean
 });
-
 const emit = defineEmits(['close']);
 
 // Настройки фабрики
@@ -114,24 +103,27 @@ const maxPoints = ref(100);
 // Загрузка доступных фабрик
 const loadAvailableFactories = async () => {
   try {
+    if (!api.isAuthenticated()) {
+      console.warn('Попытка загрузить фабрики без аутентификации');
+      return;
+    }
+
     const factories = await api.getAvailableFactories();
     availableFactories.value = factories;
 
     // Установка текущей фабрики из localStorage
     const savedFactory = localStorage.getItem('selectedTabulatedFunctionFactory');
-    if (savedFactory && factories.some(f => f.type === savedFactory)) {
+    if (savedFactory) {
       selectedFactory.value = savedFactory;
     }
   } catch (error) {
     console.error('Ошибка при загрузке фабрик:', error);
-    // Оставляем значение по умолчанию
   }
 };
 
 // Установка темы
 const setTheme = (theme) => {
   currentTheme.value = theme;
-
   if (theme === 'dark') {
     document.documentElement.classList.add('dark');
   } else {
@@ -143,14 +135,11 @@ const setTheme = (theme) => {
 const saveSettings = () => {
   // Сохранение фабрики
   localStorage.setItem('selectedTabulatedFunctionFactory', selectedFactory.value);
-
   // Сохранение темы
   localStorage.setItem('theme', currentTheme.value);
-
   // Сохранение других настроек
   localStorage.setItem('autoSave', autoSave.value.toString());
   localStorage.setItem('maxPoints', maxPoints.value.toString());
-
   emit('close');
 };
 
@@ -177,7 +166,6 @@ onMounted(() => {
   }
 });
 </script>
-
 <style scoped>
 .settings-modal {
   position: fixed;
@@ -191,7 +179,6 @@ onMounted(() => {
   align-items: center;
   z-index: 1000;
 }
-
 .modal-content {
   background-color: white;
   border-radius: 8px;
@@ -202,7 +189,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -212,7 +198,6 @@ onMounted(() => {
   color: white;
   border-bottom: 2px solid #34495e;
 }
-
 .close-btn {
   background: none;
   border: none;
@@ -227,35 +212,29 @@ onMounted(() => {
   justify-content: center;
   transition: all 0.3s;
 }
-
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
 }
-
 .settings-container {
   padding: 20px;
   overflow-y: auto;
   flex-grow: 1;
 }
-
 .settings-section {
   margin-bottom: 25px;
   padding-bottom: 20px;
   border-bottom: 1px solid #eee;
 }
-
 .settings-section:last-child {
   border-bottom: none;
   margin-bottom: 0;
   padding-bottom: 0;
 }
-
 .factory-options {
   display: flex;
   gap: 15px;
   margin-top: 15px;
 }
-
 .factory-option {
   flex: 1;
   border: 2px solid #ddd;
@@ -264,40 +243,33 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .factory-option:hover {
   border-color: #2196f3;
 }
-
 .factory-option.selected {
   border-color: #2196f3;
   background-color: #f0f7ff;
 }
-
 .factory-icon {
   font-size: 2rem;
   color: #2196f3;
   margin-bottom: 10px;
   text-align: center;
 }
-
 .factory-info h4 {
   margin: 0 0 5px 0;
   color: #333;
 }
-
 .factory-info p {
   margin: 0;
   color: #666;
   font-size: 0.9rem;
 }
-
 .theme-options {
   display: flex;
   gap: 20px;
   margin-top: 15px;
 }
-
 .theme-option {
   display: flex;
   flex-direction: column;
@@ -307,15 +279,12 @@ onMounted(() => {
   border-radius: 6px;
   transition: all 0.2s;
 }
-
 .theme-option:hover {
   background-color: #f0f0f0;
 }
-
 .theme-option.selected {
   background-color: #e3f2fd;
 }
-
 .theme-preview {
   width: 80px;
   height: 50px;
@@ -323,19 +292,15 @@ onMounted(() => {
   margin-bottom: 8px;
   border: 1px solid #ddd;
 }
-
 .light-theme {
   background: linear-gradient(to bottom, #ffffff 70%, #f0f0f0 30%);
 }
-
 .dark-theme {
   background: linear-gradient(to bottom, #1a1a1a 70%, #2a2a2a 30%);
 }
-
 .theme-option span {
   font-size: 0.9rem;
 }
-
 .setting-item {
   display: flex;
   justify-content: space-between;
@@ -343,27 +308,22 @@ onMounted(() => {
   padding: 10px 0;
   border-bottom: 1px solid #eee;
 }
-
 .setting-item:last-child {
   border-bottom: none;
 }
-
 .setting-item label {
   font-weight: 500;
 }
-
 .setting-item input[type="checkbox"] {
   width: auto;
   margin: 0;
 }
-
 .setting-item input[type="number"] {
   width: 80px;
   padding: 6px;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
-
 .modal-footer {
   padding: 15px 20px;
   border-top: 1px solid #eee;
@@ -371,7 +331,6 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 10px;
 }
-
 .save-btn, .cancel-btn {
   padding: 8px 16px;
   border: none;
@@ -380,21 +339,17 @@ onMounted(() => {
   font-weight: bold;
   transition: all 0.2s;
 }
-
 .save-btn {
   background-color: #2196f3;
   color: white;
 }
-
 .save-btn:hover {
   background-color: #1976d2;
 }
-
 .cancel-btn {
   background-color: #6c757d;
   color: white;
 }
-
 .cancel-btn:hover {
   background-color: #5a6268;
 }

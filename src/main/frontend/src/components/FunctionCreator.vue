@@ -1,422 +1,637 @@
 <template>
-  <div class="function-creator">
-    <h2>Создание табулированной функции</h2>
-    <div class="creation-type">
+  <div class="creator">
+    <!-- Крестик для закрытия окна -->
+    <div class="close-button" @click="$emit('close')">&times;</div>
+    <h2>Создать функцию</h2>
+    <div class="tabs">
       <button
-        :class="{ active: creationType === 'xy' }"
-        @click="creationType = 'xy'"
+        @click="activeTab = 'fromArrays'"
+        :class="{ active: activeTab === 'fromArrays' }"
       >
-        Из массивов X/Y
+        Из массивов X и Y
       </button>
       <button
-        :class="{ active: creationType === 'math' }"
-        @click="creationType = 'math'"
+        @click="activeTab = 'fromFunction'"
+        :class="{ active: activeTab === 'fromFunction' }"
       >
-        Из математической функции
+        Из функции MathFunction
       </button>
     </div>
-
-    <div v-if="creationType === 'xy'" class="xy-creator">
-      <div class="point-count">
-        <label for="pointCount">Количество точек:</label>
-        <input
-          type="number"
-          id="pointCount"
-          v-model.number="pointCount"
-          min="2"
-          max="100"
-        />
-      </div>
-
-      <div v-if="points.length > 0" class="points-table">
-        <h3>Точки функции</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>№</th>
-              <th>X</th>
-              <th>Y</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(point, index) in points" :key="index">
-              <td>{{ index + 1 }}</td>
-              <td>
-                <input
-                  type="number"
-                  v-model.number="point.x"
-                  @input="validatePoints"
-                  class="point-input"
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  v-model.number="point.y"
-                  @input="validatePoints"
-                  class="point-input"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-if="pointError" class="error-message">
-        {{ pointError }}
-      </div>
-    </div>
-
-    <div v-if="creationType === 'math'" class="math-creator">
-      <div class="math-function">
-        <label for="mathFunction">Выберите функцию:</label>
-        <select id="mathFunction" v-model="selectedMathFunction">
-          <option value="">-- Выберите функцию --</option>
-          <option
-            v-for="func in mathFunctions"
-            :key="func.name"
-            :value="func.name"
-          >
-            {{ func.displayName }}
-          </option>
-        </select>
-      </div>
-
-      <div class="interval">
-        <div class="interval-input">
-          <label for="fromX">От X:</label>
-          <input
-            type="number"
-            id="fromX"
-            v-model.number="fromX"
-          />
-        </div>
-        <div class="interval-input">
-          <label for="toX">До X:</label>
-          <input
-            type="number"
-            id="toX"
-            v-model.number="toX"
-          />
-        </div>
-      </div>
-
-      <div class="point-count">
-        <label for="mathPointCount">Количество точек:</label>
-        <input
-          type="number"
-          id="mathPointCount"
-          v-model.number="mathPointCount"
-          min="2"
-          max="100"
-        />
-      </div>
-    </div>
-
-    <div class="function-name">
-      <label for="functionName">Название функции:</label>
+    <div v-if="activeTab === 'fromArrays'">
+      <h3>Создание из массивов</h3>
+      <!-- Добавляем валидацию для pointCount -->
       <input
-        type="text"
-        id="functionName"
-        v-model="functionName"
-        placeholder="Введите название функции"
+        v-model.number="pointCount"
+        type="number"
+        placeholder="Количество точек"
+        min="1"
+        @blur="validatePointCount"
+        :class="{ 'error-input': pointCountError }"
       />
+      <span v-if="pointCountError" class="error-message">{{ pointCountError }}</span>
+      <button @click="generateTable" class="generate-button">Сгенерировать таблицу</button>
+      <table v-if="points.length > 0">
+        <thead>
+          <tr>
+            <th>X</th>
+            <th>Y</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(point, index) in points" :key="index">
+            <td>
+              <input
+                v-model.number="point.x"
+                type="number"
+                @blur="validatePointValue(point, 'x', index)"
+                :class="{ 'error-input': pointErrors[index] && pointErrors[index].x }"
+              />
+              <span v-if="pointErrors[index] && pointErrors[index].x" class="error-message">{{ pointErrors[index].x }}</span>
+            </td>
+            <td>
+              <input
+                v-model.number="point.y"
+                type="number"
+                @blur="validatePointValue(point, 'y', index)"
+                :class="{ 'error-input': pointErrors[index] && pointErrors[index].y }"
+              />
+              <span v-if="pointErrors[index] && pointErrors[index].y" class="error-message">{{ pointErrors[index].y }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Валидация для functionName -->
+      <input
+        v-model="functionName"
+        type="text"
+        placeholder="Название функции"
+        @blur="validateFunctionName"
+        :class="{ 'error-input': functionNameError }"
+      />
+      <span v-if="functionNameError" class="error-message">{{ functionNameError }}</span>
+      <input v-model="functionExpression" type="text" placeholder="Выражение функции (опционально)" />
+      <!-- Выбор типа функции только если НЕ создаем для операций -->
+      <select v-if="!isForOperation" v-model="typeFunction">
+        <option value="tabular">Табулированная</option>
+        <option value="analytic">Аналитическая</option>
+      </select>
+      <!-- Кнопки JSON -->
+      <div class="json-controls">
+        <button @click="loadFromJson" class="json-button secondary">
+          <i class="fas fa-upload"></i> Загрузить из JSON
+        </button>
+        <button @click="saveAsJson" class="json-button secondary" :disabled="!canExport">
+          <i class="fas fa-download"></i> Сохранить как JSON
+        </button>
+      </div>
+      <button @click="createFunctionFromArrays" class="create-button">Создать</button>
     </div>
-
-    <div v-if="creationError" class="error-message">
-      {{ creationError }}
-    </div>
-
-    <div class="actions">
-      <button @click="createFunction" :disabled="isCreating" class="create-btn">
-        <span v-if="isCreating">
-          <i class="fas fa-spinner fa-spin"></i> Создание...
-        </span>
-        <span v-else>
-          <i class="fas fa-check"></i> Создать функцию
-        </span>
-      </button>
-      <button @click="$emit('close')" class="cancel-btn">
-        <i class="fas fa-times"></i> Отмена
-      </button>
+    <div v-if="activeTab === 'fromFunction'">
+      <h3>Создание из функции</h3>
+      <select v-model="selectedFunctionName">
+        <option disabled value="">Выберите функцию</option>
+        <option v-for="name in sortedFunctionNames" :key="name" :value="name">{{ name }}</option>
+      </select>
+      <!-- Валидация для pointCount в этой вкладке тоже -->
+      <input
+        v-model.number="pointCountFromFunction"
+        type="number"
+        placeholder="Количество точек"
+        min="1"
+        @blur="validatePointCountFromFunction"
+        :class="{ 'error-input': pointCountFromFunctionError }"
+      />
+      <span v-if="pointCountFromFunctionError" class="error-message">{{ pointCountFromFunctionError }}</span>
+      <input v-model.number="startXFromFunction" type="number" placeholder="Начало интервала X" />
+      <input v-model.number="endXFromFunction" type="number" placeholder="Конец интервала X" />
+      <!-- Валидация для functionName в этой вкладке -->
+      <input
+        v-model="functionNameFromFunction"
+        type="text"
+        placeholder="Название функции"
+        @blur="validateFunctionNameFromFunction"
+        :class="{ 'error-input': functionNameFromFunctionError }"
+      />
+      <span v-if="functionNameFromFunctionError" class="error-message">{{ functionNameFromFunctionError }}</span>
+      <input v-model="functionExpressionFromFunction" type="text" placeholder="Выражение функции (опционально)" />
+      <!-- Выбор типа функции только если НЕ создаем для операций -->
+      <select v-if="!isForOperation" v-model="typeFunctionFromFunction">
+        <option value="tabular">Табулированная</option>
+        <option value="analytic">Аналитическая</option>
+      </select>
+      <!-- Кнопки JSON -->
+      <div class="json-controls">
+        <button @click="loadFromJson" class="json-button secondary">
+          <i class="fas fa-upload"></i> Загрузить из JSON
+        </button>
+        <button @click="saveAsJson" class="json-button secondary" :disabled="!canExport">
+          <i class="fas fa-download"></i> Сохранить как JSON
+        </button>
+      </div>
+      <button @click="createFunctionFromMathFunction" class="create-button">Создать</button>
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref, watch, onMounted } from 'vue';
-import * as api from '@/api.js';
-
-const emit = defineEmits(['close', 'function-created', 'error']);
-
-// Тип создания функции
-const creationType = ref('xy');
-
-// Для создания из X/Y
-const pointCount = ref(5);
+import { ref, computed, inject, watch } from 'vue';
+import { api } from '../api.js';
+// Объявляем события, которые компонент может эмитить
+const emit = defineEmits(['close', 'function-created']);
+// Добавляем пропс для определения контекста создания
+const props = defineProps({
+  isForOperation: {
+    type: Boolean,
+    default: false
+  }
+});
+// --- ИНЪЕКТИРУЕМ ФУНКЦИЮ showError ИЗ App.vue ---
+const showError = inject('showError');
+if (!showError) {
+  console.error("FunctionCreator: 'showError' function not provided by parent component.");
+}
+// --- КОНЕЦ ИНЪЕКЦИИ ---
+const activeTab = ref('fromArrays');
+const pointCount = ref(0);
 const points = ref([]);
-const pointError = ref('');
-
-// Для создания из математической функции
-const mathFunctions = ref([]);
-const selectedMathFunction = ref('');
-const fromX = ref(0);
-const toX = ref(10);
-const mathPointCount = ref(10);
-
-// Общие параметры
 const functionName = ref('');
-const creationError = ref('');
-const isCreating = ref(false);
-
-// Загрузка доступных математических функций
-const loadMathFunctions = async () => {
-  try {
-    const functions = await api.getAvailableMathFunctions();
-    mathFunctions.value = functions.map(func => ({
-      name: func.name,
-      displayName: func.displayName || func.name
-    }));
-  } catch (error) {
-    console.error('Ошибка при загрузке математических функций:', error);
-    emit('error', `Ошибка при загрузке математических функций: ${error.message}`);
-  }
+const functionExpression = ref('');
+const typeFunction = ref('tabular');
+const selectedFunctionName = ref('');
+// --- НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ВАЛИДАЦИИ И ВКЛАДКИ 'fromFunction' ---
+const pointCountFromFunction = ref(0);
+const startXFromFunction = ref(0);
+const endXFromFunction = ref(1);
+const functionNameFromFunction = ref('');
+const functionExpressionFromFunction = ref('');
+const typeFunctionFromFunction = ref('tabular');
+// --- КОНЕЦ НОВЫХ ПЕРЕМЕННЫХ ---
+// --- СОСТОЯНИЯ ДЛЯ ОШИБОК ВАЛИДАЦИИ ---
+const pointCountError = ref('');
+const functionNameError = ref('');
+const pointCountFromFunctionError = ref('');
+const functionNameFromFunctionError = ref('');
+// --- КОНЕЦ СОСТОЯНИЙ ОШИБОК ---
+// --- СОСТОЯНИЕ ДЛЯ ОШИБОК ТОЧЕК ---
+const pointErrors = ref({});
+// --- КОНЕЦ СОСТОЯНИЯ ---
+// Маппинг названий функций
+const functionMap = {
+  "Квадратичная функция": "SqrFunction",
+  "Тождественная функция": "IdentityFunction",
 };
-
-// Генерация точек при изменении количества
-const generatePoints = () => {
-  if (pointCount.value < 2) {
-    pointCount.value = 2;
+// Сортированный список названий функций
+const sortedFunctionNames = computed(() => Object.keys(functionMap));
+// Вычисляемое свойство: можно ли экспортировать
+const canExport = computed(() => {
+  return (
+    (activeTab.value === 'fromArrays' && points.value.length > 0 && functionName.value) ||
+    (activeTab.value === 'fromFunction' && functionNameFromFunction.value)
+  );
+});
+// Устанавливаем тип функции как табулированную, если создаем для операций
+watch(() => props.isForOperation, (isForOperation) => {
+  if (isForOperation) {
+    typeFunction.value = 'tabular';
+    typeFunctionFromFunction.value = 'tabular';
   }
+}, { immediate: true });
+// --- ФУНКЦИИ ВАЛИДАЦИИ ---
+const validatePointCount = () => {
+  if (pointCount.value === '' || pointCount.value === null || pointCount.value === undefined) {
+    pointCountError.value = 'Количество точек обязательно.';
+    return false;
+  }
+  if (isNaN(pointCount.value) || pointCount.value < 1) {
+    pointCountError.value = 'Количество точек должно быть положительным числом.';
+    return false;
+  }
+  pointCountError.value = '';
+  return true;
+};
+const validatePointValue = (point, coord, index) => {
+  if (!pointErrors.value[index]) pointErrors.value[index] = {};
+  if (point[coord] === '' || point[coord] === null || point[coord] === undefined) {
+    pointErrors.value[index][coord] = `Значение ${coord.toUpperCase()} обязательно.`;
+    return false;
+  }
+  if (isNaN(point[coord])) {
+    pointErrors.value[index][coord] = `Значение ${coord.toUpperCase()} должно быть числом.`;
+    return false;
+  }
+  pointErrors.value[index][coord] = '';
+  return true;
+};
+const validateFunctionName = () => {
+  if (!functionName.value.trim()) {
+    functionNameError.value = 'Название функции обязательно.';
+    return false;
+  }
+  if (functionName.value.trim().length > 255) {
+    functionNameError.value = 'Название функции слишком длинное.';
+    return false;
+  }
+  functionNameError.value = '';
+  return true;
+};
+const validatePointCountFromFunction = () => {
+  if (pointCountFromFunction.value === '' || pointCountFromFunction.value === null || pointCountFromFunction.value === undefined) {
+    pointCountFromFunctionError.value = 'Количество точек обязательно.';
+    return false;
+  }
+  if (isNaN(pointCountFromFunction.value) || pointCountFromFunction.value < 1) {
+    pointCountFromFunctionError.value = 'Количество точек должно быть положительным числом.';
+    return false;
+  }
+  pointCountFromFunctionError.value = '';
+  return true;
+};
+const validateFunctionNameFromFunction = () => {
+  if (!functionNameFromFunction.value.trim()) {
+    functionNameFromFunctionError.value = 'Название функции обязательно.';
+    return false;
+  }
+  if (functionNameFromFunction.value.trim().length > 255) {
+    functionNameFromFunctionError.value = 'Название функции слишком длинное.';
+    return false;
+  }
+  functionNameFromFunctionError.value = '';
+  return true;
+};
+// --- КОНЕЦ ФУНКЦИЙ ВАЛИДАЦИИ ---
+const generateTable = () => {
+  if (!validatePointCount()) return;
   if (pointCount.value > 100) {
-    pointCount.value = 100;
-  }
-  const newPoints = [];
-  for (let i = 0; i < pointCount.value; i++) {
-    // Если есть существующие точки, используем их значения
-    if (i < points.value.length) {
-      newPoints.push({ ...points.value[i] });
-    } else {
-      // Иначе создаем новые точки с начальными значениями
-      const x = i * 1.0;
-      newPoints.push({ x, y: Math.sin(x) });
-    }
-  }
-  points.value = newPoints;
-  validatePoints();
-};
-
-// Валидация точек
-const validatePoints = () => {
-  pointError.value = '';
-  // Проверка на дубликаты X
-  const xValues = points.value.map(p => p.x);
-  const uniqueXValues = new Set(xValues);
-  if (uniqueXValues.size !== xValues.length) {
-    pointError.value = 'Обнаружены дубликаты значений X. Все значения X должны быть уникальными.';
-    return;
-  }
-  // Проверка на сортировку по X
-  for (let i = 1; i < points.value.length; i++) {
-    if (points.value[i].x < points.value[i-1].x) {
-      pointError.value = 'Значения X должны быть отсортированы по возрастанию.';
+    if (!confirm(`Вы ввели ${pointCount.value} точек. Это может быть неудобно. Продолжить?`)) {
       return;
     }
   }
+  points.value = Array.from({ length: pointCount.value }, () => ({ x: 0, y: 0 }));
+  pointErrors.value = {};
 };
-
-// Создание функции
-const createFunction = async () => {
-  if (pointError.value) {
-    creationError.value = 'Пожалуйста, исправьте ошибки в точках перед созданием функции.';
+// --- ФУНКЦИЯ СОЗДАНИЯ ФУНКЦИИ ИЗ МАССИВОВ ---
+const createFunctionFromArrays = async () => {
+  const isPointCountValid = validatePointCount();
+  const isFunctionNameValid = validateFunctionName();
+  let allPointsValid = true;
+  points.value.forEach((point, index) => {
+    const xValid = validatePointValue(point, 'x', index);
+    const yValid = validatePointValue(point, 'y', index);
+    if (!xValid || !yValid) allPointsValid = false;
+  });
+  if (!isPointCountValid || !isFunctionNameValid || !allPointsValid) {
+    showError('Пожалуйста, исправьте ошибки в форме перед отправкой.');
     return;
   }
-  if (!functionName.value.trim()) {
-    creationError.value = 'Пожалуйста, введите название функции.';
-    return;
-  }
-
-  isCreating.value = true;
-  creationError.value = '';
-
+  const currentFunctionName = functionName.value;
+  const actualType = props.isForOperation ? 'tabular' : typeFunction.value;
   try {
-    let result;
-    if (creationType.value === 'xy') {
-      // Создание из массивов X/Y
-      const functionData = {
-        functionName: functionName.value.trim(),
-        typeFunction: 'tabular',
-      };
-
-      // Создание функции
-      result = await api.createFunction(functionData);
-
-      // Добавление точек
-      await Promise.all(points.value.map(point =>
-        api.addTabulatedPoint(result.id, point)
-      ));
-    } else if (creationType.value === 'math') {
-      // Создание из математической функции
-      if (!selectedMathFunction.value) {
-        throw new Error('Пожалуйста, выберите математическую функцию.');
-      }
-      if (fromX.value >= toX.value) {
-        throw new Error('Начальное значение X должно быть меньше конечного.');
-      }
-      if (mathPointCount.value < 2) {
-        throw new Error('Количество точек должно быть не менее 2.');
-      }
-
-      const functionData = {
-        functionName: functionName.value.trim(),
-        typeFunction: 'tabular',
-        mathFunctionName: selectedMathFunction.value,
-        fromX: parseFloat(fromX.value),
-        toX: parseFloat(toX.value),
-        pointCount: parseInt(mathPointCount.value)
-      };
-
-      // Создание функции с точками
-      result = await api.createFunctionFromMath(functionData);
+    const functionData = {
+      functionName: currentFunctionName,
+      functionExpression: functionExpression.value,
+      typeFunction: actualType,
+    };
+    await api.createFunction(functionData);
+    console.log("Запрос на создание функции отправлен.");
+    const userId = api.getStoredUserId();
+    const allFunctions = await api.getFunctionsByUserId(userId);
+    const createdFunction = allFunctions
+        .filter(f => f.functionName === currentFunctionName)
+        .sort((a, b) => b.functionId - a.functionId)[0];
+    if (!createdFunction) {
+        throw new Error("Не удалось получить ID созданной функции.");
     }
-
-    // Эмит результата создания
+    const functionId = createdFunction.functionId;
+    console.log("Найден functionId:", functionId);
+    if (typeof functionId !== 'number' || isNaN(functionId)) {
+        throw new Error("Полученный ID функции некорректен.");
+    }
+    console.log("Отправляем точки для functionId:", functionId);
+    for (const point of points.value) {
+        await api.createTabulatedPoints(functionId, point.x, point.y);
+    }
     emit('function-created', {
-      functionId: result.id,
-      functionName: result.functionName,
-      points: creationType.value === 'xy' ? points.value : null
+      points: points.value,
+      functionId: functionId,
+      functionName: currentFunctionName
     });
-
-    // Закрытие окна
+    alert("Функция и точки успешно созданы!");
+    points.value = [];
+    pointCount.value = 0;
+    functionName.value = "";
+    functionExpression.value = "";
+    typeFunction.value = "tabular";
+    pointErrors.value = {};
     emit('close');
-  } catch (error) {
-    console.error('Ошибка при создании функции:', error);
-    creationError.value = `Ошибка при создании функции: ${error.message}`;
-    emit('error', creationError.value);
-  } finally {
-    isCreating.value = false;
+  } catch (e) {
+    console.error("Create from arrays error:", e);
+    showError(e.message || 'Ошибка при создании функции');
   }
 };
-
-// Наблюдение за количеством точек
-watch(pointCount, generatePoints);
-
-// Инициализация
-onMounted(() => {
-  generatePoints();
-  loadMathFunctions();
-});
+// --- ФУНКЦИЯ СОЗДАНИЯ ФУНКЦИИ ИЗ MATH FUNCTION ---
+const createFunctionFromMathFunction = async () => {
+  const isPointCountValid = validatePointCountFromFunction();
+  const isFunctionNameValid = validateFunctionNameFromFunction();
+  const isIntervalValid = startXFromFunction.value < endXFromFunction.value;
+  if (!isPointCountValid || !isFunctionNameValid) {
+    showError('Пожалуйста, исправьте ошибки в форме перед отправкой.');
+    return;
+  }
+  if (!isIntervalValid) {
+    showError("Начало интервала должно быть меньше конца.");
+    return;
+  }
+  if (!selectedFunctionName.value) {
+    showError("Пожалуйста, выберите функцию из списка.");
+    return;
+  }
+  const currentFunctionName = functionNameFromFunction.value;
+  const actualType = props.isForOperation ? 'tabular' : typeFunctionFromFunction.value;
+  const mathFunctionName = functionMap[selectedFunctionName.value];
+  try {
+    const functionData = {
+      functionName: currentFunctionName,
+      functionExpression: functionExpressionFromFunction.value,
+      typeFunction: actualType,
+    };
+    await api.createFunction(functionData);
+    const userId = api.getStoredUserId();
+    const allFunctions = await api.getFunctionsByUserId(userId);
+    const createdFunction = allFunctions
+      .filter(f => f.functionName === currentFunctionName)
+      .sort((a, b) => b.functionId - a.functionId)[0];
+    if (!createdFunction) {
+      throw new Error("Не удалось найти созданную функцию.");
+    }
+    const functionId = createdFunction.functionId;
+    if (typeof functionId !== 'number' || isNaN(functionId)) {
+      throw new Error("Получен некорректный ID функции.");
+    }
+    const factoryType = localStorage.getItem('tabulatedFunctionFactory') || 'array';
+    await api.calculateAndSaveTabulatedPoints(
+      functionId,
+      mathFunctionName,
+      startXFromFunction.value,
+      endXFromFunction.value,
+      pointCountFromFunction.value,
+      factoryType
+    );
+    emit('function-created', {
+      points: [],
+      functionId: functionId,
+      functionName: currentFunctionName
+    });
+    alert("Функция и точки успешно созданы из MathFunction!");
+    functionNameFromFunction.value = "";
+    functionExpressionFromFunction.value = "";
+    typeFunctionFromFunction.value = "tabular";
+    selectedFunctionName.value = "";
+    pointCountFromFunction.value = 0;
+    startXFromFunction.value = 0;
+    endXFromFunction.value = 1;
+    emit('close');
+  } catch (e) {
+    console.error("Create from function error:", e);
+    showError(e.message || 'Неизвестная ошибка при создании функции.');
+  }
+};
+// --- JSON IMPORT / EXPORT ---
+const loadFromJson = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!data.functionName) {
+          throw new Error('Отсутствует название функции');
+        }
+        activeTab.value = 'fromArrays';
+        functionName.value = data.functionName;
+        functionExpression.value = data.functionExpression || '';
+        typeFunction.value = data.typeFunction || 'tabular';
+        if (Array.isArray(data.points) && data.points.length > 0) {
+          points.value = data.points
+            .map(p => ({ x: parseFloat(p.x), y: parseFloat(p.y) }))
+            .filter(p => !isNaN(p.x) && !isNaN(p.y));
+          pointCount.value = points.value.length;
+        } else {
+          points.value = [];
+          pointCount.value = 0;
+        }
+        pointErrors.value = {};
+        pointCountError.value = '';
+        functionNameError.value = '';
+        alert('Данные успешно загружены из JSON!');
+      } catch (error) {
+        console.error('Ошибка загрузки JSON:', error);
+        showError('Ошибка при загрузке JSON: ' + (error.message || 'некорректный формат'));
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+};
+const saveAsJson = () => {
+  let data;
+  if (activeTab.value === 'fromArrays') {
+    if (!functionName.value || points.value.length === 0) {
+      showError('Недостаточно данных для экспорта');
+      return;
+    }
+    data = {
+      functionName: functionName.value,
+      functionExpression: functionExpression.value,
+      typeFunction: typeFunction.value,
+      points: points.value.map(p => ({ x: p.x, y: p.y }))
+    };
+  } else {
+    if (!functionNameFromFunction.value) {
+      showError('Укажите название функции');
+      return;
+    }
+    data = {
+      functionName: functionNameFromFunction.value,
+      functionExpression: functionExpressionFromFunction.value,
+      typeFunction: typeFunctionFromFunction.value,
+      mathFunctionName: selectedFunctionName.value,
+      pointCount: pointCountFromFunction.value,
+      startX: startXFromFunction.value,
+      endX: endXFromFunction.value
+    };
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${data.functionName || 'function'}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 </script>
-
 <style scoped>
-.function-creator {
+.creator {
+  position: relative;
   padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
 }
-.creation-type {
+/* Стили для крестика */
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #666;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  z-index: 10;
+}
+.close-button:hover {
+  background-color: #f0f0f0;
+  color: #d32f2f;
+  transform: rotate(90deg);
+}
+h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 15px;
+  justify-content: center;
 }
-.creation-type button {
-  padding: 8px 16px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.creation-type button.active {
-  background-color: #2196f3;
-  color: white;
-  border-color: #2196f3;
-}
-.point-count, .math-function, .interval, .function-name {
-  margin-bottom: 15px;
-}
-.point-count label, .math-function label, .interval label, .function-name label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-input[type="number"], input[type="text"], select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-.points-table {
-  margin: 20px 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-table th, table td {
-  padding: 8px;
-  text-align: left;
-  border: 1px solid #ddd;
-}
-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-}
-.point-input {
-  width: 100%;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-.interval {
-  display: flex;
-  gap: 15px;
-}
-.interval-input {
-  flex: 1;
-}
-.error-message {
-  color: #d32f2f;
-  background-color: #ffebee;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
-  border-left: 3px solid #d32f2f;
-}
-.actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  justify-content: flex-end;
-}
-.create-btn, .cancel-btn {
-  padding: 10px 20px;
+.tabs button {
+  padding: 8px 15px;
+  background-color: #e9ecef;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  transition: background-color 0.2s;
 }
-.create-btn {
-  background-color: #4CAF50;
+.tabs button.active {
+  background-color: #2196f3;
   color: white;
 }
-.create-btn:hover {
-  background-color: #45a049;
+.tabs button:hover:not(.active) {
+  background-color: #dee2e6;
 }
-.create-btn:disabled {
+input, select, button {
+  padding: 8px;
+  margin: 0.25rem 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+button {
+  background-color: #42b983;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+button:hover {
+  background-color: #359c6d;
+}
+button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }
-.cancel-btn {
-  background-color: #f44336;
-  color: white;
+.generate-button {
+  background-color: #2196f3;
 }
-.cancel-btn:hover {
-  background-color: #da190b;
+.generate-button:hover {
+  background-color: #1976d2;
+}
+.create-button {
+  background-color: #4caf50;
+  font-weight: bold;
+  padding: 10px;
+  margin-top: 1rem;
+  font-size: 16px;
+}
+.create-button:hover {
+  background-color: #43a047;
+}
+table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+table th {
+  background-color: #f5f5f5;
+}
+/* Стили для валидации */
+.error-input {
+  border: 2px solid #d32f2f !important;
+}
+.error-message {
+  color: #d32f2f;
+  font-size: 0.85em;
+  display: block;
+  margin-top: 0.25rem;
+  min-height: 1.2em;
+}
+/* Стили для JSON кнопок */
+.json-controls {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.json-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  background: #ecf0f1;
+  color: #2c3e50;
+  transition: all 0.2s;
+}
+.json-button:hover {
+  background: #bdc3c7;
+}
+.json-button:disabled {
+  background: #ddd;
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .creator {
+    padding: 15px;
+    margin: 10px;
+  }
+  table {
+    font-size: 0.9em;
+  }
+  table th, table td {
+    padding: 6px;
+  }
 }
 </style>

@@ -1,4 +1,3 @@
-// src/main/java/core/dto/IntegrationResultDto.java
 package core.dto;
 
 import lombok.*;
@@ -9,4 +8,8 @@ import lombok.*;
 public class IntegrationResultDto {
     private double value;
     private long duration; // в миллисекундах
+    private String error;
+
+    public IntegrationResultDto(double result, long duration) {
+    }
 }

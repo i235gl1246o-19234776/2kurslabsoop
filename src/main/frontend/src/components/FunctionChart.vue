@@ -1,200 +1,198 @@
+<!-- src/components/FunctionChart.vue -->
 <template>
-  <div class="function-chart-simple">
-    <div class="chart-header">
-      <h3>{{ title }}</h3>
-    </div>
-    <div class="chart-container">
-      <canvas ref="chartCanvas"></canvas>
-    </div>
-    <div class="chart-info">
-      <p>Точек на графике: {{ points.length }}</p>
-      <p v-if="points.length > 0">
-        Диапазон X: [{{ minX.toFixed(2) }}, {{ maxX.toFixed(2) }}]
-        Y: [{{ minY.toFixed(2) }}, {{ maxY.toFixed(2) }}]
-      </p>
+  <div class="chart-container">
+    <canvas ref="chartCanvas"></canvas>
+    <div v-if="showSlider" class="slider-controls">
+      <button @click="zoomIn">+</button>
+      <button @click="zoomOut">-</button>
+      <button @click="resetZoom">⟲</button>
     </div>
   </div>
 </template>
-
-<script>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
-import { Chart, registerables } from 'chart.js'
-
-Chart.register(...registerables)
-
-export default {
-  name: 'FunctionChartSimple',
-  props: {
-    points: {
-      type: Array,
-      default: () => []
-    },
-    title: {
-      type: String,
-      default: 'График функции'
-    }
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom'; // ← Убедитесь, что установлен!
+// Регистрация компонентов
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  zoomPlugin
+);
+const props = defineProps({
+  points: {
+    type: Array,
+    required: true
   },
-  setup(props) {
-    const chartCanvas = ref(null)
-    let chartInstance = null
-
-    const minX = computed(() => {
-      if (!props.points.length) return 0
-      return Math.min(...props.points.map(p => p.x))
-    })
-
-    const maxX = computed(() => {
-      if (!props.points.length) return 0
-      return Math.max(...props.points.map(p => p.x))
-    })
-
-    const minY = computed(() => {
-      if (!props.points.length) return 0
-      return Math.min(...props.points.map(p => p.y))
-    })
-
-    const maxY = computed(() => {
-      if (!props.points.length) return 0
-      return Math.max(...props.points.map(p => p.y))
-    })
-
-    const createChart = () => {
-      if (!chartCanvas.value) {
-        console.log('❌ canvas element not found')
-        return
-      }
-
-      if (!props.points || props.points.length === 0) {
-        console.log('❌ no points data')
-        return
-      }
-
-      console.log('🔄 Creating chart with points:', props.points)
-
-      // Уничтожаем старый график
-      if (chartInstance) {
-        chartInstance.destroy()
-      }
-
-      const ctx = chartCanvas.value.getContext('2d')
-
-      // Сортируем точки по X
-      const sortedPoints = [...props.points].sort((a, b) => a.x - b.x)
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: sortedPoints.map(p => p.x.toFixed(2)),
-          datasets: [{
-            label: props.title,
-            data: sortedPoints.map(point => point.y),
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-            borderWidth: 2,
-            pointRadius: 4,
-            pointBackgroundColor: '#3498db',
-            fill: true,
-            tension: 0.4
-          }]
+  showSlider: {
+    type: Boolean,
+    default: false
+  },
+  chartTitle: {
+    type: String,
+    default: ''
+  },
+  xAxisScale: { // ← НОВЫЙ ПРОПС
+    type: Number,
+    default: 1.0
+  }
+})
+const emit = defineEmits(['point-selected', 'range-changed']);
+const chartCanvas = ref(null);
+let myChart = null;
+const createChart = () => {
+  if (!chartCanvas.value || !props.points.length) return;
+  const ctx = chartCanvas.value.getContext('2d');
+  if (myChart) {
+    myChart.destroy();
+  }
+  myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: props.points.map(p => p.x.toFixed(3)),
+      datasets: [{
+        label: 'Табулированная функция',
+        data: props.points.map(p => p.y),
+        borderColor: '#4CAF50',
+        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+        pointBackgroundColor: '#E91E63',
+        pointBorderColor: '#FFFFFF',
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'X'
-              }
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            title: function(context) {
+              return `x = ${context[0].label}`;
             },
-            y: {
-              title: {
-                display: true,
-                text: 'Y'
-              }
+            label: function(context) {
+              return `y = ${context.raw.toFixed(3)}`;
+            }
+          }
+        },
+        zoom: {
+          zoom: {
+            wheel: {
+              enabled: true,
+            },
+            pinch: {
+              enabled: true
+            },
+            mode: 'xy',
+            onZoom: ({ chart }) => {
+              // При зуме — можно отправлять событие с диапазоном
+              const minIndex = Math.floor(chart.scales.x.min / chart.scales.x.max * props.points.length);
+              const maxIndex = Math.ceil(chart.scales.x.max / chart.scales.x.max * props.points.length);
+              emit('range-changed', { start: minIndex, end: maxIndex });
             }
           },
-          plugins: {
-            title: {
-              display: true,
-              text: props.title
-            },
-            legend: {
-              display: false
+          pan: {
+            enabled: true,
+            mode: 'xy',
+            onPan: ({ chart }) => {
+              const minIndex = Math.floor(chart.scales.x.min / chart.scales.x.max * props.points.length);
+              const maxIndex = Math.ceil(chart.scales.x.max / chart.scales.x.max * props.points.length);
+              emit('range-changed', { start: minIndex, end: maxIndex });
             }
           }
         }
-      })
-
-      console.log('✅ Chart created successfully')
-    }
-
-    // Отслеживание изменений в точках
-    watch(() => props.points, (newPoints) => {
-      console.log('📈 Points changed:', newPoints)
-      if (newPoints && newPoints.length > 0) {
-        createChart()
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'x'
+          },
+          min: Math.min(...props.points.map(p => p.x)),
+          max: Math.max(...props.points.map(p => p.x))
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'y'
+          },
+          beginAtZero: false
+        }
+      },
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const point = props.points[index];
+          emit('point-selected', { index, x: point.x, y: point.y });
+        }
       }
-    }, { deep: true })
-
-    // Инициализация при монтировании
-    onMounted(() => {
-      console.log('🎯 Chart component mounted')
-      createChart()
-    })
-
-    // Очистка при размонтировании
-    onUnmounted(() => {
-      if (chartInstance) {
-        chartInstance.destroy()
-        chartInstance = null
-      }
-    })
-
-    return {
-      chartCanvas,
-      minX,
-      maxX,
-      minY,
-      maxY
     }
+  });
+  // Сброс зума при изменении данных
+  myChart.resetZoom();
+};
+const zoomIn = () => {
+  if (myChart) {
+    myChart.zoom(1.1); // увеличиваем на 10%
   }
-}
+};
+const zoomOut = () => {
+  if (myChart) {
+    myChart.zoom(0.9); // уменьшаем на 10%
+  }
+};
+const resetZoom = () => {
+  if (myChart) {
+    myChart.resetZoom();
+  }
+};
+onMounted(createChart);
+watch(() => props.points, createChart, { deep: true });
+// Эмит события при выборе точки (если нужно)
 </script>
-
 <style scoped>
-.function-chart-simple {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-header {
-  padding: 10px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.chart-header h3 {
-  margin: 0;
-  color: #2c3e50;
-}
-
 .chart-container {
-  flex: 1;
   position: relative;
-  min-height: 300px;
 }
-
-.chart-info {
-  padding: 10px;
-  background: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
-  font-size: 12px;
-  color: #666;
+.slider-controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+  justify-content: center;
 }
-
-.chart-info p {
-  margin: 2px 0;
+.slider-controls button {
+  padding: 5px 10px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 1.2rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slider-controls button:hover {
+  background: #e0e0e0;
 }
 </style>

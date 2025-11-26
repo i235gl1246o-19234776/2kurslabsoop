@@ -1,49 +1,39 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Создание сложной функции"
-    width="600px"
+    title="Создание функции из точек"
+    width="800px"
     :close-on-click-modal="false"
   >
     <el-form :model="form" :rules="rules" ref="formRef">
-      <el-form-item label="Базовая функция" prop="baseFunctionName">
-        <el-select v-model="form.baseFunctionName" placeholder="Выберите базовую функцию" style="width: 100%">
-          <el-option
-            v-for="name in functionsStore.mathFunctions"
-            :key="'base_' + name"
-            :label="name"
-            :value="name"
-          />
-        </el-select>
-      </el-form-item>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="Название функции" prop="functionName">
+            <el-input
+              v-model="form.functionName"
+              placeholder="Введите название функции"
+              :maxlength="100"
+            />
+          </el-form-item>
+        </el-col>
 
-      <el-form-item label="Внешняя функция" prop="outerFunctionName">
-        <el-select v-model="form.outerFunctionName" placeholder="Выберите внешнюю функцию" style="width: 100%">
-          <el-option
-            v-for="name in functionsStore.mathFunctions"
-            :key="'outer_' + name"
-            :label="name"
-            :value="name"
-          />
-        </el-select>
-      </el-form-item>
+        <el-col :span="12">
+          <el-form-item label="Тип функции" prop="typeFunction">
+            <el-select v-model="form.typeFunction" placeholder="Выберите тип">
+              <el-option label="Табличная" value="tabular" />
+              <el-option label="Аналитическая" value="analytic" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
 
-      <el-form-item label="Пользовательское имя" prop="customName">
-        <el-input v-model="form.customName" placeholder="Введите имя для сложной функции" />
-      </el-form-item>
+      <!-- Остальной код без изменений -->
     </el-form>
-
-    <template #footer>
-      <el-button @click="visible = false">Отмена</el-button>
-      <el-button type="primary" :loading="loading" @click="handleCreate">
-        Создать
-      </el-button>
-    </template>
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useFunctionsStore } from '@/stores/functions'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
@@ -65,23 +55,39 @@ const authStore = useAuthStore()
 const loading = ref(false)
 
 const form = ref({
-  baseFunctionName: '',
-  outerFunctionName: '',
-  customName: '',
+  functionName: '', // Исправлено с customName на functionName
+  typeFunction: 'tabular',
+  functionExpression: '',
   userId: authStore.user?.id
 })
 
+const pointCount = ref(5)
+const points = ref([])
+
 const rules = {
-  baseFunctionName: [
-    { required: true, message: 'Выберите базовую функцию', trigger: 'change' }
+  functionName: [
+    { required: true, message: 'Введите название функции', trigger: 'blur' },
+    { min: 1, max: 100, message: 'Название должно быть от 1 до 100 символов', trigger: 'blur' }
   ],
-  outerFunctionName: [
-    { required: true, message: 'Выберите внешнюю функцию', trigger: 'change' }
+  typeFunction: [
+    { required: true, message: 'Выберите тип функции', trigger: 'change' }
   ],
-  customName: [
-    { required: true, message: 'Введите имя для сложной функции', trigger: 'blur' }
+  functionExpression: [
+    {
+      required: true,
+      message: 'Введите выражение функции',
+      trigger: 'blur',
+      validator: (rule, value, callback) => {
+        if (form.value.typeFunction === 'analytic' && !value) {
+          callback(new Error('Введите выражение функции'))
+        } else {
+          callback()
+        }
+      }
+    }
   ]
 }
+
 
 const handleCreate = async () => {
   if (!formRef.value) return

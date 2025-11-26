@@ -3,6 +3,7 @@ package core.controller;
 import core.entity.*;
 import core.repository.*;
 import core.dto.*;
+import core.service.*;
 import functions.ArrayTabulatedFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,17 +30,16 @@ import functions.factory.TabulatedFunctionFactory;
 @RestController
 @RequestMapping("/api/functions")
 public class FunctionController {
-
     @Autowired
     private FunctionRepository functionRepository;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private TabulatedFunctionRepository tabulatedFunctionRepository;
+    @Autowired
+    private OperationRepository operationRepository;
 
-    @GetMapping("/math-functions") // GET запрос
+    @GetMapping("/math-functions")
     public ResponseEntity<List<String>> getAvailableMathFunctionNames() {
         log.info("Запрос на получение доступных имён MathFunction");
         List<String> availableNames = MathFunctionRegistry.getAvailableFunctionNames();
@@ -49,7 +49,6 @@ public class FunctionController {
     @PostMapping("/from-math")
     public ResponseEntity<FunctionDto> createTabulatedFunctionFromMath(@RequestBody MathFunctionCreationDto dto) {
         log.info("Запрос на создание табулированной функции из MathFunction: {}", dto);
-
         MathFunction mathFunction;
         try {
             mathFunction = MathFunctionRegistry.getFunctionByName(dto.getMathFunctionName());
@@ -57,7 +56,6 @@ public class FunctionController {
             log.error("MathFunction с именем '{}' не найдена: {}", dto.getMathFunctionName(), e.getMessage());
             return ResponseEntity.badRequest().body(null);
         }
-
         TabulatedFunctionFactory factory;
         String factoryType = dto.getFactoryType();
         if ("linkedlist".equalsIgnoreCase(factoryType)) {
@@ -67,7 +65,6 @@ public class FunctionController {
             factory = new ArrayTabulatedFunctionFactory();
             log.debug("Используется ArrayTabulatedFunctionFactory");
         }
-
         TabulatedFunction tabulatedFunction;
         try {
             tabulatedFunction = factory.create(mathFunction, dto.getXFrom(), dto.getXTo(), dto.getCount());
@@ -75,36 +72,29 @@ public class FunctionController {
             log.error("Ошибка при создании табулированной функции: {}", e.getMessage());
             return ResponseEntity.badRequest().body(null);
         }
-
         // 4. Создаём FunctionEntity (обёртка)
         UserEntity currentUser = userRepository.findById(dto.getUserId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
         FunctionEntity functionEntity = new FunctionEntity();
         functionEntity.setFunctionName("FuncFromMath_" + dto.getMathFunctionName() + "_" + System.currentTimeMillis());
         functionEntity.setTypeFunction(FunctionEntity.FunctionType.tabular);
         functionEntity.setUser(currentUser);
-
         // 5. Сохраняем FunctionEntity
         FunctionEntity savedFunctionEntity = functionRepository.save(functionEntity);
-
         // 6. Создаём точки для функции
         for (int i = 0; i < tabulatedFunction.getCount(); i++) {
             double x = tabulatedFunction.getX(i);
             double y = tabulatedFunction.getY(i);
-
             if (Double.isNaN(x) || Double.isNaN(y) ||
                     !Double.isFinite(x) || !Double.isFinite(y)) {
                 throw new IllegalArgumentException(
                         "Некорректные точки при создании табулированной функции: x=" + x + ", y=" + y);
             }
-
             TabulatedFunctionEntity pointEntity = new TabulatedFunctionEntity();
             pointEntity.setFunction(savedFunctionEntity);
             pointEntity.setXVal(x);
             pointEntity.setYVal(y);
-
             tabulatedFunctionRepository.save(pointEntity);
         }
-
         // 7. Конвертируем в DTO и возвращаем
         FunctionDto savedDto = convertToDto(savedFunctionEntity);
         log.info("Табулированная функция из MathFunction создана и сохранена с ID: {}", savedDto.getId());
@@ -204,33 +194,28 @@ public class FunctionController {
         return ResponseEntity.ok(functionDtos);
     }
 
-    // В FunctionController.java
     @GetMapping("/{id}")
     public ResponseEntity<FunctionDto> getFunctionById(@PathVariable Long id) {
         log.info("Запрос на получение функции с ID: {}", id);
-
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null || !auth.isAuthenticated()) {
                 log.warn("Попытка доступа без аутентификации к функции ID: {}", id);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-
             Optional<FunctionEntity> functionOpt = functionRepository.findById(id);
             if (functionOpt.isPresent()) {
-                FunctionEntity op = functionOpt.get();
-                Long functionId = op.getFunction().getId();
-
-                if (!hasAccessToFunction(functionId)) {
-                    log.warn("Пользователь '{}' не имеет доступа к операции {}, принадлежащей функции {}", auth.getName(), id, functionId);
+                FunctionEntity function = functionOpt.get();
+                Long userId = function.getUser().getId();
+                if (!hasAccessToUser(userId)) {
+                    log.warn("Пользователь '{}' не имеет доступа к функции {}, принадлежащей пользователю {}", auth.getName(), id, userId);
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
                 }
-
-                FunctionDto operationDto = convertToDto(op);
-                log.info("Операция с ID {} найдена", id);
-                return ResponseEntity.ok(operationDto);
+                FunctionDto functionDto = convertToDto(function);
+                log.info("Функция с ID {} найдена", id);
+                return ResponseEntity.ok(functionDto);
             } else {
-                log.warn("Операция с ID {} не найдена", id);
+                log.warn("Функция с ID {} не найдена", id);
                 return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
@@ -239,47 +224,9 @@ public class FunctionController {
         }
     }
 
-    private boolean hasAccessToFunction(Long functionId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            log.warn("Проверка доступа: пользователь не аутентифицирован.");
-            return false;
-        }
-
-        String currentRole = auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElse("");
-        log.debug("Проверка доступа к функции {}: текущая роль = '{}'", functionId, currentRole);
-
-        if ("ROLE_ADMIN".equals(currentRole)) {
-            log.debug("Проверка доступа: доступ разрешён для администратора.");
-            return true;
-        }
-
-        String currentUsername = auth.getName();
-        UserEntity currentUser = userRepository.findByName(currentUsername);
-        if (currentUser == null) {
-            log.warn("Проверка доступа: аутентифицированный пользователь '{}' не найден в БД.", currentUsername);
-            return false;
-        }
-
-        Optional<FunctionEntity> functionOpt = functionRepository.findById(functionId);
-        if (functionOpt.isEmpty()) {
-            log.warn("Проверка доступа: функция с ID {} не найдена.", functionId);
-            return false;
-        }
-
-        UserEntity owner = functionOpt.get().getUser();
-        boolean hasAccess = owner.getId().equals(currentUser.getId());
-        log.debug("Проверка доступа: пользователь '{}' имеет доступ к функции {}: {}", currentUsername, functionId, hasAccess);
-        return hasAccess;
-    }
-
     @PostMapping
     public ResponseEntity<FunctionDto> createFunction(@RequestBody FunctionDto functionDto) {
         log.info("Запрос на создание функции: {}", functionDto);
-
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             log.warn("Попытка создания функции без аутентификации");
@@ -291,14 +238,12 @@ public class FunctionController {
             log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
         if (!auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             if (!currentUser.getId().equals(functionDto.getUserId())) {
                 log.warn("Пользователь '{}' пытается создать функцию для другого пользователя (ожидаемый ID: {}, полученный в DTO: {})", currentUsername, currentUser.getId(), functionDto.getUserId());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
-
         try {
             UserEntity targetUser = userRepository.findById(functionDto.getUserId())
                     .orElseThrow(() -> {
@@ -333,42 +278,35 @@ public class FunctionController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<FunctionDto>> getAvailableFunctionsForUser(@PathVariable Long userId) {
         log.info("Запрос на получение функций для пользователя ID: {}", userId);
-
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             log.warn("Попытка доступа без аутентификации к списку функций пользователя ID: {}", userId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
         String currentUsername = auth.getName();
         UserEntity currentUser = userRepository.findByName(currentUsername);
         if (currentUser == null) {
             log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
         // Проверка прав: текущий пользователь - владелец или админ
         if (!currentUser.getId().equals(userId) && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             log.warn("Пользователь '{}' не имеет прав на доступ к функциям пользователя с ID {}", currentUsername, userId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         // Проверка, существует ли пользователь с ID userId
         Optional<UserEntity> targetUserOpt = userRepository.findById(userId);
         if (targetUserOpt.isEmpty()) {
             log.warn("Попытка получить функции для несуществующего пользователя с ID: {}", userId);
             return ResponseEntity.notFound().build(); // Возвращаем 404, а не 500
         }
-
         try {
             // Используем существующий репозиторий для получения функций по ID пользователя
             List<FunctionEntity> functions = functionRepository.findByUser_Id(userId);
-
             // Конвертируем в DTO
             List<FunctionDto> functionDtos = functions.stream()
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
-
             log.info("Возвращено {} функций для пользователя ID: {}", functionDtos.size(), userId);
             return ResponseEntity.ok(functionDtos);
         } catch (Exception e) {
@@ -377,7 +315,6 @@ public class FunctionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
 
     @PutMapping("/{id}")
     public ResponseEntity<FunctionDto> updateFunction(@PathVariable Long id, @RequestBody FunctionDto functionDtoDetails) {
@@ -393,23 +330,19 @@ public class FunctionController {
             return ResponseEntity.notFound().build();
         }
         FunctionEntity func = funcOpt.get();
-
         if (!hasAccessToUser(func.getUser().getId())) {
             log.warn("Пользователь '{}' не имеет прав на обновление функции {} принадлежащей пользователю {}", auth.getName(), id, func.getUser().getId());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         if (!auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             if (!func.getUser().getId().equals(functionDtoDetails.getUserId())) {
                 log.warn("Пользователь '{}' пытается передать функцию {} другому пользователю (ID: {})", auth.getName(), id, functionDtoDetails.getUserId());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
-
         func.setTypeFunction(FunctionEntity.FunctionType.valueOf(functionDtoDetails.getTypeFunction().toLowerCase()));
         func.setFunctionName(functionDtoDetails.getFunctionName());
         func.setFunctionExpression(functionDtoDetails.getFunctionExpression());
-
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             if (!func.getUser().getId().equals(functionDtoDetails.getUserId())) {
                 UserEntity newOwner = userRepository.findById(functionDtoDetails.getUserId())
@@ -418,7 +351,6 @@ public class FunctionController {
                 log.info("Владелец функции {} изменен на пользователя ID {}", id, newOwner.getId());
             }
         }
-
         FunctionEntity updatedEntity = functionRepository.save(func);
         FunctionDto updatedDto = convertToDto(updatedEntity);
         log.info("Функция с ID {} обновлена", id);
@@ -449,12 +381,22 @@ public class FunctionController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<FunctionDto>> searchFunctions(
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String functionName,
-            @RequestParam(required = false) String typeFunction) {
-        log.info("Запрос на расширенный поиск функций с параметрами : userId={}, functionName={}, typeFunction={}", userId, functionName, typeFunction);
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FunctionResponseDTO {
+        private Long functionId;
+        private String functionName;
+        private String typeFunction;
+        private Double xVal;
+        private Double yVal;
+        private String userName;
+        private Integer operationsTypeId;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<SearchFunctionResponseDTO> searchFunctions(@RequestBody SearchFunctionRequestDTO request) {
+        log.info("Запрос на расширенный поиск функций: {}", request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             log.warn("Попытка поиска функций без аутентификации");
@@ -464,59 +406,149 @@ public class FunctionController {
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
                 .orElse("");
-        List<FunctionEntity> functions;
-        if (userId != null) {
-            if ("ROLE_ADMIN".equals(currentRole)) {
-                functions = functionRepository.findByUser_Id(userId);
-                log.debug("Админ ищет функции пользователя ID: {}", userId);
-            } else {
-                String currentUsername = auth.getName();
-                UserEntity currentUser = userRepository.findByName(currentUsername);
-                if (currentUser != null && currentUser.getId().equals(userId)) {
-                    functions = functionRepository.findByUser_Id(userId);
-                    log.debug("Пользователь '{}' ищет в своих функциях (ID: {})", currentUsername, userId);
-                } else {
-                    log.warn("Пользователь '{}' пытается искать функции пользователя {} (не его)", currentUsername, userId);
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-                }
-            }
-        } else {
-            if ("ROLE_ADMIN".equals(currentRole)) {
-                functions = functionRepository.findAll();
-                log.debug("Админ ищет во всех функциях");
-            } else {
-                String currentUsername = auth.getName();
-                UserEntity currentUser = userRepository.findByName(currentUsername);
-                if (currentUser != null) {
-                    functions = functionRepository.findByUser_Id(currentUser.getId());
-                    log.debug("Пользователь '{}' ищет в своих функциях", currentUsername);
-                } else {
-                    log.error("Ошибка: аутентифицированный пользователь '{}' не найден в БД", currentUsername);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            }
+        if (!"ROLE_ADMIN".equals(currentRole)) {
+            log.warn("Попытка поиска функций без прав администратора");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        if (functionName != null) {
-            functions = functions.stream()
-                    .filter(f -> f.getFunctionName().toLowerCase().contains(functionName.toLowerCase()))
-                    .collect(Collectors.toList());
-        }
-        if (typeFunction != null) {
-            try {
-                FunctionEntity.FunctionType typeEnum = FunctionEntity.FunctionType.valueOf(typeFunction.toLowerCase());
-                functions = functions.stream()
-                        .filter(f -> f.getTypeFunction() == typeEnum)
+        try {
+            // Получаем все функции из базы
+            List<FunctionEntity> allFunctions = functionRepository.findAll();
+
+            // Фильтрация по userName
+            if (request.getUserName() != null && !request.getUserName().isEmpty()) {
+                allFunctions = allFunctions.stream()
+                        .filter(f -> f.getUser().getName().equals(request.getUserName()))
                         .collect(Collectors.toList());
-            } catch (IllegalArgumentException e) {
-                log.warn("Неверный тип функции при поиске: {}", typeFunction);
-                return ResponseEntity.badRequest().build();
             }
+
+            // Фильтрация по functionName
+            if (request.getFunctionName() != null && !request.getFunctionName().isEmpty()) {
+                allFunctions = allFunctions.stream()
+                        .filter(f -> f.getFunctionName().contains(request.getFunctionName()))
+                        .collect(Collectors.toList());
+            }
+
+            // Фильтрация по typeFunction
+            if (request.getTypeFunction() != null && !request.getTypeFunction().isEmpty()) {
+                try {
+                    FunctionEntity.FunctionType typeEnum = FunctionEntity.FunctionType.valueOf(request.getTypeFunction().toLowerCase());
+                    allFunctions = allFunctions.stream()
+                            .filter(f -> f.getTypeFunction() == typeEnum)
+                            .collect(Collectors.toList());
+                } catch (IllegalArgumentException e) {
+                    log.warn("Неверный тип функции при поиске: {}", request.getTypeFunction());
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+
+            // Фильтрация по xVal и yVal (требует присоединения tabulated_functions)
+            if (request.getXVal() != null || request.getYVal() != null) {
+                List<FunctionEntity> filteredFunctions = new ArrayList<>();
+                for (FunctionEntity function : allFunctions) {
+                    List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(function.getId());
+                    if (request.getXVal() != null && request.getYVal() != null) {
+                        boolean match = points.stream().anyMatch(p ->
+                                Math.abs(p.getXVal() - request.getXVal()) < 1e-9 &&
+                                        Math.abs(p.getYVal() - request.getYVal()) < 1e-9);
+                        if (match) filteredFunctions.add(function);
+                    } else if (request.getXVal() != null) {
+                        boolean match = points.stream().anyMatch(p ->
+                                Math.abs(p.getXVal() - request.getXVal()) < 1e-9);
+                        if (match) filteredFunctions.add(function);
+                    } else if (request.getYVal() != null) {
+                        boolean match = points.stream().anyMatch(p ->
+                                Math.abs(p.getYVal() - request.getYVal()) < 1e-9);
+                        if (match) filteredFunctions.add(function);
+                    }
+                }
+                allFunctions = filteredFunctions;
+            }
+
+            // Фильтрация по operationsTypeId (требует присоединения operations)
+            if (request.getOperationsTypeId() != null) {
+                List<FunctionEntity> filteredFunctions = new ArrayList<>();
+                for (FunctionEntity function : allFunctions) {
+                    List<OperationEntity> operations = operationRepository.findAll().stream()
+                            .filter(op -> op.getFunction().getId().equals(function.getId()))
+                            .collect(Collectors.toList());
+                    boolean match = operations.stream()
+                            .anyMatch(op -> op.getOperationsTypeId().equals(request.getOperationsTypeId()));
+                    if (match) filteredFunctions.add(function);
+                }
+                allFunctions = filteredFunctions;
+            }
+
+            // Сортировка
+            if (request.getSortBy() != null && !request.getSortBy().isEmpty()) {
+                switch (request.getSortBy().toLowerCase()) {
+                    case "functionname":
+                        if ("desc".equalsIgnoreCase(request.getSortOrder())) {
+                            allFunctions.sort((f1, f2) -> f2.getFunctionName().compareTo(f1.getFunctionName()));
+                        } else {
+                            allFunctions.sort((f1, f2) -> f1.getFunctionName().compareTo(f2.getFunctionName()));
+                        }
+                        break;
+                    case "typefunction":
+                        if ("desc".equalsIgnoreCase(request.getSortOrder())) {
+                            allFunctions.sort((f1, f2) -> f2.getTypeFunction().name().compareTo(f1.getTypeFunction().name()));
+                        } else {
+                            allFunctions.sort((f1, f2) -> f1.getTypeFunction().name().compareTo(f2.getTypeFunction().name()));
+                        }
+                        break;
+                    // Добавьте другие поля для сортировки по необходимости
+                }
+            }
+
+            // Пагинация
+            int total = allFunctions.size();
+            List<FunctionEntity> paginatedFunctions = allFunctions;
+            if (request.getPage() != null && request.getSize() != null) {
+                int page = request.getPage();
+                int size = request.getSize();
+                int fromIndex = (page - 1) * size;
+                int toIndex = Math.min(fromIndex + size, total);
+                if (fromIndex < total) {
+                    paginatedFunctions = allFunctions.subList(fromIndex, toIndex);
+                } else {
+                    paginatedFunctions = new ArrayList<>();
+                }
+            }
+
+            // Конвертация в DTO
+            List<FunctionResponseDTO> responseDtos = new ArrayList<>();
+            for (FunctionEntity function : paginatedFunctions) {
+                FunctionResponseDTO dto = new FunctionResponseDTO();
+                dto.setFunctionId(function.getId());
+                dto.setFunctionName(function.getFunctionName());
+                dto.setTypeFunction(function.getTypeFunction().name());
+                dto.setUserName(function.getUser().getName());
+
+                // Получаем первую точку для xVal и yVal (если есть)
+                List<TabulatedFunctionEntity> points = tabulatedFunctionRepository.findByFunction_Id(function.getId());
+                if (!points.isEmpty()) {
+                    TabulatedFunctionEntity firstPoint = points.get(0);
+                    dto.setXVal(firstPoint.getXVal());
+                    dto.setYVal(firstPoint.getYVal());
+                }
+
+                // Получаем первую операцию для operationsTypeId (если есть)
+                List<OperationEntity> operations = operationRepository.findAll().stream()
+                        .filter(op -> op.getFunction().getId().equals(function.getId()))
+                        .collect(Collectors.toList());
+                if (!operations.isEmpty()) {
+                    dto.setOperationsTypeId(operations.get(0).getOperationsTypeId());
+                }
+
+                responseDtos.add(dto);
+            }
+
+            SearchFunctionResponseDTO response = new SearchFunctionResponseDTO(responseDtos, total);
+            log.info("Поиск завершен, найдено {} функций из {}", responseDtos.size(), total);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Ошибка при поиске функций: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        List<FunctionDto> functionDtos = functions.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        log.info("Возвращено {} функций", functionDtos.size());
-        return ResponseEntity.ok(functionDtos);
     }
 
     private FunctionDto convertToDto(FunctionEntity funcEntity) {

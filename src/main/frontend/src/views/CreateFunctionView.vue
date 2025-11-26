@@ -331,7 +331,9 @@ export default {
         const functionData = {
           name: form.value.name,
           typeFunction: form.value.typeFunction,
-          userId: parseInt(userId) // Убедимся, что это число
+          userId: parseInt(userId),
+          // Добавляем точки
+          points: points.value.map(p => ({ x: p.xVal, y: p.yVal }))
         }
 
         console.log('📤 Создание функции с данными:', functionData)

@@ -1,7 +1,7 @@
 // stores/auth.js
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { api, setCredentials, setUserId, clearAuth, getStoredUser, getStoredUserId } from '@/services/api'
+import { api } from "@/api.js";
 import { ElMessage } from 'element-plus'
 
 export const useAuthStore = defineStore('auth', () => {
