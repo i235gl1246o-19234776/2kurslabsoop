@@ -1,4 +1,3 @@
-<!-- src/components/FunctionExplorer.vue -->
 <template>
   <div class="modal-overlay" @click.self="close">
     <div class="modal-content explorer-modal">
@@ -11,6 +10,18 @@
           <p>Загрузка данных...</p>
         </div>
         <div v-else>
+          <div class="file-controls">
+            <button @click="createNewFunction" class="primary-button">
+              <i class="fas fa-plus"></i> Новая функция
+            </button>
+            <button @click="loadFromFile" class="secondary-button">
+              <i class="fas fa-upload"></i> Загрузить
+            </button>
+            <button @click="saveToFile" class="secondary-button" :disabled="!points.length">
+              <i class="fas fa-download"></i> Сохранить
+            </button>
+          </div>
+          <!-- Управление масштабом оси X -->
           <div class="scale-controls">
             <label>
               Масштаб оси X:
@@ -36,6 +47,13 @@
           <div class="points-table">
             <div class="table-header">
               <h3>Точки функции ({{ visiblePoints.length }} из {{ points.length }})</h3>
+              <div v-if="isFunctionInsertable" class="insert-control">
+                <input type="number" v-model="newPoint.x" step="any" placeholder="x" />
+                <input type="number" v-model="newPoint.y" step="any" placeholder="y" />
+                <button @click="insertPoint" class="insert-btn">
+                  <i class="fas fa-plus"></i> Вставить точку
+                </button>
+              </div>
             </div>
             <table v-if="visiblePoints.length > 0">
               <thead>
@@ -43,6 +61,7 @@
                   <th>#</th>
                   <th>x</th>
                   <th>y</th>
+                  <th v-if="isFunctionRemovable">Действия</th>
                 </tr>
               </thead>
               <tbody>
@@ -54,6 +73,11 @@
                   <td>{{ index + visibleRange.start + 1 }}</td>
                   <td>{{ formatNumber(point.x) }}</td>
                   <td>{{ formatNumber(point.y) }}</td>
+                  <td v-if="isFunctionRemovable">
+                    <button @click="removePoint(index + visibleRange.start)" class="remove-btn">
+                      <i class="fas fa-trash"></i> Удалить
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -113,6 +137,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import FunctionChart from './FunctionChart.vue'
@@ -121,20 +146,35 @@ import { api } from '../api.js'
 const props = defineProps({
   functionId: {
     type: Number,
-    required: true
+    default: null
   },
   functionName: {
     type: String,
     default: ''
+  },
+  initialPoints: {
+    type: Array,
+    default: () => []
+  },
+  insertable: {
+    type: Boolean,
+    default: false
+  },
+  removable: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'function-created', 'function-updated', 'create-new-function'])
 
-const points = ref([])
+const points = ref([...props.initialPoints])
 const isLoading = ref(false)
+const newPoint = ref({ x: 0, y: 0 })
 const applyX = ref(0)
 const applyResult = ref(null)
+const isFunctionInsertable = computed(() => props.insertable)
+const isFunctionRemovable = computed(() => props.removable)
 const highlightedIndex = ref(-1)
 const visibleRange = ref({ start: 0, end: 0 })
 const currentPage = ref(1)
@@ -184,21 +224,144 @@ const visiblePoints = computed(() => {
 })
 
 onMounted(async () => {
-  isLoading.value = true
-  try {
-    const loadedPoints = await api.getTabulatedPointsByFunctionId(props.functionId)
-    points.value = loadedPoints.map(p => ({ x: parseFloat(p.xval), y: parseFloat(p.yval) }))
-      .sort((a, b) => a.x - b.x)
-  } catch (error) {
-    console.error('Ошибка загрузки точек:', error)
-    alert('Ошибка загрузки точек функции: ' + (error.message || 'неизвестная ошибка'))
-  } finally {
-    isLoading.value = false
+  if (props.functionId) {
+    isLoading.value = true
+    try {
+      const loadedPoints = await api.getTabulatedPointsByFunctionId(props.functionId)
+      points.value = loadedPoints.map(p => ({ x: parseFloat(p.xval), y: parseFloat(p.yval) }))
+        .sort((a, b) => a.x - b.x)
+    } catch (error) {
+      console.error('Ошибка загрузки точек:', error)
+      alert('Ошибка загрузки точек функции: ' + (error.message || 'неизвестная ошибка'))
+    } finally {
+      isLoading.value = false
+    }
   }
+})
+
+watch(() => props.initialPoints, (newPoints) => {
+  points.value = [...newPoints].sort((a, b) => a.x - b.x)
 })
 
 const close = () => {
   emit('close')
+}
+
+const createNewFunction = () => {
+  emit('create-new-function')
+}
+
+const loadFromFile = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json'
+  input.onchange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result)
+        if (data.points && Array.isArray(data.points)) {
+          points.value = data.points.map(p => ({
+            x: parseFloat(p.x),
+            y: parseFloat(p.y)
+          })).sort((a, b) => a.x - b.x)
+          applyResult.value = null
+          currentPage.value = 1
+        } else {
+          throw new Error('Неверный формат файла')
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки файла:', error)
+        alert('Ошибка при загрузке файла. Проверьте формат данных.')
+      }
+    }
+    reader.readAsText(file)
+  }
+  input.click()
+}
+
+const saveToFile = () => {
+  if (!points.value.length) return
+  const data = {
+    functionName: props.functionName || 'Безымянная функция',
+    points: points.value,
+    createdAt: new Date().toISOString()
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json'
+  })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${props.functionName || 'function'}_${Date.now()}.json`
+  document.body.appendChild(a)
+  a.click()
+  setTimeout(() => {
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, 0)
+}
+
+const insertPoint = () => {
+  let xRaw = newPoint.value.x;
+  let yRaw = newPoint.value.y;
+
+  // Поддержка строковых чисел (",", лишние пробелы)
+  if (typeof xRaw === 'string') xRaw = xRaw.trim().replace(',', '.');
+  if (typeof yRaw === 'string') yRaw = yRaw.trim().replace(',', '.');
+
+  const x = parseFloat(xRaw);
+  const y = parseFloat(yRaw);
+
+  if (isNaN(x) || isNaN(y)) {
+    alert('Введите корректные числовые значения для x и y');
+    return;
+  }
+
+  // 🔑 КЛЮЧЕВАЯ ФУНКЦИЯ: нормализация x для сравнения
+  const normalizeX = (val) => {
+    // Округляем до 10 знаков — достаточно для UI-приложений
+    return Math.round(val * 1e10) / 1e10;
+  };
+
+  const xNorm = normalizeX(x);
+  let found = false;
+
+  // 🔍 Ищем и обновляем
+  for (let i = 0; i < points.value.length; i++) {
+    const pNorm = normalizeX(points.value[i].x);
+    if (pNorm === xNorm) {
+      points.value[i].y = y; // ⚠️ Обновляем y
+      found = true;
+      break;
+    }
+  }
+
+  // ➕ Если не найдено — добавляем
+  if (!found) {
+    points.value.push({ x, y });
+  }
+
+  // 🧹 Сортируем и сбрасываем
+  points.value.sort((a, b) => a.x - b.x);
+  newPoint.value = { x: '', y: '' };
+  applyResult.value = null;
+  currentPage.value = 1;
+};
+
+const removePoint = (index) => {
+  if (confirm('Вы уверены, что хотите удалить эту точку?')) {
+    points.value.splice(index, 1)
+    applyResult.value = null
+    if (points.value.length > 0) {
+      const maxPage = Math.ceil(points.value.length / maxVisiblePoints.value)
+      if (currentPage.value > maxPage) {
+        currentPage.value = maxPage
+      }
+    }
+  }
 }
 
 const applyFunction = () => {
@@ -255,6 +418,7 @@ const increasePage = () => {
   }
 }
 </script>
+
 <style scoped>
 .modal-overlay {
   position: fixed;
@@ -268,6 +432,7 @@ const increasePage = () => {
   align-items: center;
   z-index: 1000;
 }
+
 .explorer-modal {
   background: white;
   border-radius: 10px;
@@ -279,6 +444,7 @@ const increasePage = () => {
   display: flex;
   flex-direction: column;
 }
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -289,12 +455,14 @@ const increasePage = () => {
   border-bottom: 2px solid #34495e;
   flex-shrink: 0;
 }
+
 .modal-body {
   flex: 1;
   overflow-y: auto;
   padding: 0;
   max-height: calc(90vh - 70px);
 }
+
 .close-btn {
   background: none;
   border: none;
@@ -309,9 +477,19 @@ const increasePage = () => {
   justify-content: center;
   transition: all 0.3s;
 }
+
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.file-controls {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #eee;
+}
+
 .scale-controls {
   padding: 0 15px 15px;
   display: flex;
@@ -320,6 +498,7 @@ const increasePage = () => {
   background: #f8f9fa;
   border-bottom: 1px solid #eee;
 }
+
 .scale-controls label {
   display: flex;
   align-items: center;
@@ -327,24 +506,60 @@ const increasePage = () => {
   font-weight: 500;
   color: #2c3e50;
 }
+
 .scale-controls input[type="range"] {
   width: 200px;
 }
+
 .scale-controls span {
   min-width: 40px;
   text-align: center;
   font-weight: bold;
   color: #e74c3c;
 }
+
+.primary-button, .secondary-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.primary-button {
+  background: #3498db;
+  color: white;
+}
+
+.primary-button:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.secondary-button {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.secondary-button:hover {
+  background: #bdc3c7;
+}
+
 .chart-section {
   padding: 15px;
   flex: 1;
   min-height: 400px;
 }
+
 .points-table {
   padding: 0 15px 15px;
   overflow-x: auto;
 }
+
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -353,31 +568,79 @@ const increasePage = () => {
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.insert-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.insert-control input {
+  width: 80px;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.insert-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.insert-btn:hover {
+  background: #219653;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
 }
+
 table th, table td {
   padding: 10px;
   text-align: left;
   border-bottom: 1px solid #eee;
 }
+
 table th {
   background: #f8f9fa;
   font-weight: 600;
 }
+
+.remove-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-btn:hover {
+  background: #c0392b;
+}
+
 .empty-table {
   text-align: center;
   padding: 20px;
   color: #7f8c8d;
   font-style: italic;
 }
+
 .apply-section {
   padding: 15px;
   border-top: 1px solid #eee;
   background: #f8f9fa;
 }
+
 .apply-input {
   display: flex;
   gap: 10px;
@@ -385,12 +648,14 @@ table th {
   margin: 10px 0;
   flex-wrap: wrap;
 }
+
 .apply-input input {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   width: 120px;
 }
+
 .apply-input button {
   padding: 8px 15px;
   background: #9b59b6;
@@ -400,13 +665,16 @@ table th {
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .apply-input button:hover {
   background: #8e44ad;
 }
+
 .apply-input button:disabled {
   background: #bdc3c7;
   cursor: not-allowed;
 }
+
 .apply-result {
   margin-top: 15px;
   padding: 10px;
@@ -415,6 +683,7 @@ table th {
   font-weight: 500;
   color: #2980b9;
 }
+
 .loading {
   display: flex;
   justify-content: center;
@@ -423,6 +692,7 @@ table th {
   font-size: 1.2rem;
   color: #7f8c8d;
 }
+
 .slider-container {
   margin-top: 20px;
   padding: 15px;
@@ -430,10 +700,12 @@ table th {
   border-radius: 8px;
   border: 1px solid #eee;
 }
+
 .slider-container h4 {
   margin-bottom: 10px;
   color: #333;
 }
+
 .slider {
   width: 100%;
   margin: 5px 0;
@@ -443,6 +715,7 @@ table th {
   outline: none;
   border-radius: 4px;
 }
+
 .slider::-webkit-slider-thumb {
   appearance: none;
   width: 16px;
@@ -452,6 +725,7 @@ table th {
   cursor: pointer;
   border: 2px solid white;
 }
+
 .slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
@@ -460,6 +734,7 @@ table th {
   cursor: pointer;
   border: 2px solid white;
 }
+
 .slider-labels {
   display: flex;
   justify-content: space-between;
@@ -467,18 +742,22 @@ table th {
   font-size: 0.9em;
   color: #666;
 }
+
 /* Кастомный скроллбар */
 .modal-body::-webkit-scrollbar {
   width: 8px;
 }
+
 .modal-body::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
+
 .modal-body::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
 }
+
 .modal-body::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }

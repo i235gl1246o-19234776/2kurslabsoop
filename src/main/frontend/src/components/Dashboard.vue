@@ -78,6 +78,7 @@
     />
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted, inject, nextTick } from 'vue';
 import OperationsWindow from './OperationsWindow.vue';
@@ -87,20 +88,24 @@ import DifferentiationWindow from './DifferentiationWindow.vue';
 import SettingsModal from './SettingsModal.vue';
 import FunctionCreator from './FunctionCreator.vue';
 import FunctionExplorer from './FunctionExplorer.vue';
-import { api } from '@/api.js';
+import { api } from '../api.js';
+
 // Состояние окон
 const activeWindow = ref(null);
 const showFunctionCreator = ref(false);
 const showFunctionExplorer = ref(false);
 const creatorTarget = ref(null); // null, 'A', 'B', 'diff' и т.д.
+
 // Состояние выбранной функции для FunctionExplorer
 const selectedFunctionId = ref(null);
 const selectedFunctionName = ref('');
 const selectedPoints = ref([]);
 const selectedInsertable = ref(false);
 const selectedRemovable = ref(false);
+
 // Глобальная функция отображения ошибок
 const showError = inject('showError');
+
 // === УПРАВЛЕНИЕ ОКНАМИ ===
 const openWindow = async (windowName) => {
   // Сначала закрываем все окна
@@ -109,10 +114,12 @@ const openWindow = async (windowName) => {
   await nextTick();
   activeWindow.value = windowName;
 };
+
 const closeWindow = async () => {
   activeWindow.value = null;
   await nextTick(); // Даем Vue завершить обновление DOM
 };
+
 const openFunctionCreator = async (target) => {
   // Сначала закрываем все окна
   closeAllWindows();
@@ -121,11 +128,13 @@ const openFunctionCreator = async (target) => {
   creatorTarget.value = target;
   showFunctionCreator.value = true;
 };
+
 const closeFunctionCreator = async () => {
   showFunctionCreator.value = false;
   creatorTarget.value = null;
   await nextTick();
 };
+
 // Обработка события "Новая функция" из FunctionExplorer
 const handleCreateNewFunctionFromExplorer = async () => {
   await closeFunctionExplorer();
@@ -133,12 +142,14 @@ const handleCreateNewFunctionFromExplorer = async () => {
   creatorTarget.value = null;
   showFunctionCreator.value = true;
 };
+
 const closeFunctionExplorer = async () => {
   showFunctionExplorer.value = false;
   selectedFunctionId.value = null;
   selectedPoints.value = [];
   await nextTick();
 };
+
 // === ИЗУЧЕНИЕ ФУНКЦИИ ===
 const openFunctionExplorer = async () => {
   try {
@@ -166,6 +177,7 @@ const openFunctionExplorer = async () => {
     showError(error.message || 'Ошибка при загрузке функций');
   }
 };
+
 // === ОБРАБОТКА СОЗДАННОЙ ФУНКЦИИ ===
 const handleFunctionCreated = async (eventData) => {
   const { functionId, functionName, points } = eventData;
@@ -202,10 +214,12 @@ const handleFunctionCreated = async (eventData) => {
     }
   }
 };
+
 // === СОСТАВНЫЕ ФУНКЦИИ ===
 const handleCompositeFunctionCreated = () => {
   alert('Составная функция создана! Перейдите в "Изучить функцию" для табуляции.');
 };
+
 // === ЗАКРЫТИЕ ВСЕХ ОКОН ===
 const closeAllWindows = async () => {
   activeWindow.value = null;
@@ -215,30 +229,36 @@ const closeAllWindows = async () => {
   // Даем Vue время на обновление
   await nextTick();
 };
+
 // При монтировании — ничего не делаем (окна открываются по кнопкам)
 onMounted(() => {
   // Можно добавить логику, если нужно
 });
 </script>
+
 <style scoped>
 .dashboard {
   text-align: center;
   padding: 2rem;
 }
+
 .dashboard h2 {
   margin-bottom: 1rem;
   color: #333;
 }
+
 .dashboard p {
   margin-bottom: 1.5rem;
   color: #666;
 }
+
 .dashboard-buttons {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   align-items: center;
 }
+
 .dashboard-buttons button {
   padding: 0.8rem 1.5rem;
   font-size: 1rem;
@@ -255,24 +275,30 @@ onMounted(() => {
   justify-content: center;
   gap: 8px;
 }
+
 .dashboard-buttons button:hover {
   transform: translateY(-2px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
 .dashboard-buttons .primary-button {
   background-color: #2196f3;
   font-weight: bold;
   font-size: 1.1rem;
 }
+
 .dashboard-buttons .primary-button:hover {
   background-color: #1976d2;
 }
+
 .dashboard-buttons .secondary-button {
   background-color: #3498db;
 }
+
 .dashboard-buttons .secondary-button:hover {
   background-color: #2980b9;
 }
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -285,6 +311,7 @@ onMounted(() => {
   align-items: center;
   z-index: 1001;
 }
+
 .modal-content {
   background: white;
   border-radius: 8px;

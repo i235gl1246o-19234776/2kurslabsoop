@@ -1,33 +1,67 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    // Автоматический импорт ref, reactive, computed и других Vue функций
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+      imports: ['vue', 'vue-router'],
+      dts: 'src/auto-imports.d.ts',
+    }),
+    // Автоматический импорт компонентов
+    Components({
+      resolvers: [ElementPlusResolver()],
+      dirs: ['src/components'],
+      extensions: ['vue'],
+      dts: 'src/components.d.ts',
+    }),
+  ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@api': path.resolve(__dirname, './src/api.js') // Исправлен путь к api.js
-    }
+      // Стандартный алиас для src директории
+      '@': path.resolve(__dirname, 'src'),
+    },
+    extensions: ['.js', '.vue', '.json']
   },
-  // Добавляем настройки прокси для API запросов
+  // Настройки прокси для API запросов
   server: {
     proxy: {
+      // Проксируем все запросы начинающиеся с /api
       '/api': {
-        target: 'http://localhost:8080', // ЗАМЕНИТЕ НА АДРЕС ВАШЕГО БЭКЕНДА
+        target: 'http://localhost:8080', // Замените на адрес вашего бэкенда
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        secure: false, // Отключаем проверку SSL сертификатов для разработки
-        // Дополнительные настройки для отладки:
+        // Сохраняем префикс /api при запросе к бэкенду
+        rewrite: (path) => path,
+        secure: false,
+        // Логирование для отладки
         configure: (proxy, options) => {
-          // Отладка прокси в консоли
           proxy.on('error', (err, req, res) => {
             console.error('[PROXY ERROR]:', err.message)
           })
           proxy.on('proxyReq', (proxyReq, req, res) => {
             console.log('[PROXY REQUEST]:', req.method, req.url)
           })
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('[PROXY RESPONSE]:', proxyRes.statusCode, req.url)
+          })
         }
+      }
+    }
+  },
+  build: {
+    // Оптимизация сборки
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
       }
     }
   }

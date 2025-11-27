@@ -139,7 +139,7 @@ public class OperationController {
     // --- Метод для унарных операций (дифференцирование) ---
     @PostMapping("/differentiate")
     public ResponseEntity<List<TabulatedFunctionDto>> performDifferentiation(
-            @RequestBody DifferentiateRequestDto requestDto) {
+            @RequestBody DifferentiationRequestDto requestDto) {
         log.info("Запрос на выполнение операции 'differentiate' с DTO: {}", requestDto);
         Long functionId = requestDto.getFunctionId();
         String factoryType = requestDto.getFactoryType();

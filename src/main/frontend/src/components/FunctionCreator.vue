@@ -132,11 +132,14 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, computed, inject, watch } from 'vue';
 import { api } from '../api.js';
+
 // Объявляем события, которые компонент может эмитить
 const emit = defineEmits(['close', 'function-created']);
+
 // Добавляем пропс для определения контекста создания
 const props = defineProps({
   isForOperation: {
@@ -144,12 +147,14 @@ const props = defineProps({
     default: false
   }
 });
+
 // --- ИНЪЕКТИРУЕМ ФУНКЦИЮ showError ИЗ App.vue ---
 const showError = inject('showError');
 if (!showError) {
   console.error("FunctionCreator: 'showError' function not provided by parent component.");
 }
 // --- КОНЕЦ ИНЪЕКЦИИ ---
+
 const activeTab = ref('fromArrays');
 const pointCount = ref(0);
 const points = ref([]);
@@ -157,6 +162,7 @@ const functionName = ref('');
 const functionExpression = ref('');
 const typeFunction = ref('tabular');
 const selectedFunctionName = ref('');
+
 // --- НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ВАЛИДАЦИИ И ВКЛАДКИ 'fromFunction' ---
 const pointCountFromFunction = ref(0);
 const startXFromFunction = ref(0);
@@ -164,23 +170,31 @@ const endXFromFunction = ref(1);
 const functionNameFromFunction = ref('');
 const functionExpressionFromFunction = ref('');
 const typeFunctionFromFunction = ref('tabular');
+
 // --- КОНЕЦ НОВЫХ ПЕРЕМЕННЫХ ---
+
 // --- СОСТОЯНИЯ ДЛЯ ОШИБОК ВАЛИДАЦИИ ---
 const pointCountError = ref('');
 const functionNameError = ref('');
 const pointCountFromFunctionError = ref('');
 const functionNameFromFunctionError = ref('');
+
 // --- КОНЕЦ СОСТОЯНИЙ ОШИБОК ---
+
 // --- СОСТОЯНИЕ ДЛЯ ОШИБОК ТОЧЕК ---
 const pointErrors = ref({});
+
 // --- КОНЕЦ СОСТОЯНИЯ ---
+
 // Маппинг названий функций
 const functionMap = {
   "Квадратичная функция": "SqrFunction",
   "Тождественная функция": "IdentityFunction",
 };
+
 // Сортированный список названий функций
 const sortedFunctionNames = computed(() => Object.keys(functionMap));
+
 // Вычисляемое свойство: можно ли экспортировать
 const canExport = computed(() => {
   return (
@@ -188,6 +202,7 @@ const canExport = computed(() => {
     (activeTab.value === 'fromFunction' && functionNameFromFunction.value)
   );
 });
+
 // Устанавливаем тип функции как табулированную, если создаем для операций
 watch(() => props.isForOperation, (isForOperation) => {
   if (isForOperation) {
@@ -195,6 +210,7 @@ watch(() => props.isForOperation, (isForOperation) => {
     typeFunctionFromFunction.value = 'tabular';
   }
 }, { immediate: true });
+
 // --- ФУНКЦИИ ВАЛИДАЦИИ ---
 const validatePointCount = () => {
   if (pointCount.value === '' || pointCount.value === null || pointCount.value === undefined) {
@@ -208,6 +224,7 @@ const validatePointCount = () => {
   pointCountError.value = '';
   return true;
 };
+
 const validatePointValue = (point, coord, index) => {
   if (!pointErrors.value[index]) pointErrors.value[index] = {};
   if (point[coord] === '' || point[coord] === null || point[coord] === undefined) {
@@ -221,6 +238,7 @@ const validatePointValue = (point, coord, index) => {
   pointErrors.value[index][coord] = '';
   return true;
 };
+
 const validateFunctionName = () => {
   if (!functionName.value.trim()) {
     functionNameError.value = 'Название функции обязательно.';
@@ -233,6 +251,7 @@ const validateFunctionName = () => {
   functionNameError.value = '';
   return true;
 };
+
 const validatePointCountFromFunction = () => {
   if (pointCountFromFunction.value === '' || pointCountFromFunction.value === null || pointCountFromFunction.value === undefined) {
     pointCountFromFunctionError.value = 'Количество точек обязательно.';
@@ -245,6 +264,7 @@ const validatePointCountFromFunction = () => {
   pointCountFromFunctionError.value = '';
   return true;
 };
+
 const validateFunctionNameFromFunction = () => {
   if (!functionNameFromFunction.value.trim()) {
     functionNameFromFunctionError.value = 'Название функции обязательно.';
@@ -257,7 +277,9 @@ const validateFunctionNameFromFunction = () => {
   functionNameFromFunctionError.value = '';
   return true;
 };
+
 // --- КОНЕЦ ФУНКЦИЙ ВАЛИДАЦИИ ---
+
 const generateTable = () => {
   if (!validatePointCount()) return;
   if (pointCount.value > 100) {
@@ -268,6 +290,7 @@ const generateTable = () => {
   points.value = Array.from({ length: pointCount.value }, () => ({ x: 0, y: 0 }));
   pointErrors.value = {};
 };
+
 // --- ФУНКЦИЯ СОЗДАНИЯ ФУНКЦИИ ИЗ МАССИВОВ ---
 const createFunctionFromArrays = async () => {
   const isPointCountValid = validatePointCount();
@@ -278,42 +301,43 @@ const createFunctionFromArrays = async () => {
     const yValid = validatePointValue(point, 'y', index);
     if (!xValid || !yValid) allPointsValid = false;
   });
+
   if (!isPointCountValid || !isFunctionNameValid || !allPointsValid) {
     showError('Пожалуйста, исправьте ошибки в форме перед отправкой.');
     return;
   }
+
   const currentFunctionName = functionName.value;
   const actualType = props.isForOperation ? 'tabular' : typeFunction.value;
+
   try {
     const functionData = {
       functionName: currentFunctionName,
       functionExpression: functionExpression.value,
       typeFunction: actualType,
     };
-    await api.createFunction(functionData);
+
+    const functionResponse = await api.createFunction(functionData);
     console.log("Запрос на создание функции отправлен.");
-    const userId = api.getStoredUserId();
-    const allFunctions = await api.getFunctionsByUserId(userId);
-    const createdFunction = allFunctions
-        .filter(f => f.functionName === currentFunctionName)
-        .sort((a, b) => b.functionId - a.functionId)[0];
-    if (!createdFunction) {
-        throw new Error("Не удалось получить ID созданной функции.");
-    }
-    const functionId = createdFunction.functionId;
+
+    const functionId = functionResponse.functionId;
     console.log("Найден functionId:", functionId);
+
     if (typeof functionId !== 'number' || isNaN(functionId)) {
         throw new Error("Полученный ID функции некорректен.");
     }
+
     console.log("Отправляем точки для functionId:", functionId);
     for (const point of points.value) {
-        await api.createTabulatedPoints(functionId, point.x, point.y);
+        await api.createTabulatedPoint(functionId, point.x, point.y);
     }
+
     emit('function-created', {
       points: points.value,
       functionId: functionId,
       functionName: currentFunctionName
     });
+
     alert("Функция и точки успешно созданы!");
     points.value = [];
     pointCount.value = 0;
@@ -327,45 +351,46 @@ const createFunctionFromArrays = async () => {
     showError(e.message || 'Ошибка при создании функции');
   }
 };
+
 // --- ФУНКЦИЯ СОЗДАНИЯ ФУНКЦИИ ИЗ MATH FUNCTION ---
 const createFunctionFromMathFunction = async () => {
   const isPointCountValid = validatePointCountFromFunction();
   const isFunctionNameValid = validateFunctionNameFromFunction();
   const isIntervalValid = startXFromFunction.value < endXFromFunction.value;
+
   if (!isPointCountValid || !isFunctionNameValid) {
     showError('Пожалуйста, исправьте ошибки в форме перед отправкой.');
     return;
   }
+
   if (!isIntervalValid) {
     showError("Начало интервала должно быть меньше конца.");
     return;
   }
+
   if (!selectedFunctionName.value) {
     showError("Пожалуйста, выберите функцию из списка.");
     return;
   }
+
   const currentFunctionName = functionNameFromFunction.value;
   const actualType = props.isForOperation ? 'tabular' : typeFunctionFromFunction.value;
   const mathFunctionName = functionMap[selectedFunctionName.value];
+
   try {
     const functionData = {
       functionName: currentFunctionName,
       functionExpression: functionExpressionFromFunction.value,
       typeFunction: actualType,
     };
-    await api.createFunction(functionData);
-    const userId = api.getStoredUserId();
-    const allFunctions = await api.getFunctionsByUserId(userId);
-    const createdFunction = allFunctions
-      .filter(f => f.functionName === currentFunctionName)
-      .sort((a, b) => b.functionId - a.functionId)[0];
-    if (!createdFunction) {
-      throw new Error("Не удалось найти созданную функцию.");
-    }
-    const functionId = createdFunction.functionId;
+
+    const functionResponse = await api.createFunction(functionData);
+    const functionId = functionResponse.functionId;
+
     if (typeof functionId !== 'number' || isNaN(functionId)) {
       throw new Error("Получен некорректный ID функции.");
     }
+
     const factoryType = localStorage.getItem('tabulatedFunctionFactory') || 'array';
     await api.calculateAndSaveTabulatedPoints(
       functionId,
@@ -375,11 +400,13 @@ const createFunctionFromMathFunction = async () => {
       pointCountFromFunction.value,
       factoryType
     );
+
     emit('function-created', {
       points: [],
       functionId: functionId,
       functionName: currentFunctionName
     });
+
     alert("Функция и точки успешно созданы из MathFunction!");
     functionNameFromFunction.value = "";
     functionExpressionFromFunction.value = "";
@@ -394,6 +421,7 @@ const createFunctionFromMathFunction = async () => {
     showError(e.message || 'Неизвестная ошибка при создании функции.');
   }
 };
+
 // --- JSON IMPORT / EXPORT ---
 const loadFromJson = () => {
   const input = document.createElement('input');
@@ -435,6 +463,7 @@ const loadFromJson = () => {
   };
   input.click();
 };
+
 const saveAsJson = () => {
   let data;
   if (activeTab.value === 'fromArrays') {
@@ -463,6 +492,7 @@ const saveAsJson = () => {
       endX: endXFromFunction.value
     };
   }
+
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -474,6 +504,7 @@ const saveAsJson = () => {
   URL.revokeObjectURL(url);
 };
 </script>
+
 <style scoped>
 .creator {
   position: relative;
@@ -484,6 +515,7 @@ const saveAsJson = () => {
   max-width: 800px;
   margin: 0 auto;
 }
+
 /* Стили для крестика */
 .close-button {
   position: absolute;
@@ -501,22 +533,26 @@ const saveAsJson = () => {
   transition: all 0.2s;
   z-index: 10;
 }
+
 .close-button:hover {
   background-color: #f0f0f0;
   color: #d32f2f;
   transform: rotate(90deg);
 }
+
 h2 {
   color: #333;
   margin-bottom: 1.5rem;
   text-align: center;
 }
+
 .tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
   justify-content: center;
 }
+
 .tabs button {
   padding: 8px 15px;
   background-color: #e9ecef;
@@ -525,13 +561,16 @@ h2 {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 .tabs button.active {
   background-color: #2196f3;
   color: white;
 }
+
 .tabs button:hover:not(.active) {
   background-color: #dee2e6;
 }
+
 input, select, button {
   padding: 8px;
   margin: 0.25rem 0;
@@ -540,6 +579,7 @@ input, select, button {
   width: 100%;
   box-sizing: border-box;
 }
+
 button {
   background-color: #42b983;
   color: white;
@@ -547,19 +587,24 @@ button {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 button:hover {
   background-color: #359c6d;
 }
+
 button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
 .generate-button {
   background-color: #2196f3;
 }
+
 .generate-button:hover {
   background-color: #1976d2;
 }
+
 .create-button {
   background-color: #4caf50;
   font-weight: bold;
@@ -567,26 +612,32 @@ button:disabled {
   margin-top: 1rem;
   font-size: 16px;
 }
+
 .create-button:hover {
   background-color: #43a047;
 }
+
 table {
   width: 100%;
   margin-top: 1rem;
   border-collapse: collapse;
 }
+
 table th, table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
 }
+
 table th {
   background-color: #f5f5f5;
 }
+
 /* Стили для валидации */
 .error-input {
   border: 2px solid #d32f2f !important;
 }
+
 .error-message {
   color: #d32f2f;
   font-size: 0.85em;
@@ -594,6 +645,7 @@ table th {
   margin-top: 0.25rem;
   min-height: 1.2em;
 }
+
 /* Стили для JSON кнопок */
 .json-controls {
   display: flex;
@@ -602,6 +654,7 @@ table th {
   justify-content: center;
   flex-wrap: wrap;
 }
+
 .json-button {
   display: flex;
   align-items: center;
@@ -615,13 +668,16 @@ table th {
   color: #2c3e50;
   transition: all 0.2s;
 }
+
 .json-button:hover {
   background: #bdc3c7;
 }
+
 .json-button:disabled {
   background: #ddd;
   cursor: not-allowed;
 }
+
 @media (max-width: 600px) {
   .creator {
     padding: 15px;

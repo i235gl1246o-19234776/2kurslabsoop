@@ -1,0 +1,87 @@
+/* Файл для темного/светлого режима на основе настроек системы */
+:root {
+  /* Светлая тема по умолчанию */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-modal: #ffffff;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --card-bg: #ffffff;
+  --header-bg: #42b983;
+  --header-text: #ffffff;
+  --button-primary: #2196f3;
+  --button-primary-hover: #1976d2;
+  --button-secondary: #3498db;
+  --button-secondary-hover: #2980b9;
+  --button-success: #4caf50;
+  --button-warning: #ff9800;
+  --button-danger: #f44336;
+  --error-bg: #ffebee;
+  --error-border: #ffcdd2;
+  --error-text: #d32f2f;
+  --warning-bg: #fff8e1;
+  --warning-border: #ffecb3;
+  --warning-text: #ed6c02;
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-track: #f1f1f1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Темная тема */
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-tertiary: #252525;
+    --bg-modal: #2d2d2d;
+    --text-primary: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --border-color: #444;
+    --card-bg: #1e1e1e;
+    --header-bg: #388e3c;
+    --header-text: #ffffff;
+    --button-primary: #1976d2;
+    --button-primary-hover: #1565c0;
+    --button-secondary: #2980b9;
+    --button-secondary-hover: #2472a4;
+    --button-success: #43a047;
+    --button-warning: #f57c00;
+    --button-danger: #e53935;
+    --error-bg: #2c1a1a;
+    --error-border: #5c1a1a;
+    --error-text: #ff6b6b;
+    --warning-bg: #2e281a;
+    --warning-border: #b8860b;
+    --warning-text: #ffcc00;
+    --modal-overlay: rgba(0, 0, 0, 0.7);
+    --scrollbar-thumb: #555;
+    --scrollbar-track: #333;
+  }
+}
+
+/* Кастомные скроллбары */
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+/* Для Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}

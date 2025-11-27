@@ -2,12 +2,14 @@ package core.controller;
 
 import core.dto.DifferentiationRequestDto;
 import core.dto.DifferentiationResultDto;
+import core.dto.TabulatedFunctionDto;
 import core.entity.FunctionEntity;
 import core.entity.TabulatedFunctionEntity;
 import core.entity.UserEntity;
 import core.repository.FunctionRepository;
 import core.repository.TabulatedFunctionRepository;
 import core.repository.UserRepository;
+import functions.Point;
 import functions.TabulatedFunction;
 import functions.factory.ArrayTabulatedFunctionFactory;
 import functions.factory.LinkedListTabulatedFunctionFactory;
@@ -22,6 +24,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -144,10 +147,7 @@ public class DifferentiationController {
             TabulatedFunction derivative = differentialOperator.derive(function);
 
             // Конвертируем результат в DTO
-            List<core.dto.TabulatedFunctionDto> points = derivative.stream()
-                    .map(point -> new core.dto.TabulatedFunctionDto(null, requestDto.getFunctionId(), point.x, point.y))
-                    .collect(Collectors.toList());
-
+            List<core.dto.TabulatedFunctionDto> points = convertTabulatedFunctionToDtoList(derivative);
             log.info("Дифференцирование выполнено успешно. Результат содержит {} точек.", points.size());
             return ResponseEntity.ok(new DifferentiationResultDto(points, null));
         } catch (Exception e) {
@@ -155,5 +155,31 @@ public class DifferentiationController {
             return ResponseEntity.badRequest()
                     .body(new DifferentiationResultDto(null, "Ошибка: " + e.getMessage()));
         }
+    }
+
+    private List<TabulatedFunctionDto> convertTabulatedFunctionToDtoList(TabulatedFunction function) {
+        Point[] resultPoints = asPoints(function);
+        for (Point p : resultPoints) {
+            if (Double.isNaN(p.x) || Double.isNaN(p.y) ||
+                    !Double.isFinite(p.x) || !Double.isFinite(p.y)) {
+                throw new IllegalArgumentException(
+                        "Результат операции содержит недопустимые значения (NaN/Infinity)");
+            }
+        }
+        return Arrays.stream(resultPoints)
+                .map(point -> new TabulatedFunctionDto(null, null, point.x, point.y))
+                .collect(Collectors.toList());
+    }
+
+    private static Point[] asPoints(TabulatedFunction function) {
+        if (function == null) {
+            throw new IllegalArgumentException("TabulatedFunction не может быть null");
+        }
+        int count = function.getCount();
+        Point[] points = new Point[count];
+        for (int i = 0; i < count; i++) {
+            points[i] = new Point(function.getX(i), function.getY(i));
+        }
+        return points;
     }
 }

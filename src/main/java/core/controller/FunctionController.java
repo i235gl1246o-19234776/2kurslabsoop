@@ -381,18 +381,7 @@ public class FunctionController {
         return ResponseEntity.noContent().build();
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class FunctionResponseDTO {
-        private Long functionId;
-        private String functionName;
-        private String typeFunction;
-        private Double xVal;
-        private Double yVal;
-        private String userName;
-        private Integer operationsTypeId;
-    }
+
 
     @PostMapping("/search")
     public ResponseEntity<SearchFunctionResponseDTO> searchFunctions(@RequestBody SearchFunctionRequestDTO request) {

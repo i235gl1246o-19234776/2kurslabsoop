@@ -1,80 +1,104 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory } from 'vue-router';
+import Dashboard from '../components/Dashboard.vue';
+import FunctionCreator from '../components/FunctionCreator.vue';
+import FunctionExplorer from '../components/FunctionExplorer.vue';
+import OperationsWindow from '../components/OperationsWindow.vue';
+import IntegrationWindow from '../components/IntegrationWindow.vue';
+import DifferentiationWindow from '../components/DifferentiationWindow.vue';
+import CompositeFunctionCreator from '../components/CompositeFunctionCreator.vue';
+import SettingsModal from '../components/SettingsModal.vue';
+import LoginView from '../views/LoginView.vue';
+import RegisterView from '../views/RegisterView.vue';
+import FunctionCreatorView from '../views/FunctionCreatorView.vue';
+import SettingsView from '../views/SettingsView.vue';
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
+    name: 'Dashboard',
+    component: Dashboard,
     meta: { requiresAuth: true }
   },
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/LoginView.vue')
+    component: LoginView,
+    meta: { hideAuthHeader: true }
   },
   {
-    path: '/functions',
-    name: 'Functions',
-    component: () => import('@/views/FunctionsView.vue'),
-    meta: { requiresAuth: true }
+    path: '/register',
+    name: 'Register',
+    component: RegisterView,
+    meta: { hideAuthHeader: true }
   },
   {
     path: '/functions/create',
-    name: 'CreateFunction',
-    component: () => import('@/views/CreateFunctionView.vue'),
+    name: 'FunctionCreator',
+    component: FunctionCreatorView,
     meta: { requiresAuth: true }
   },
   {
-    path: '/functions/create-from-math',
-    name: 'CreateFromMath',
-    component: () => import('@/views/CreateFromMathView.vue'),
+    path: '/functions/explore/:id?',
+    name: 'FunctionExplorer',
+    component: FunctionExplorer,
     meta: { requiresAuth: true }
   },
   {
     path: '/operations',
     name: 'Operations',
-    component: () => import('@/components/OperationsWithFunctions.vue'),
+    component: OperationsWindow,
     meta: { requiresAuth: true }
   },
   {
     path: '/integration',
     name: 'Integration',
-    component: () => import('@/components/IntegralCalculator.vue'),
+    component: IntegrationWindow,
     meta: { requiresAuth: true }
   },
   {
-    path: '/functions/composite',
-    name: 'CompositeFunction',
-    component: () => import('@/components/CompositeFunctionCreator.vue'),
+    path: '/differentiation',
+    name: 'Differentiation',
+    component: DifferentiationWindow,
     meta: { requiresAuth: true }
   },
   {
-    path: '/graphs',
-    name: 'Graphs',
-    component: () => import('@/views/GraphView.vue')
+    path: '/composite',
+    name: 'CompositeFunctions',
+    component: CompositeFunctionCreator,
+    meta: { requiresAuth: true }
   },
   {
     path: '/settings',
     name: 'Settings',
-    component: () => import('@/views/SettingsView.vue'),
+    component: SettingsView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: SettingsModal,
     meta: { requiresAuth: true }
   }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
 
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const isAuthenticated = localStorage.getItem('authCredentials');
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login')
+  if (requiresAuth && !isAuthenticated) {
+    next('/login');
+  } else if (to.path === '/login' && isAuthenticated) {
+    next('/');
+  } else if (to.path === '/register' && isAuthenticated) {
+    next('/');
   } else {
-    next()
+    next();
   }
-})
+});
 
-export default router
+export default router;

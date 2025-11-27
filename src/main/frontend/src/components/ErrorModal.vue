@@ -8,8 +8,10 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, watch } from 'vue';
+
 // Определяем входные параметры для компонента
 const props = defineProps({
   isOpen: {
@@ -21,12 +23,15 @@ const props = defineProps({
     default: 'Произошла неизвестная ошибка',
   },
 });
+
 // Определяем событие, которое будет генерировать компонент
 const emit = defineEmits(['close']);
+
 // Функция для закрытия модального окна
 const closeModal = () => {
   emit('close'); // Сообщаем родительскому компоненту, что окно нужно закрыть
 };
+
 // Опционально: закрытие по клику вне окна
 const handleOutsideClick = (event) => {
   // Проверяем, кликнули ли мы по overlay (а не по содержимому окна)
@@ -34,6 +39,7 @@ const handleOutsideClick = (event) => {
     closeModal();
   }
 };
+
 // Следим за изменением isOpen, чтобы добавить/удалить обработчик клика
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
@@ -43,6 +49,7 @@ watch(() => props.isOpen, (newVal) => {
   }
 });
 </script>
+
 <style scoped>
 .error-modal-overlay {
   position: fixed;
@@ -56,6 +63,7 @@ watch(() => props.isOpen, (newVal) => {
   align-items: center;
   z-index: 1000; /* Высокий z-index, чтобы перекрыть остальное содержимое */
 }
+
 .error-modal-content {
   background-color: white;
   padding: 20px;
@@ -65,14 +73,17 @@ watch(() => props.isOpen, (newVal) => {
   width: 90%;
   text-align: center;
 }
+
 .error-modal-content h3 {
   margin-top: 0;
   color: #d32f2f; /* Красный цвет для заголовка */
 }
+
 .error-modal-content p {
   margin: 15px 0;
   color: #555;
 }
+
 .error-modal-content button {
   background-color: #d32f2f; /* Красная кнопка */
   color: white;
@@ -81,6 +92,7 @@ watch(() => props.isOpen, (newVal) => {
   border-radius: 4px;
   cursor: pointer;
 }
+
 .error-modal-content button:hover {
   background-color: #b71c1c; /* Более тёмный красный при наведении */
 }

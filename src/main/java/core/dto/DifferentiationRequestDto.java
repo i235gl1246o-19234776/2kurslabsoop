@@ -3,7 +3,7 @@ package core.dto;
 import lombok.Data;
 
 @Data
-public class DifferentiateRequestDto {
+public class DifferentiationRequestDto {
     private Long functionId;
     private String factoryType;
 }

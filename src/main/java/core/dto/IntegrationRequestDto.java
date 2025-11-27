@@ -1,4 +1,4 @@
-// src/main/java/core/dto/IntegrationRequestDto.java
+
 package core.dto;
 
 import lombok.*;

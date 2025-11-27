@@ -1,4 +1,3 @@
-<!-- src/components/RegisterForm.vue -->
 <template>
   <div class="form-container">
     <h2>Регистрация</h2>
@@ -19,14 +18,17 @@
     <button @click="$emit('close')">Закрыть</button>
   </div>
 </template>
+
 <script setup>
 import { ref, inject } from 'vue';
 import { api } from '../api.js';
+
 const showError = inject('showError');
 const name = ref('');
 const password = ref('');
 const showServerError = ref(false); // Флаг для отображения ошибки 500
 const emit = defineEmits(['register-success', 'close']);
+
 const register = async () => {
   try {
     console.log('🔧 Отправка запроса на регистрацию...');
@@ -50,6 +52,7 @@ const register = async () => {
   }
 };
 </script>
+
 <style scoped>
 .form-container {
   background: white;
@@ -57,6 +60,7 @@ const register = async () => {
   border-radius: 0.5rem;
   position: relative;
 }
+
 .error-message {
   background: #ffebee;
   border: 2px solid #f44336;
@@ -65,16 +69,20 @@ const register = async () => {
   margin-bottom: 1rem;
   color: #c62828;
 }
+
 .error-message strong {
   font-size: 1.1em;
 }
+
 .error-message ul {
   margin: 0.5rem 0;
   padding-left: 1.5rem;
 }
+
 .error-message li {
   margin: 0.25rem 0;
 }
+
 .error-message button {
   background: #f44336;
   color: white;
@@ -84,6 +92,7 @@ const register = async () => {
   cursor: pointer;
   margin-top: 0.5rem;
 }
+
 .error-message button:hover {
   background: #d32f2f;
 }

@@ -1,4 +1,3 @@
-<!-- src/components/CompositeFunctionCreator.vue -->
 <template>
   <div class="modal-overlay" @click.self="close">
     <div class="modal-content composite-modal">
@@ -84,7 +83,7 @@
                 <span>Название функции:</span>
                 <input
                   type="text"
-                  v-model="localizedFunctionName"
+                  v-model="functionName"
                   placeholder="Введите название функции"
                   required
                 >
@@ -95,7 +94,7 @@
                 <span>Техническое имя:</span>
                 <input
                   type="text"
-                  v-model="technicalFunctionName"
+                  v-model="technicalName"
                   placeholder="Введите техническое имя"
                   required
                 >
@@ -137,7 +136,7 @@
           <div v-if="creationResult" class="result-section">
             <h3>Функция создана!</h3>
             <div class="result-details">
-              <p><strong>ID:</strong> {{ creationResult.functionId }}</p>
+              <p><strong>ID:</strong> {{ creationResult.id }}</p>
               <p><strong>Название:</strong> {{ creationResult.functionName }}</p>
               <p><strong>Техническое имя:</strong> {{ creationResult.technicalName }}</p>
               <div class="next-actions">
@@ -155,222 +154,291 @@
     </div>
   </div>
 </template>
+
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { api } from '../api.js'
-const emit = defineEmits(['close', 'function-created'])
+import { ref, computed, onMounted } from 'vue';
+import { api } from '../api.js';
+
+const emit = defineEmits(['close', 'function-created']);
+
 // Состояние
-const isLoading = ref(true)
-const isCreating = ref(false)
-const availableFunctions = ref([])
-const functionBlocks = ref([])
-const localizedFunctionName = ref('')
-const technicalFunctionName = ref('')
-const functionDescription = ref('')
-const creationResult = ref(null)
-const errorMessage = ref('')
+const isLoading = ref(true);
+const isCreating = ref(false);
+const availableFunctions = ref([]);
+const functionBlocks = ref([]);
+const functionName = ref('');
+const technicalName = ref('');
+const functionDescription = ref('');
+const creationResult = ref(null);
+const errorMessage = ref('');
+
 // Загрузка доступных функций
 const loadAvailableFunctions = async () => {
-  isLoading.value = true
-  errorMessage.value = ''
+  isLoading.value = true;
+  errorMessage.value = '';
   try {
-    const userId = api.getStoredUserId()
-    console.log('👤 Loading functions for user:', userId)
-    const functions = await api.getFunctionsByUserId(userId)
-    console.log('📊 Loaded functions:', functions)
+    const userId = api.getStoredUserId();
+    if (!userId) {
+      throw new Error('Пользователь не авторизован');
+    }
+
+    const response = await fetch(`/api/functions?userId=${userId}`, {
+      headers: {
+        'Authorization': `Basic ${api.getStoredCredentials()}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка загрузки функций: ${response.status}`);
+    }
+
+    const functions = await response.json();
+
     // Фильтруем функции, которые можно использовать
     availableFunctions.value = functions.filter(f =>
-      f.typeFunction === 'math' || f.functionExpression?.includes('COMPOSITE')
-    )
-    console.log('✅ Available functions:', availableFunctions.value)
+      f.typeFunction === 'analytic' || f.functionExpression?.includes('COMPOSITE')
+    );
+
     if (availableFunctions.value.length === 0) {
-      errorMessage.value = 'Нет доступных функций для создания составной функции. Сначала создайте математические функции.'
+      errorMessage.value = 'Нет доступных функций для создания составной функции. Сначала создайте математические функции.';
     }
+
   } catch (error) {
-    console.error('❌ Error loading functions:', error)
-    errorMessage.value = 'Ошибка загрузки функций: ' + error.message
+    console.error('❌ Error loading functions:', error);
+    errorMessage.value = 'Ошибка загрузки функций: ' + error.message;
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
+
 // Добавление блоков
 const addFunctionBlock = () => {
   functionBlocks.value.push({
     type: 'function',
     functionId: '',
     name: ''
-  })
-}
+  });
+};
+
 const addOperationBlock = () => {
   if (functionBlocks.value.length === 0) {
-    errorMessage.value = 'Сначала добавьте функцию'
-    return
+    errorMessage.value = 'Сначала добавьте функцию';
+    return;
   }
+
   functionBlocks.value.push({
     type: 'operation',
     operation: 'add'
-  })
-}
+  });
+};
+
 const removeBlock = (index) => {
-  functionBlocks.value.splice(index, 1)
-}
+  functionBlocks.value.splice(index, 1);
+};
+
 const updateBlockFunction = (index) => {
-  const block = functionBlocks.value[index]
+  const block = functionBlocks.value[index];
   if (block.type === 'function' && block.functionId) {
-    const func = availableFunctions.value.find(f => f.id === block.functionId)
+    const func = availableFunctions.value.find(f => f.id === block.functionId);
     if (func) {
-      block.name = func.functionName
+      block.name = func.functionName;
     }
   }
-}
+};
+
 // Вспомогательные функции
 const getFunctionTypeDisplay = (type) => {
-  return type === 'math' ? 'математическая' : 'составная'
-}
+  return type === 'analytic' ? 'аналитическая' : 'составная';
+};
+
 const getFunctionExpression = (functionId) => {
-  const func = availableFunctions.value.find(f => f.id === functionId)
-  return func ? (func.functionExpression || 'нет выражения') : 'не найдено'
-}
+  const func = availableFunctions.value.find(f => f.id === functionId);
+  return func ? (func.functionExpression || 'нет выражения') : 'не найдено';
+};
+
 // Предпросмотр формулы
 const formulaPreview = computed(() => {
-  if (functionBlocks.value.length === 0) return 'f(x) = '
-  let formula = 'f(x) = '
+  if (functionBlocks.value.length === 0) return 'f(x) = ';
+
+  let formula = 'f(x) = ';
+
   for (let i = 0; i < functionBlocks.value.length; i++) {
-    const block = functionBlocks.value[i]
+    const block = functionBlocks.value[i];
+
     if (block.type === 'function' && block.functionId) {
-      const func = availableFunctions.value.find(f => f.id === block.functionId)
+      const func = availableFunctions.value.find(f => f.id === block.functionId);
+
       if (func) {
         if (i > 0) {
-          const prevBlock = functionBlocks.value[i-1]
+          const prevBlock = functionBlocks.value[i-1];
           if (prevBlock.type === 'operation') {
-            formula += ` ${getOperationSymbol(prevBlock.operation)} `
+            formula += ` ${getOperationSymbol(prevBlock.operation)} `;
           }
         }
-        formula += `${func.functionName}(x)`
+
+        formula += `${func.functionName}(x)`;
       }
     }
   }
-  return formula
-})
+
+  return formula;
+});
+
 const getOperationSymbol = (operation) => {
   switch (operation) {
-    case 'add': return '+'
-    case 'subtract': return '-'
-    case 'multiply': return '×'
-    case 'divide': return '÷'
-    default: return '?'
+    case 'add': return '+';
+    case 'subtract': return '-';
+    case 'multiply': return '×';
+    case 'divide': return '÷';
+    default: return '?';
   }
-}
+};
+
 // Валидация
 const canCreate = computed(() => {
   const hasValidBlocks = functionBlocks.value.length >= 1 &&
     functionBlocks.value.every(block =>
       block.type === 'function' ? block.functionId : true
-    )
-  const hasValidName = localizedFunctionName.value.trim().length >= 2
-  const hasValidTechnicalName = technicalFunctionName.value.trim().length >= 2
-  return hasValidBlocks && hasValidName && hasValidTechnicalName && !creationResult.value
-})
+    );
+
+  const hasValidName = functionName.value.trim().length >= 2;
+  const hasValidTechnicalName = technicalName.value.trim().length >= 2;
+
+  return hasValidBlocks && hasValidName && hasValidTechnicalName && !creationResult.value;
+});
+
 const validateBlocks = () => {
-  const errors = []
+  const errors = [];
+
   if (functionBlocks.value.length === 0) {
-    errors.push('Добавьте хотя бы одну функцию')
+    errors.push('Добавьте хотя бы одну функцию');
   }
+
   for (let i = 0; i < functionBlocks.value.length; i++) {
-    const block = functionBlocks.value[i]
+    const block = functionBlocks.value[i];
+
     if (block.type === 'function' && !block.functionId) {
-      errors.push(`Блок ${i + 1}: не выбрана функция`)
+      errors.push(`Блок ${i + 1}: не выбрана функция`);
     }
+
     if (block.type === 'operation' && i === 0) {
-      errors.push('Первый блок не может быть операцией')
+      errors.push('Первый блок не может быть операцией');
     }
+
     if (block.type === 'operation' && i === functionBlocks.value.length - 1) {
-      errors.push('Последний блок не может быть операцией')
+      errors.push('Последний блок не может быть операцией');
     }
   }
-  return errors
-}
+
+  return errors;
+};
+
 // Создание функции
 const validateAndCreate = async () => {
-  if (!canCreate.value) return
-  const validationErrors = validateBlocks()
+  if (!canCreate.value) return;
+
+  const validationErrors = validateBlocks();
   if (validationErrors.length > 0) {
-    errorMessage.value = 'Ошибки в конфигурации:\n' + validationErrors.join('\n')
-    return
+    errorMessage.value = 'Ошибки в конфигурации:\n' + validationErrors.join('\n');
+    return;
   }
+
   try {
-    isCreating.value = true
-    errorMessage.value = ''
-    // Формируем структуру
+    isCreating.value = true;
+    errorMessage.value = '';
+
+    // Формируем структуру составной функции
     const compositeStructure = {
       type: 'composite',
-      name: technicalFunctionName.value.trim(),
-      displayName: localizedFunctionName.value.trim(),
+      name: technicalName.value.trim(),
+      displayName: functionName.value.trim(),
       description: functionDescription.value.trim(),
       blocks: functionBlocks.value.map(block => {
         if (block.type === 'function') {
-          const func = availableFunctions.value.find(f => f.id === block.functionId)
+          const func = availableFunctions.value.find(f => f.id === block.functionId);
           return {
             type: 'function',
-            functionId: block.functionId.toString(),
-            name: func.functionName,
-            technicalName: func.technicalName || func.functionName
-          }
+            functionId: block.functionId,
+            name: func ? func.functionName : '',
+            technicalName: func ? (func.technicalName || func.functionName) : ''
+          };
         } else {
           return {
             type: 'operation',
             operation: block.operation
-          }
+          };
         }
       })
-    }
+    };
+
     const functionData = {
-      functionName: localizedFunctionName.value.trim(),
-      technicalName: technicalFunctionName.value.trim(),
-      description: functionDescription.value.trim(),
+      userId: api.getStoredUserId(),
+      functionName: functionName.value.trim(),
+      technicalName: technicalName.value.trim(),
       functionExpression: JSON.stringify(compositeStructure),
-      userId: api.getStoredUserId()
+      typeFunction: 'analytic'
+    };
+
+    console.log('📤 Sending function data:', functionData);
+
+    const response = await fetch('/api/composite-functions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${api.getStoredCredentials()}`
+      },
+      body: JSON.stringify(functionData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Ошибка создания функции: ${response.status}`);
     }
-    console.log('📤 Sending function data:', functionData)
-    const result = await api.createCompositeFunction(functionData)
-    creationResult.value = result
-    errorMessage.value = ''
-    console.log('✅ Function created successfully:', result)
+
+    const result = await response.json();
+    creationResult.value = result;
+    errorMessage.value = '';
+    console.log('✅ Function created successfully:', result);
+
   } catch (error) {
-    console.error('❌ Error creating function:', error)
-    errorMessage.value = 'Ошибка создания функции: ' + error.message
+    console.error('❌ Error creating function:', error);
+    errorMessage.value = 'Ошибка создания функции: ' + error.message;
   } finally {
-    isCreating.value = false
+    isCreating.value = false;
   }
-}
+};
+
 // Тестирование функции
 const testFunction = () => {
   if (creationResult.value) {
-    emit('function-created', creationResult.value)
-    close()
+    emit('function-created', creationResult.value);
+    close();
   }
-}
+};
+
 // Сброс
 const resetBuilder = () => {
   if (confirm('Сбросить конструктор?')) {
-    functionBlocks.value = []
-    localizedFunctionName.value = ''
-    technicalFunctionName.value = ''
-    functionDescription.value = ''
-    creationResult.value = null
-    errorMessage.value = ''
+    functionBlocks.value = [];
+    functionName.value = '';
+    technicalName.value = '';
+    functionDescription.value = '';
+    creationResult.value = null;
+    errorMessage.value = '';
   }
-}
+};
+
 const close = () => {
-  emit('close')
-}
+  emit('close');
+};
+
 // Инициализация
 onMounted(() => {
-  loadAvailableFunctions()
-})
+  loadAvailableFunctions();
+});
 </script>
+
 <style scoped>
-/* Стили остаются такими же как в предыдущей версии */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -383,6 +451,7 @@ onMounted(() => {
   align-items: center;
   z-index: 1000;
 }
+
 .composite-modal {
   background: white;
   border-radius: 10px;
@@ -392,6 +461,7 @@ onMounted(() => {
   max-height: 90vh;
   overflow: hidden;
 }
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -400,6 +470,7 @@ onMounted(() => {
   background: #2c3e50;
   color: white;
 }
+
 .close-btn {
   background: none;
   border: none;
@@ -407,16 +478,19 @@ onMounted(() => {
   font-size: 1.5rem;
   cursor: pointer;
 }
+
 .composite-container {
   padding: 20px;
   overflow-y: auto;
   max-height: 70vh;
 }
+
 .loading {
   text-align: center;
   padding: 40px;
   color: #666;
 }
+
 .error-section {
   background: #fee;
   border: 1px solid #fcc;
@@ -424,10 +498,12 @@ onMounted(() => {
   padding: 15px;
   margin-bottom: 20px;
 }
+
 .error-message {
   color: #c00;
   margin: 0;
 }
+
 .function-builder,
 .function-settings,
 .function-preview {
@@ -436,52 +512,63 @@ onMounted(() => {
   border: 1px solid #ddd;
   border-radius: 5px;
 }
+
 .builder-controls {
   display: flex;
   gap: 10px;
   margin: 15px 0;
 }
+
 .add-btn, .reset-btn {
   padding: 8px 15px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
+
 .add-btn {
   background: #4CAF50;
   color: white;
 }
+
 .reset-btn {
   background: #f44336;
   color: white;
 }
+
 .builder-tree {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .builder-block {
   border: 1px solid #ccc;
   border-radius: 5px;
   padding: 10px;
 }
+
 .block-header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
 }
+
 .block-content select {
   width: 100%;
   padding: 5px;
 }
+
 .setting-group {
   margin-bottom: 15px;
 }
+
 .setting-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
 }
+
 .setting-group input,
 .setting-group textarea {
   width: 100%;
@@ -489,6 +576,7 @@ onMounted(() => {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
 .formula-display {
   background: #f5f5f5;
   padding: 15px;
@@ -496,10 +584,12 @@ onMounted(() => {
   font-family: monospace;
   font-size: 1.1em;
 }
+
 .actions {
   text-align: center;
   margin: 20px 0;
 }
+
 .create-btn {
   background: #2196F3;
   color: white;
@@ -509,21 +599,25 @@ onMounted(() => {
   cursor: pointer;
   font-size: 1.1em;
 }
+
 .create-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
+
 .result-section {
   background: #e8f5e8;
   border: 1px solid #4CAF50;
   border-radius: 5px;
   padding: 15px;
 }
+
 .next-actions {
   display: flex;
   gap: 10px;
   margin-top: 15px;
 }
+
 .action-btn {
   background: #666;
   color: white;

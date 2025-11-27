@@ -8,6 +8,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchFunctionResponseDTO {
-    private List<FunctionController.FunctionResponseDTO> functions;
+    private List<FunctionResponseDTO> functions;
     private int total;
 }
