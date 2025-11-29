@@ -557,22 +557,24 @@ const saveAsJson = () => {
 <style scoped>
 .creator {
   position: relative;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 25px 20px;
+  background-color: #230942;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
   max-width: 800px;
-  margin: 0 auto;
+  margin: 20px auto;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Стили для крестика */
+/* Крестик */
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   cursor: pointer;
   font-size: 24px;
-  color: #666;
+  color: #ffffff;
   width: 28px;
   height: 28px;
   display: flex;
@@ -582,161 +584,184 @@ const saveAsJson = () => {
   transition: all 0.2s;
   z-index: 10;
 }
-
 .close-button:hover {
-  background-color: #f0f0f0;
-  color: #d32f2f;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ff6fda;
   transform: rotate(90deg);
 }
 
 h2 {
-  color: #333;
-  margin-bottom: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 1.8rem;
   text-align: center;
 }
 
+/* Вкладки */
 .tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 25px;
   justify-content: center;
 }
-
 .tabs button {
-  padding: 8px 15px;
-  background-color: #e9ecef;
+  padding: 10px 18px;
+  background-color: #5b1fa8;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.25s ease;
+  color: #ffffff;
+  font-weight: 500;
 }
-
 .tabs button.active {
-  background-color: #2196f3;
-  color: white;
+  background-color: #ff4fc4;
+  color: #ffffff;
 }
-
 .tabs button:hover:not(.active) {
-  background-color: #dee2e6;
+  background-color: #7b1fa8;
 }
 
-input, select, button {
-  padding: 8px;
-  margin: 0.25rem 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+/* Инпуты и селекты */
+input, select {
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid #5b1fa8;
+  border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
+  background-color: #2f105c;
+  color: #ffffff;
 }
 
+/* Убираем стрелки у number input */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+input::placeholder {
+  color: #cccccc;
+}
+select {
+  background-color: #2f105c;
+  color: #ffffff;
+}
+
+/* Кнопки */
 button {
-  background-color: #42b983;
-  color: white;
+  padding: 10px 15px;
+  margin: 6px 0;
   border: none;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.25s ease;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
 }
-
-button:hover {
-  background-color: #359c6d;
+button:not(.close-button) {
+  background-color: #5b1fa8;
 }
-
+button:not(.close-button):hover {
+  background-color: #7b1fa8;
+}
 button:disabled {
-  background-color: #cccccc;
+  background-color: #888;
   cursor: not-allowed;
 }
 
+/* Специальные кнопки */
 .generate-button {
   background-color: #2196f3;
 }
-
 .generate-button:hover {
   background-color: #1976d2;
 }
-
 .create-button {
-  background-color: #4caf50;
+  background-color: #ff4fc4;
   font-weight: bold;
-  padding: 10px;
   margin-top: 1rem;
   font-size: 16px;
 }
-
 .create-button:hover {
-  background-color: #43a047;
+  background-color: #ff6fda;
 }
 
+/* Таблицы */
 table {
   width: 100%;
   margin-top: 1rem;
   border-collapse: collapse;
 }
-
 table th, table td {
-  border: 1px solid #ddd;
+  border: 1px solid #5b1fa8;
   padding: 8px;
   text-align: left;
 }
-
 table th {
-  background-color: #f5f5f5;
+  background-color: #2f105c;
+  color: #ffffff;
+}
+table td {
+  background-color: #230942;
+  color: #ffffff;
 }
 
-/* Стили для валидации */
+/* Ошибки */
 .error-input {
-  border: 2px solid #d32f2f !important;
+  border: 2px solid #ff4fc4 !important;
 }
-
 .error-message {
-  color: #d32f2f;
+  color: #ff4fc4;
   font-size: 0.85em;
   display: block;
   margin-top: 0.25rem;
   min-height: 1.2em;
 }
 
-/* Стили для JSON кнопок */
+/* JSON кнопки */
 .json-controls {
   display: flex;
-  gap: 10px;
-  margin: 15px 0;
+  gap: 12px;
+  margin: 20px 0;
   justify-content: center;
   flex-wrap: wrap;
 }
-
 .json-button {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  gap: 6px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  background-color: #5b1fa8;
+  color: #ffffff;
   font-weight: 500;
-  background: #ecf0f1;
-  color: #2c3e50;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
 }
-
 .json-button:hover {
-  background: #bdc3c7;
+  background-color: #7b1fa8;
 }
-
 .json-button:disabled {
-  background: #ddd;
+  background: #888;
   cursor: not-allowed;
 }
 
+/* Адаптив */
 @media (max-width: 600px) {
   .creator {
-    padding: 15px;
-    margin: 10px;
+    padding: 20px;
+    margin: 15px;
   }
-
   table {
     font-size: 0.9em;
   }
-
   table th, table td {
     padding: 6px;
   }

@@ -1,79 +1,74 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+    /* src/assets/dark-theme.css */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+     /* Основные переменные темы */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+     /* Тёмная тема — активируется автоматически */
+       :root {
+         --bg-primary: #121212;
+         --bg-secondary: #1e1e1e;
+         --bg-tertiary: #252525;
+         --text-primary: #e0e0e0;
+         --text-secondary: #aaaaaa;
+         --border-color: #444;
+         --card-bg: #1e1e1e;
+         --header-bg: #2c3e50;
+         --header-text: #ffffff;
+         --button-primary: #1976d2;
+         --button-primary-hover: #1565c0;
+         --button-secondary: #2980b9;
+         --button-secondary-hover: #2472a4;
+         --button-success: #43a047;
+         --button-warning: #f57c00;
+         --button-danger: #e53935;
+         --error-bg: #2c1a1a;
+         --error-border: #5c1a1a;
+         --error-text: #ff6b6b;
+         --warning-bg: #2e281a;
+         --warning-border: #b8860b;
+         --warning-text: #ffcc00;
+         --modal-overlay: rgba(0, 0, 0, 0.7);
+         --scrollbar-thumb: #555;
+         --scrollbar-track: #333;
+       }
+     }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+     /* Глобальные стили */
+     body {
+       margin: 0;
+       background-color: var(--bg-primary);
+       color: var(--text-primary);
+       font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+       -webkit-font-smoothing: antialiased;
+       -moz-osx-font-smoothing: grayscale;
+       min-height: 100vh;
+     }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+     a {
+       color: var(--button-primary);
+       text-decoration: inherit;
+     }
+     a:hover {
+       color: var(--button-primary-hover);
+     }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
+     input, select, textarea, button {
+       color: var(--text-primary);
+       background-color: var(--bg-secondary);
+       border: 1px solid var(--border-color);
+     }
 
-.card {
-  padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+     /* Скроллбар */
+     *::-webkit-scrollbar {
+       width: 8px;
+     }
+     *::-webkit-scrollbar-track {
+       background: var(--scrollbar-track);
+     }
+     *::-webkit-scrollbar-thumb {
+       background: var(--scrollbar-thumb);
+       border-radius: 4px;
+     }
+     *::-webkit-scrollbar-thumb:hover {
+       background: #888;
+     }
