@@ -1,22 +1,25 @@
 package core.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Setter
+@Getter
 public class TabulatedFunctionDto {
-
-    @JsonProperty("id")
+    // Геттеры и сеттеры
     private Long id;
-
-    @JsonProperty("functionId")
     private Long functionId;
-
-    @JsonProperty("xVal")
     private Double xVal;
-
-    @JsonProperty("yVal")
     private Double yVal;
+
+    // Конструкторы
+    public TabulatedFunctionDto() {}
+
+    public TabulatedFunctionDto(Long id, Long functionId, Double xVal, Double yVal) {
+        this.id = id;
+        this.functionId = functionId;
+        this.xVal = xVal;
+        this.yVal = yVal;
+    }
+
 }

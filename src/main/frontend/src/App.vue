@@ -1,18 +1,30 @@
 <template>
   <div id="app">
-    <header v-if="!$route.meta?.hideAuthHeader">
-      <h1>Табулированные Функции</h1>
-      <nav>
-        <button v-if="!isLoggedIn" @click="showLogin = true">Войти</button>
-        <button v-if="!isLoggedIn" @click="showRegister = true">Зарегистрироваться</button>
-        <span v-if="isLoggedIn">Привет, {{ name }}!</span>
-        <button v-if="isLoggedIn" @click="logout">Выйти</button>
-      </nav>
-    </header>
+    <!-- Основной контент -->
     <main>
-      <RouterView />
-
-      <!-- Центральное модальное окно ошибок -->
+      <!-- Если вошёл — показываем Dashboard -->
+      <div v-if="isLoggedIn">
+        <Dashboard />
+      </div>
+      <!-- Если НЕ вошёл — красивый прямоугольник -->
+      <div v-else class="auth-card-wrapper">
+        <div class="auth-card">
+          <h2>Пожалуйста, войдите в систему</h2>
+          <div class="auth-buttons">
+            <button @click="showLogin = true" class="auth-btn">Войти</button>
+            <button @click="showRegister = true" class="auth-btn">Зарегистрироваться</button>
+          </div>
+        </div>
+      </div>
+      <!-- Модальное окно входа -->
+      <div v-if="showLogin" class="modal">
+        <LoginForm @login-success="handleLoginSuccess" @close="showLogin = false" />
+      </div>
+      <!-- Модальное окно регистрации -->
+      <div v-if="showRegister" class="modal">
+        <RegisterForm @register-success="handleRegisterSuccess" @close="showRegister = false" />
+      </div>
+      <!-- Центральное окно ошибок -->
       <ErrorModal
         :is-open="showErrorModal"
         :message="errorMessage"
@@ -21,26 +33,27 @@
     </main>
   </div>
 </template>
-
 <script setup>
 import { ref, provide, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import LoginForm from './components/LoginForm.vue';
+import RegisterForm from './components/RegisterForm.vue';
+import Dashboard from './components/Dashboard.vue';
 import ErrorModal from './components/ErrorModal.vue';
 import { api } from './api.js';
 
-const route = useRoute();
-const router = useRouter();
-
-// Состояние аутентификации
+// Статус
 const isLoggedIn = ref(false);
 const name = ref('');
 const userId = ref(null);
 
-// Глобальное окно ошибок
+// Модалки
+const showLogin = ref(false);
+const showRegister = ref(false);
+
+// Глобальные ошибки
 const showErrorModal = ref(false);
 const errorMessage = ref('');
 
-// === Глобальный обработчик ошибок ===
 const showError = (message) => {
   errorMessage.value = message;
   showErrorModal.value = true;
@@ -51,7 +64,7 @@ const closeErrorModal = () => {
   errorMessage.value = '';
 };
 
-// === Предоставление данных дочерним компонентам ===
+// Делаем доступным дочерним компонентам
 provide('showError', showError);
 provide('auth', {
   isLoggedIn: computed(() => isLoggedIn.value),
@@ -59,164 +72,238 @@ provide('auth', {
   userId: computed(() => userId.value)
 });
 
-// === Проверка сессии при загрузке ===
-onMounted(async () => {
-  if (localStorage.getItem('authCredentials')) {
-    try {
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'Authorization': `Basic ${localStorage.getItem('authCredentials')}`
-        }
-      });
+// Успешный логин
+const handleLoginSuccess = (userData) => {
+  isLoggedIn.value = true;
+  name.value = userData.name;
+  userId.value = userData.id;
+  showLogin.value = false;
+};
 
-      if (response.ok) {
-        const userData = await response.json();
-        isLoggedIn.value = true;
-        name.value = userData.name;
-        userId.value = userData.id;
-      } else {
-        // Если ответ не 200, очищаем хранилище
-        localStorage.removeItem('authCredentials');
-        localStorage.removeItem('userId');
-      }
-    } catch (err) {
-      console.error("Ошибка проверки сессии:", err);
-      // При ошибке сети тоже очищаем хранилище
-      localStorage.removeItem('authCredentials');
-      localStorage.removeItem('userId');
-    }
-  }
+// После регистрации — сразу открываем логин
+const handleRegisterSuccess = () => {
+  showRegister.value = false;
+  showLogin.value = true;
+};
 
-  // Добавляем глобальный обработчик ошибок 500
-  window.addEventListener('unhandledrejection', (event) => {
-    if (event.reason?.message?.includes('500') ||
-        event.reason?.message?.includes('HTML instead of JSON') ||
-        event.reason?.message?.includes('Unexpected token')) {
-
-      showError('Ошибка 500: Сервер не отвечает или возвращает ошибку. Проверьте консоль сервера на наличие ошибок.');
-      event.preventDefault(); // Предотвращаем вывод в консоль
-    }
-  });
-});
-
-// === Обработчики аутентификации ===
+// Выход
 const logout = () => {
-  localStorage.removeItem('authCredentials');
-  localStorage.removeItem('userId');
+  api.logout();
   isLoggedIn.value = false;
   name.value = '';
   userId.value = null;
-  router.push('/login'); // Перенаправляем на страницу входа
 };
-</script>
 
+// Проверяем авторизацию при загрузке страницы
+onMounted(async () => {
+  if (api.isAuthenticated()) {
+    try {
+      const response = await fetch('/api/users/me', {
+        headers: {
+          'Authorization': `Basic ${api.getStoredCredentials()}`
+        }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        handleLoginSuccess(userData);
+      } else {
+        api.logout();
+      }
+    } catch (err) {
+      api.logout();
+    }
+  }
+});
+</script>
 <style>
-/* Глобальные стили */
+/* Глобальная тёмная тема */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Убрать горизонтальный скролл */
+}
+
 body {
   font-family: Arial, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  min-height: 100vh;
+  background-color: #230942;
+  color: #ffffff;
 }
+
 #app {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
+  padding: 0;
 }
+
+/* Шапка */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--header-bg);
-  color: var(--header-text);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(
+    135deg,
+    #210b41 0%,
+    #5b1fa8 40%,
+    #ff4fc4 100%
+  );
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
 header h1 {
   font-size: 1.5rem;
+  font-weight: bold;
+}
+
+nav button {
+  margin-left: 1rem;
+  padding: 0.45rem 0.9rem;
+  background: #2f105c;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.25s;
+}
+
+nav button:hover {
+  background: #ff4fc4;
+}
+
+/* Основной контент */
+main {
+  padding: 0; /* Убрали отступы */
+  margin: 0;
+}
+
+/* === ЦЕНТРАЛЬНАЯ КАРТОЧКА === */
+.auth-card-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Занимает всю высоту */
+  margin: 0;
+  padding: 0;
+}
+
+.auth-card {
+  background: linear-gradient(
+    160deg,
+    #210b41 0%,
+    #5b1fa8 45%,
+    #ff4fc4 100%
+  );
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    0 0 25px rgba(255, 79, 196, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  animation: fadeIn 0.5s ease;
+}
+
+.auth-card h2 {
+  margin-bottom: 1.8rem;
+  color: #ffffff;
+  font-size: 1.4rem;
   font-weight: 600;
 }
-nav {
+
+/* Кнопки внутри карточки */
+.auth-buttons {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
 }
-button {
-  cursor: pointer;
-  padding: 0.6rem 1.2rem;
-  border-radius: 4px;
+
+.auth-btn {
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
   border: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    #2f105c 0%,
+    #7b1fa8 40%,
+    #ff4fc4 100%
+  );
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: 0.25s ease;
 }
-.primary-button {
-  background-color: var(--button-primary);
-  color: white;
+
+.auth-btn:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(
+    135deg,
+    #3d1474 0%,
+    #9e27c8 40%,
+    #ff6fda 100%
+  );
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45);
 }
-.primary-button:hover {
-  background-color: var(--button-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+.auth-btn:active {
+  transform: scale(0.97);
 }
-.secondary-button {
-  background-color: var(--button-secondary);
-  color: white;
-}
-.secondary-button:hover {
-  background-color: var(--button-secondary-hover);
-  transform: translateY(-1px);
-}
-.danger-button {
-  background-color: var(--button-danger);
-  color: white;
-}
-.danger-button:hover {
-  background-color: #d32f2f;
-}
-.success-button {
-  background-color: var(--button-success);
-  color: white;
-}
-.success-button:hover {
-  background-color: #388e3c;
-}
-main {
-  flex: 1;
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
+
 /* Модальное окно */
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
-/* Адаптивность */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    gap: 1rem;
+
+/* Анимация появления */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
   }
-  nav {
-    flex-wrap: wrap;
-    justify-content: center;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  main {
-    padding: 1rem;
-  }
+}
+
+/* Глобальные стили для видео */
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Поддержка кастомных скроллбаров для видео-контента */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #888;
 }
 </style>

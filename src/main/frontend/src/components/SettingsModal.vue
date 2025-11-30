@@ -1,28 +1,45 @@
+<!-- src/components/SettingsModal.vue -->
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="$emit('close')">
-    <div class="modal-content" @click.stop>
-      <h3>Настройки</h3>
-      <div class="setting-item">
-        <label for="factory-select">Фабрика табулированных функций:</label>
-        <select id="factory-select" v-model="selectedFactoryKey" @change="saveSettings">
-          <option value="array">Массив (ArrayTabulatedFunction)</option>
-          <option value="linked-list">Связный список (LinkedListTabulatedFunction)</option>
-        </select>
+  <div class="modal-overlay" @click.self="close">
+    <div class="settings-modal">
+      <div class="window-header">
+        <h2>Настройки</h2>
+        <button class="close-button" @click="close">&times;</button>
       </div>
-      <button @click="$emit('close')">Закрыть</button>
+
+      <div class="settings-content">
+        <div class="setting-section">
+          <h3>Фабрика табулированных функций</h3>
+          <div class="setting-item">
+            <label for="factory-select" class="setting-label">
+              Выберите тип реализации:
+            </label>
+            <select
+              id="factory-select"
+              v-model="selectedFactoryKey"
+              @change="saveSettings"
+              class="setting-select"
+            >
+              <option value="array">Массив (ArrayTabulatedFunction)</option>
+              <option value="linked-list">Связный список (LinkedListTabulatedFunction)</option>
+            </select>
+            <div class="setting-description">
+              <p><strong>Массив</strong> - быстрый доступ по индексу, медленная вставка/удаление</p>
+              <p><strong>Связный список</strong> - быстрая вставка/удаление, медленный доступ по индексу</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button @click="close" class="close-btn">Закрыть</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-
-const props = defineProps({
-  isOpen: {
-    type: Boolean,
-    required: true,
-  },
-});
 
 const emit = defineEmits(['close']);
 
@@ -41,6 +58,10 @@ onMounted(() => {
 const saveSettings = () => {
   localStorage.setItem('tabulatedFunctionFactory', selectedFactoryKey.value);
 };
+
+const close = () => {
+  emit('close');
+};
 </script>
 
 <style scoped>
@@ -50,51 +71,214 @@ const saveSettings = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
-.modal-content {
-  background-color: white;
+.settings-modal {
+  position: relative;
+  padding: 25px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  max-width: 600px;
+  max-height: 90vh;
+  margin: 20px auto;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #1a0a2e;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #5b1fa8;
+}
+
+/* Крестик */
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  z-index: 10;
+  background: none;
+  border: none;
+}
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ff6fda;
+  transform: rotate(90deg);
+}
+
+.window-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #5b1fa8;
+}
+
+h2 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+h3 {
+  color: #ffffff;
+  margin: 0 0 15px 0;
+  font-size: 1.3rem;
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px;
+}
+
+.setting-section {
+  margin-bottom: 25px;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 90%;
-  max-width: 500px;
-  text-align: center;
+  background: rgba(47, 16, 92, 0.3);
+  border-radius: 12px;
+  border: 1px solid #5b1fa8;
 }
 
 .setting-item {
-  margin-bottom: 20px;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+.setting-label {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 1.1rem;
 }
 
-select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-}
-
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
+.setting-select {
+  padding: 12px 16px;
+  border: 1px solid #5b1fa8;
+  border-radius: 8px;
+  background-color: #2f105c;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: border-color 0.25s ease;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #0056b3;
+.setting-select:focus {
+  outline: none;
+  border-color: #ff4fc4;
+  box-shadow: 0 0 0 2px rgba(255, 79, 196, 0.2);
+}
+
+.setting-description {
+  padding: 15px;
+  background: rgba(91, 31, 168, 0.2);
+  border-radius: 8px;
+  border-left: 3px solid #ff4fc4;
+}
+
+.setting-description p {
+  margin: 8px 0;
+  color: #cccccc;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.setting-description strong {
+  color: #ff6fda;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.close-btn {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #5b1fa8 0%, #ff4fc4 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(91, 31, 168, 0.3);
+}
+
+.close-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(91, 31, 168, 0.4);
+  background: linear-gradient(135deg, #7b1fa8 0%, #ff6fda 100%);
+}
+
+@media (max-width: 768px) {
+  .settings-modal {
+    width: 95%;
+    margin: 10px;
+    max-height: 95vh;
+    padding: 20px 15px;
+  }
+
+  .setting-section {
+    padding: 15px;
+  }
+
+  .settings-content {
+    max-height: calc(95vh - 100px);
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-modal {
+    padding: 15px 10px;
+  }
+
+  .setting-section {
+    padding: 12px;
+  }
+
+  .setting-select {
+    padding: 10px 12px;
+  }
+
+  .close-btn {
+    padding: 10px 25px;
+    width: 100%;
+  }
+}
+
+/* Кастомный скроллбар */
+.settings-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background: #2f105c;
+  border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background: #5b1fa8;
+  border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: #ff4fc4;
 }
 </style>

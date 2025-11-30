@@ -2,14 +2,16 @@ package core.dto;
 
 import lombok.*;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Setter
+@Getter
 public class IntegrationResultDto {
     private double value;
-    private long duration; // в миллисекундах
-    private String error;
+    private long duration;
 
-    public IntegrationResultDto(double result, long duration) {
+    public IntegrationResultDto() {}
+
+    public IntegrationResultDto(double value, long duration) {
+        this.value = value;
+        this.duration = duration;
     }
 }

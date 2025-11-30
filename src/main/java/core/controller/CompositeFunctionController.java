@@ -13,12 +13,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Arrays;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -31,15 +35,49 @@ public class CompositeFunctionController {
     @Autowired
     private UserRepository userRepository;
 
+    // Получение аутентифицированного пользователя
+    private UserEntity getAuthenticatedUser() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attrs.getRequest();
+        return (UserEntity) request.getAttribute("authenticatedUser");
+    }
+
+    // Проверка прав администратора
+    private boolean isAdmin() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attrs.getRequest();
+        String role = (String) request.getAttribute("userRole");
+        return "ADMIN".equals(role);
+    }
+
+    // POST /api/functions/composite - создание сложной функции
     @PostMapping("/composite")
     public ResponseEntity<FunctionDto> createCompositeFunction(
             @RequestBody CompositeFunctionDto compositeDto) {
+
         log.info("Запрос на создание сложной функции: {}", compositeDto);
+
+        UserEntity currentUser = getAuthenticatedUser();
+        if (currentUser == null) {
+            log.warn("Попытка создания сложной функции без аутентификации");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Проверяем доступ к пользователю
+        if (!isAdmin() && !currentUser.getId().equals(compositeDto.getUserId())) {
+            log.warn("Пользователь '{}' пытается создать сложную функцию для другого пользователя", currentUser.getName());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         try {
             // Проверяем существование пользователя
-            UserEntity user = userRepository.findById(compositeDto.getUserId())
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            Optional<UserEntity> userOpt = userRepository.findById(compositeDto.getUserId());
+            if (userOpt.isEmpty()) {
+                log.error("Пользователь с ID {} не найден", compositeDto.getUserId());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            UserEntity user = userOpt.get();
 
             // Получаем базовую и внешнюю функции
             MathFunction baseFunction = MathFunctionRegistry.getFunctionByName(compositeDto.getBaseFunctionName());
@@ -76,19 +114,6 @@ public class CompositeFunctionController {
             log.error("Ошибка при создании сложной функции: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new FunctionDto(null, null, null, "Ошибка: " + e.getMessage(), null, null, null));
-        }
-    }
-
-    @GetMapping("/composite-functions")
-    public ResponseEntity<List<String>> getAvailableCompositeFunctions() {
-        log.info("Запрос на получение доступных сложных функций");
-
-        try {
-            List<String> compositeFunctionNames = MathFunctionRegistry.getAvailableCompositeFunctionNames();
-            return ResponseEntity.ok(compositeFunctionNames);
-        } catch (Exception e) {
-            log.error("Ошибка при получении списка сложных функций: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

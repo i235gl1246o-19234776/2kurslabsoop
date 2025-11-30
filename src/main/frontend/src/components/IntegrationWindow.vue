@@ -1,104 +1,214 @@
+<!-- src/components/IntegrationWindow.vue -->
 <template>
   <div class="modal-overlay" @click.self="close">
-    <div class="modal-content integration-modal">
-      <div class="modal-header">
+    <div class="integration-window">
+      <div class="window-header">
         <h2>Вычисление определенного интеграла</h2>
-        <button class="close-btn" @click="close">&times;</button>
+        <button class="close-button" @click="close">&times;</button>
       </div>
-      <div class="modal-body" ref="modalBody">
+
+      <div class="window-body" ref="windowBody">
         <div v-if="isLoading" class="loading">
+          <div class="spinner"></div>
           <p>Загрузка данных...</p>
         </div>
+
         <div v-else>
-          <div class="function-selection">
+          <div class="section">
             <h3>Выберите функцию для интегрирования</h3>
             <div class="function-controls">
-              <select v-model="selectedFunctionId" @change="loadFunctionPoints">
+              <select v-model="selectedFunctionId" @change="loadFunctionPoints" class="function-select">
                 <option value="">Выберите функцию</option>
-                <option v-for="func in availableFunctions" :key="func.id" :value="func.id">
-                  {{ func.functionName }} (ID: {{ func.id }})
+                <option v-for="func in availableFunctions" :key="func.functionId" :value="func.functionId">
+                  {{ func.functionName }} (ID: {{ func.functionId }})
                 </option>
               </select>
-              <button @click="openFunctionCreator" class="create-btn">
-                <i class="fas fa-plus"></i> Создать новую
-              </button>
             </div>
+
             <div v-if="selectedFunction" class="function-info">
-              <p><strong>Имя:</strong> {{ selectedFunction.functionName }}</p>
-              <p><strong>Тип:</strong> {{ selectedFunction.typeFunction === 'tabular' ? 'Табличная' : 'Математическая' }}</p>
-              <p><strong>Область определения:</strong> от {{ domainStart }} до {{ domainEnd }}</p>
-              <p><strong>Количество точек:</strong> {{ functionPoints.length }}</p>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Имя:</span>
+                  <span class="info-value">{{ selectedFunction.functionName }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Тип:</span>
+                  <span class="info-value">{{ selectedFunction.typeFunction === 'tabular' ? 'Табличная' : 'Математическая' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Область определения:</span>
+                  <span class="info-value">от {{ domainStart.toFixed(2) }} до {{ domainEnd.toFixed(2) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Точек:</span>
+                  <span class="info-value">{{ functionPoints.length }}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div v-if="functionPoints.length > 0" class="integration-settings">
+
+          <div v-if="functionPoints.length > 0" class="section">
             <h3>Параметры вычисления</h3>
-            <div class="settings-row">
-              <label>
-                <span>Начало интервала (a):</span>
-                <input type="number" v-model="integrationStart" step="any" :min="domainStart" :max="domainEnd">
-              </label>
-              <label>
-                <span>Конец интервала (b):</span>
-                <input type="number" v-model="integrationEnd" step="any" :min="domainStart" :max="domainEnd">
-              </label>
+
+            <div class="settings-grid">
+              <div class="setting-group">
+                <label class="setting-label">
+                  <span class="label-text">Начало интервала (a):</span>
+                  <input
+                    type="number"
+                    v-model="integrationStart"
+                    step="any"
+                    :min="domainStart"
+                    :max="domainEnd"
+                    class="setting-input"
+                  >
+                </label>
+              </div>
+
+              <div class="setting-group">
+                <label class="setting-label">
+                  <span class="label-text">Конец интервала (b):</span>
+                  <input
+                    type="number"
+                    v-model="integrationEnd"
+                    step="any"
+                    :min="domainStart"
+                    :max="domainEnd"
+                    class="setting-input"
+                  >
+                </label>
+              </div>
+
+              <div class="setting-group">
+                <label class="setting-label">
+                  <span class="label-text">Количество разбиений (n):</span>
+                  <input
+                    type="number"
+                    v-model="integrationSteps"
+                    min="10"
+                    max="1000000"
+                    step="1000"
+                    class="setting-input"
+                  >
+                  <span class="setting-hint">(рекомендуется от 1000 до 100000)</span>
+                </label>
+              </div>
+
+              <div class="setting-group">
+                <label class="setting-label">
+                  <span class="label-text">Количество потоков:</span>
+                  <input
+                    type="number"
+                    v-model="threadCount"
+                    min="1"
+                    :max="maxThreads"
+                    step="1"
+                    class="setting-input"
+                  >
+                  <span class="setting-hint">(максимум {{ maxThreads }})</span>
+                </label>
+              </div>
             </div>
-            <div class="settings-row">
-              <label>
-                <span>Количество разбиений (n):</span>
-                <input type="number" v-model="integrationSteps" min="10" max="1000000" step="1000">
-                <span class="hint">(рекомендуется от 1000 до 100000)</span>
-              </label>
-              <label>
-                <span>Количество потоков:</span>
-                <input type="number" v-model="threadCount" min="1" :max="maxThreads" step="1">
-                <span class="hint">(максимум {{ maxThreads }})</span>
-              </label>
-            </div>
+
             <div class="performance-info">
-              <p>Доступных процессорных ядер: {{ availableCores }}</p>
-              <p>Рекомендуемое количество потоков: {{ recommendedThreads }}</p>
+              <div class="performance-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Доступных ядер:</span>
+                  <span class="stat-value">{{ availableCores }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Рекомендуется потоков:</span>
+                  <span class="stat-value">{{ recommendedThreads }}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div v-if="functionPoints.length > 0" class="integration-chart">
+
+          <div v-if="functionPoints.length > 0" class="section">
+            <div class="chart-header">
+              <h3>Область интегрирования</h3>
+              <div class="chart-legend">
+                <div class="legend-item">
+                  <span class="legend-color integration-area"></span>
+                  <span class="legend-text">Площадь под кривой</span>
+                </div>
+              </div>
+            </div>
             <FunctionChart
               :points="chartPoints"
               :show-slider="false"
-              chart-title="Область интегрирования"
+              :integration-range="{ start: integrationStart, end: integrationEnd }"
             />
           </div>
-          <div class="integration-actions">
+
+          <div class="actions-section">
             <button
               @click="calculateIntegral"
               :disabled="!canCalculate || isCalculating"
-              class="calculate-btn"
+              class="calculate-button"
             >
-              <span v-if="isCalculating">
-                <i class="fas fa-spinner fa-spin"></i> Вычисление...
-              </span>
-              <span v-else>
-                <i class="fas fa-calculator"></i> Вычислить интеграл
+              <span class="btn-content">
+                <span v-if="isCalculating" class="btn-spinner"></span>
+                <span class="btn-icon">∫</span>
+                <span class="btn-text">
+                  {{ isCalculating ? 'Вычисление...' : 'Вычислить интеграл' }}
+                </span>
               </span>
             </button>
-            <button @click="reset" class="reset-btn">
-              <i class="fas fa-redo"></i> Сбросить
+
+            <button @click="reset" class="reset-button">
+              <span class="btn-content">
+                <span class="btn-icon">↺</span>
+                <span class="btn-text">Сбросить</span>
+              </span>
             </button>
+
             <div class="scroll-controls">
-              <button @click="scrollToTop" class="scroll-btn" title="В начало">
-                <i class="fas fa-arrow-up"></i>
+              <button @click="scrollToTop" class="scroll-button" title="В начало">
+                <span class="scroll-icon">↑</span>
               </button>
-              <button @click="scrollToBottom" class="scroll-btn" title="В конец">
-                <i class="fas fa-arrow-down"></i>
+              <button @click="scrollToBottom" class="scroll-button" title="В конец">
+                <span class="scroll-icon">↓</span>
               </button>
             </div>
           </div>
-          <div v-if="calculationResult" class="result-section">
-            <h3>Результат вычисления</h3>
-            <div class="result-details">
-              <p><strong>Значение интеграла:</strong> {{ formattedResult }}</p>
-              <p><strong>Время выполнения:</strong> {{ executionTime }} мс</p>
-              <p><strong>Количество потоков:</strong> {{ threadCount }}</p>
-              <p><strong>Метод:</strong> Параллельный метод трапеций</p>
+
+          <div v-if="calculationResult" class="section result-section">
+            <div class="result-header">
+              <h3>Результат вычисления</h3>
+              <div class="result-badge">
+                ∫<sub>{{ integrationStart.toFixed(2) }}</sub><sup>{{ integrationEnd.toFixed(2) }}</sup> f(x) dx
+              </div>
             </div>
+
+            <div class="result-content">
+              <div class="result-main">
+                <div class="result-value">
+                  {{ formattedResult }}
+                </div>
+                <div class="result-label">Значение интеграла</div>
+              </div>
+
+              <div class="result-details">
+                <div class="detail-item">
+                  <span class="detail-label">Время выполнения:</span>
+                  <span class="detail-value">{{ executionTime }} мс</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Количество потоков:</span>
+                  <span class="detail-value">{{ threadCount }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Метод:</span>
+                  <span class="detail-value">Параллельный метод трапеций</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Разбиений:</span>
+                  <span class="detail-value">{{ integrationSteps.toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="performance-chart" v-if="performanceData.length > 0">
               <h4>Сравнение производительности</h4>
               <div class="chart-container">
@@ -108,6 +218,7 @@
           </div>
         </div>
       </div>
+
       <div class="scroll-indicator" v-if="showScrollIndicator">
         <div class="scroll-progress" :style="{ width: scrollProgress + '%' }"></div>
       </div>
@@ -116,288 +227,233 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import FunctionChart from './FunctionChart.vue';
-import { Chart, registerables } from 'chart.js';
-import { api } from '../api.js';
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import FunctionChart from './FunctionChart.vue'
+import { api } from '../api.js'
+import { Chart, registerables } from 'chart.js'
+Chart.register(...registerables)
 
-Chart.register(...registerables);
+const emit = defineEmits(['close'])
 
-const emit = defineEmits(['close']);
+const isLoading = ref(false)
+const isCalculating = ref(false)
+const availableFunctions = ref([])
+const selectedFunctionId = ref(null)
+const selectedFunction = ref(null)
+const functionPoints = ref([])
+const calculationResult = ref(null)
+const executionTime = ref(0)
+const integrationStart = ref(0)
+const integrationEnd = ref(0)
+const integrationSteps = ref(10000)
+const threadCount = ref(4)
+const maxThreads = ref(16)
+const availableCores = ref(navigator.hardwareConcurrency || 8)
+const performanceData = ref([])
+const windowBody = ref(null)
+const showScrollIndicator = ref(false)
+const scrollProgress = ref(0)
 
-// Состояние
-const isLoading = ref(false);
-const isCalculating = ref(false);
-const availableFunctions = ref([]);
-const selectedFunctionId = ref(null);
-const selectedFunction = ref(null);
-const functionPoints = ref([]);
-const calculationResult = ref(null);
-const executionTime = ref(0);
-const integrationStart = ref(0);
-const integrationEnd = ref(0);
-const integrationSteps = ref(10000);
-const threadCount = ref(1);
-const maxThreads = ref(16);
-const availableCores = ref(navigator.hardwareConcurrency || 8);
-const performanceData = ref([]);
-const modalBody = ref(null);
-const showScrollIndicator = ref(false);
-const scrollProgress = ref(0);
-const integrationChartInstance = ref(null);
+// Инициализация максимального количества потоков
+maxThreads.value = Math.min(16, availableCores.value * 2)
 
-// Инициализация
-maxThreads.value = Math.min(16, availableCores.value * 2);
-
-// Вычисляемые свойства
 const recommendedThreads = computed(() => {
-  return Math.min(8, availableCores.value);
-});
+  return Math.min(8, availableCores.value)
+})
 
 const domainStart = computed(() => {
-  if (functionPoints.value.length === 0) return 0;
-  return Math.min(...functionPoints.value.map(p => p.x));
-});
+  if (functionPoints.value.length === 0) return 0
+  return Math.min(...functionPoints.value.map(p => p.x))
+})
 
 const domainEnd = computed(() => {
-  if (functionPoints.value.length === 0) return 0;
-  return Math.max(...functionPoints.value.map(p => p.x));
-});
+  if (functionPoints.value.length === 0) return 0
+  return Math.max(...functionPoints.value.map(p => p.x))
+})
 
 const chartPoints = computed(() => {
-  if (!selectedFunctionId.value || functionPoints.value.length === 0) return [];
+  if (!selectedFunctionId.value || functionPoints.value.length === 0) return []
   return functionPoints.value.filter(p =>
     p.x >= integrationStart.value && p.x <= integrationEnd.value
-  );
-});
+  )
+})
 
 const formattedResult = computed(() => {
-  if (!calculationResult.value) return '0.0000';
-  const absValue = Math.abs(calculationResult.value);
+  if (!calculationResult.value) return '0.0000'
+  const absValue = Math.abs(calculationResult.value)
+
   if (absValue < 0.001 || absValue > 10000) {
-    return calculationResult.value.toExponential(6);
+    return calculationResult.value.toExponential(6)
   }
-  return calculationResult.value.toFixed(6);
-});
+  return calculationResult.value.toFixed(6)
+})
 
 const canCalculate = computed(() => {
   return selectedFunctionId.value &&
          functionPoints.value.length > 0 &&
          integrationStart.value < integrationEnd.value &&
-         integrationSteps.value >= 10 &&
-         threadCount.value >= 1;
-});
+         integrationSteps.value >= 10
+})
 
-// Методы прокрутки
+const performanceChart = ref(null)
+let integrationChartInstance = null
+
+// Функции прокрутки
 const scrollToTop = () => {
-  if (modalBody.value) {
-    modalBody.value.scrollTo({ top: 0, behavior: 'smooth' });
+  if (windowBody.value) {
+    windowBody.value.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   }
-};
+}
 
 const scrollToBottom = () => {
-  if (modalBody.value) {
-    modalBody.value.scrollTo({
-      top: modalBody.value.scrollHeight,
+  if (windowBody.value) {
+    windowBody.value.scrollTo({
+      top: windowBody.value.scrollHeight,
       behavior: 'smooth'
-    });
+    })
   }
-};
+}
 
 // Обработчик прокрутки
 const handleScroll = () => {
-  if (!modalBody.value) return;
+  if (!windowBody.value) return
 
-  const scrollTop = modalBody.value.scrollTop;
-  const scrollHeight = modalBody.value.scrollHeight;
-  const clientHeight = modalBody.value.clientHeight;
+  const scrollTop = windowBody.value.scrollTop
+  const scrollHeight = windowBody.value.scrollHeight
+  const clientHeight = windowBody.value.clientHeight
 
-  showScrollIndicator.value = scrollHeight > clientHeight;
+  showScrollIndicator.value = scrollHeight > clientHeight
 
   if (scrollHeight > clientHeight) {
-    scrollProgress.value = (scrollTop / (scrollHeight - clientHeight)) * 100;
+    scrollProgress.value = (scrollTop / (scrollHeight - clientHeight)) * 100
   } else {
-    scrollProgress.value = 0;
+    scrollProgress.value = 0
   }
-};
+}
 
 // Загрузка доступных функций
 const loadAvailableFunctions = async () => {
-  isLoading.value = true;
+  isLoading.value = true
   try {
-    const userId = api.getStoredUserId();
-    if (!userId) {
-      throw new Error('Пользователь не авторизован');
-    }
+    const userId = api.getStoredUserId()
+    const functions = await api.getFunctionsByUserId(userId)
+    availableFunctions.value = functions.filter(f =>
+      f.typeFunction === 'tabular' || f.implementsMathFunction
+    )
 
-    const response = await fetch(`/api/functions?userId=${userId}`, {
-      headers: {
-        'Authorization': `Basic ${api.getStoredCredentials()}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Ошибка загрузки функций: ${response.status}`);
-    }
-
-    const functions = await response.json();
-    availableFunctions.value = functions.filter(f => f.typeFunction === 'tabular');
-
-    // Автоматически выбираем первую функцию, если есть
     if (availableFunctions.value.length > 0 && !selectedFunctionId.value) {
-      selectedFunctionId.value = availableFunctions.value[0].id;
-      await loadFunctionPoints();
+      selectedFunctionId.value = availableFunctions.value[0].functionId
+      await loadFunctionPoints()
     }
-
   } catch (error) {
-    console.error('Ошибка загрузки функций:', error);
-    alert('Ошибка загрузки списка функций: ' + error.message);
+    console.error('Ошибка загрузки функций:', error)
+    alert('Ошибка загрузки списка функций: ' + error.message)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 // Загрузка точек выбранной функции
 const loadFunctionPoints = async () => {
-  if (!selectedFunctionId.value) return;
+  if (!selectedFunctionId.value) return
 
-  isLoading.value = true;
+  isLoading.value = true
   try {
-    // Получаем информацию о функции
-    const userId = api.getStoredUserId();
-    const response = await fetch(`/api/functions?userId=${userId}`, {
-      headers: {
-        'Authorization': `Basic ${api.getStoredCredentials()}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Ошибка загрузки информации о функциях: ${response.status}`);
-    }
-
-    const functions = await response.json();
-    selectedFunction.value = functions.find(f => f.id === selectedFunctionId.value);
+    const userId = api.getStoredUserId()
+    const allFunctions = await api.getFunctionsByUserId(userId)
+    selectedFunction.value = allFunctions.find(f => f.functionId === selectedFunctionId.value)
 
     if (!selectedFunction.value) {
-      throw new Error('Функция не найдена');
+      throw new Error('Функция не найдена')
     }
 
-    // Получаем точки функции
-    const pointsResponse = await fetch(`/api/tabulated-points/function/${selectedFunctionId.value}`, {
-      headers: {
-        'Authorization': `Basic ${api.getStoredCredentials()}`
-      }
-    });
+    const points = await api.getTabulatedPointsByFunctionId(selectedFunctionId.value)
+    functionPoints.value = points.map(p => ({
+      x: parseFloat(p.xval),
+      y: parseFloat(p.yval)
+    })).sort((a, b) => a.x - b.x)
 
-    if (!pointsResponse.ok) {
-      throw new Error(`Ошибка загрузки точек функции: ${pointsResponse.status}`);
-    }
-
-    const pointsData = await pointsResponse.json();
-    functionPoints.value = pointsData.map(p => ({
-      x: parseFloat(p.xVal),
-      y: parseFloat(p.yVal)
-    })).sort((a, b) => a.x - b.x);
-
-    // Устанавливаем границы по умолчанию
-    integrationStart.value = domainStart.value;
-    integrationEnd.value = domainEnd.value;
-
-    // Устанавливаем рекомендуемое количество разбиений
-    integrationSteps.value = Math.min(100000, Math.max(1000, functionPoints.value.length * 10));
-    threadCount.value = recommendedThreads.value;
-
+    integrationStart.value = domainStart.value
+    integrationEnd.value = domainEnd.value
+    integrationSteps.value = Math.min(100000, Math.max(1000, functionPoints.value.length * 10))
+    threadCount.value = recommendedThreads.value
   } catch (error) {
-    console.error('Ошибка загрузки точек функции:', error);
-    alert('Ошибка загрузки точек функции: ' + error.message);
+    console.error('Ошибка загрузки точек функции:', error)
+    alert('Ошибка загрузки точек функции: ' + error.message)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 // Вычисление интеграла
 const calculateIntegral = async () => {
-  if (!canCalculate.value) return;
+  if (!canCalculate.value) return
 
-  isCalculating.value = true;
-  calculationResult.value = null;
+  isCalculating.value = true
+  calculationResult.value = null
+
   try {
-    const startTime = performance.now();
+    const startTime = performance.now()
 
-    const response = await fetch('/api/integration', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${api.getStoredCredentials()}`
-      },
-      body: JSON.stringify({
-        functionId: selectedFunctionId.value,
-        a: parseFloat(integrationStart.value),
-        b: parseFloat(integrationEnd.value),
-        steps: parseInt(integrationSteps.value),
-        threadCount: parseInt(threadCount.value)
-      })
-    });
+    const result = await api.calculateIntegral(
+      selectedFunctionId.value,
+      parseFloat(integrationStart.value),
+      parseFloat(integrationEnd.value),
+      parseInt(integrationSteps.value),
+      parseInt(threadCount.value)
+    )
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Ошибка вычисления: ${response.status}`);
-    }
+    const endTime = performance.now()
 
-    const result = await response.json();
-    const endTime = performance.now();
+    calculationResult.value = result.value
+    executionTime.value = (endTime - startTime).toFixed(2)
 
-    calculationResult.value = result.value;
-    executionTime.value = (endTime - startTime).toFixed(2);
-
-    // Сохраняем данные для сравнения производительности
     performanceData.value.push({
       threads: threadCount.value,
       time: parseFloat(executionTime.value),
       result: calculationResult.value
-    });
+    })
 
-    renderPerformanceChart();
-    console.log('Результат интегрирования:', result);
+    renderPerformanceChart()
 
-    // Прокручиваем к результату
-    await nextTick();
-    scrollToBottom();
-
+    setTimeout(() => {
+      scrollToBottom()
+    }, 100)
   } catch (error) {
-    console.error('Ошибка вычисления интеграла:', error);
-    alert('Ошибка вычисления интеграла: ' + (error.message || 'неизвестная ошибка'));
+    console.error('Ошибка вычисления интеграла:', error)
+    alert('Ошибка вычисления интеграла: ' + (error.message || 'неизвестная ошибка'))
   } finally {
-    isCalculating.value = false;
+    isCalculating.value = false
   }
-};
+}
 
 // Отрисовка графика производительности
 const renderPerformanceChart = () => {
-  const chartElement = document.getElementById('performanceChart');
-  if (!chartElement || performanceData.value.length === 0) return;
+  if (!performanceChart.value || performanceData.value.length === 0) return
 
-  const ctx = chartElement.getContext('2d');
+  const ctx = performanceChart.value.getContext('2d')
 
-  // Если уже есть график, уничтожаем его
-  if (integrationChartInstance.value) {
-    integrationChartInstance.value.destroy();
+  if (integrationChartInstance) {
+    integrationChartInstance.destroy()
   }
 
-  // Подготавливаем данные
-  const threadCounts = performanceData.value.map(d => d.threads);
-  const executionTimes = performanceData.value.map(d => d.time);
+  const threadCounts = performanceData.value.map(d => d.threads)
+  const executionTimes = performanceData.value.map(d => d.time)
 
-  integrationChartInstance.value = new Chart(ctx, {
+  integrationChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: threadCounts.map(t => `${t} потоков`),
       datasets: [{
         label: 'Время выполнения (мс)',
         data: executionTimes,
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1
+        backgroundColor: '#ff4fc4',
+        borderColor: '#ff6fda',
+        borderWidth: 2,
+        borderRadius: 6
       }]
     },
     options: {
@@ -408,93 +464,107 @@ const renderPerformanceChart = () => {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Время (мс)'
+            text: 'Время (мс)',
+            color: '#ffffff'
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          },
+          ticks: {
+            color: '#ffffff'
           }
         },
         x: {
           title: {
             display: true,
-            text: 'Количество потоков'
+            text: 'Количество потоков',
+            color: '#ffffff'
+          },
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: '#ffffff'
           }
         }
       },
       plugins: {
+        legend: {
+          display: false
+        },
         title: {
           display: true,
-          text: 'Зависимость времени выполнения от количества потоков'
+          text: 'Зависимость времени выполнения от количества потоков',
+          color: '#ffffff',
+          font: {
+            size: 14
+          }
         }
       }
     }
-  });
-};
+  })
+}
 
 // Открытие окна создания функции
 const openFunctionCreator = () => {
   window.dispatchEvent(new CustomEvent('open-create-function', {
     detail: { operand: 'integration' }
-  }));
-};
+  }))
+}
 
 // Сброс результатов
 const reset = () => {
-  calculationResult.value = null;
-  executionTime.value = 0;
-  performanceData.value = [];
+  calculationResult.value = null
+  executionTime.value = 0
+  performanceData.value = []
 
-  if (integrationChartInstance.value) {
-    integrationChartInstance.value.destroy();
-    integrationChartInstance.value = null;
+  if (integrationChartInstance) {
+    integrationChartInstance.destroy()
+    integrationChartInstance = null
   }
 
-  // Прокручиваем к началу при сбросе
-  scrollToTop();
-};
+  scrollToTop()
+}
 
 const close = () => {
-  emit('close');
-};
+  emit('close')
+}
 
 // Обработчик создания новой функции
 const handleFunctionCreated = async (event) => {
-  const { functionId, functionName } = event.detail;
-  // Обновляем список доступных функций
-  await loadAvailableFunctions();
-  // Выбираем созданную функцию
-  selectedFunctionId.value = functionId;
-  await loadFunctionPoints();
-};
+  const { functionId, functionName } = event.detail
+  await loadAvailableFunctions()
+  selectedFunctionId.value = functionId
+  await loadFunctionPoints()
+}
 
 // Инициализация
 onMounted(async () => {
-  threadCount.value = recommendedThreads.value;
-  await loadAvailableFunctions();
+  threadCount.value = recommendedThreads.value
+  await loadAvailableFunctions()
 
-  // Подписка на событие создания функции
-  window.addEventListener('function-created', handleFunctionCreated);
+  window.addEventListener('function-created', handleFunctionCreated)
 
-  // Добавляем обработчик прокрутки
-  if (modalBody.value) {
-    modalBody.value.addEventListener('scroll', handleScroll);
+  if (windowBody.value) {
+    windowBody.value.addEventListener('scroll', handleScroll)
   }
 
-  // Инициализируем состояние прокрутки
-  setTimeout(handleScroll, 100);
-});
+  setTimeout(handleScroll, 100)
+})
 
 // Очистка при размонтировании
 onUnmounted(() => {
-  window.removeEventListener('function-created', handleFunctionCreated);
+  window.removeEventListener('function-created', handleFunctionCreated)
 
-  if (integrationChartInstance.value) {
-    integrationChartInstance.value.destroy();
-    integrationChartInstance.value = null;
+  if (integrationChartInstance) {
+    integrationChartInstance.destroy()
+    integrationChartInstance = null
   }
 
-  // Удаляем обработчик прокрутки
-  if (modalBody.value) {
-    modalBody.value.removeEventListener('scroll', handleScroll);
+  if (windowBody.value) {
+    windowBody.value.removeEventListener('scroll', handleScroll)
   }
-});
+})
 </script>
 
 <style scoped>
@@ -504,191 +574,372 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
-.integration-modal {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
-  width: 95%;
-  max-width: 1000px;
+.integration-window {
+  position: relative;
+  padding: 25px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  max-width: 900px;
   max-height: 90vh;
-  overflow: hidden;
+  margin: 20px auto;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #1a0a2e;
   display: flex;
   flex-direction: column;
-  position: relative;
+  overflow: hidden;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: #2c3e50;
-  color: white;
-  border-bottom: 2px solid #34495e;
-  flex-shrink: 0;
-}
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-  max-height: calc(90vh - 70px);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
+/* Крестик */
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  font-size: 24px;
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  border-radius: 50%;
+  transition: all 0.2s;
+  z-index: 10;
+  background: none;
+  border: none;
+}
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ff6fda;
+  transform: rotate(90deg);
 }
 
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+.window-header {
+  margin-bottom: 1.8rem;
+  text-align: center;
+  padding: 0 20px;
 }
 
-.function-selection, .integration-settings, .result-section {
-  padding: 15px;
-  border-bottom: 1px solid #eee;
+h2 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+h3, h4 {
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+}
+
+.window-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px;
+  max-height: calc(90vh - 120px);
+}
+
+.section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: rgba(47, 16, 92, 0.3);
+  border-radius: 12px;
+  border: 1px solid #5b1fa8;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  gap: 15px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #5b1fa8;
+  border-top: 4px solid #ff4fc4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .function-controls {
   display: flex;
-  gap: 10px;
-  margin: 10px 0;
+  gap: 12px;
+  margin: 15px 0;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.function-controls select {
+.function-select {
   flex: 1;
-  min-width: 200px;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  min-width: 250px;
+  padding: 10px;
+  border: 1px solid #5b1fa8;
+  border-radius: 8px;
+  background-color: #2f105c;
+  color: #ffffff;
+  font-size: 1rem;
 }
 
-.create-btn {
-  background: #3498db;
-  color: white;
+.function-select:focus {
+  outline: none;
+  border-color: #ff4fc4;
+}
+
+.create-button {
+  background-color: #ff4fc4;
+  color: #ffffff;
   border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  font-weight: 600;
+  transition: background-color 0.25s ease;
+}
+
+.create-button:hover {
+  background-color: #ff6fda;
+}
+
+.btn-icon {
+  font-weight: bold;
 }
 
 .function-info {
   margin-top: 15px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border-left: 3px solid #3498db;
+  padding: 15px;
+  background: rgba(91, 31, 168, 0.2);
+  border-radius: 8px;
+  border-left: 3px solid #ff4fc4;
 }
 
-.settings-row {
-  display: flex;
-  gap: 20px;
-  margin: 15px 0;
-  flex-wrap: wrap;
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
 }
 
-.settings-row label {
+.info-item {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 250px;
+  gap: 4px;
 }
 
-.settings-row input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 100%;
+.info-label {
+  font-weight: 600;
+  color: #cccccc;
+  font-size: 0.9rem;
 }
 
-.hint {
+.info-value {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label-text {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.setting-input {
+  padding: 10px;
+  border: 1px solid #5b1fa8;
+  border-radius: 8px;
+  background-color: #2f105c;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: border-color 0.25s ease;
+}
+
+.setting-input:focus {
+  outline: none;
+  border-color: #ff4fc4;
+}
+
+/* Убираем стрелки у number input */
+.setting-input[type=number]::-webkit-outer-spin-button,
+.setting-input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.setting-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.setting-hint {
   font-size: 0.85rem;
-  color: #7f8c8d;
+  color: #cccccc;
   font-style: italic;
+  margin-top: 4px;
 }
 
 .performance-info {
   margin-top: 15px;
-  padding: 12px;
-  background: #e8f4f8;
-  border-radius: 6px;
-  border-left: 3px solid #2980b9;
-}
-
-.integration-chart {
   padding: 15px;
-  min-height: 350px;
+  background: rgba(33, 150, 243, 0.2);
+  border-radius: 8px;
+  border-left: 3px solid #2196f3;
 }
 
-.integration-actions {
+.performance-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-weight: 600;
+  color: #90caf9;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chart-legend {
   display: flex;
   gap: 15px;
-  padding: 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.integration-area {
+  background: #ff4fc4;
+}
+
+.legend-text {
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+.actions-section {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   position: relative;
+  background: rgba(47, 16, 92, 0.3);
+  border-radius: 12px;
+  margin: 20px 0;
 }
 
-.calculate-btn, .reset-btn {
-  padding: 12px 25px;
+.calculate-button, .reset-button {
+  padding: 12px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s;
+  transition: background-color 0.25s ease;
+  min-width: 180px;
+  justify-content: center;
 }
 
-.calculate-btn {
-  background: #9b59b6;
-  color: white;
+.calculate-button {
+  background-color: #2196f3;
+  color: #ffffff;
 }
 
-.calculate-btn:hover:not(:disabled) {
-  background: #8e44ad;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.calculate-button:hover:not(:disabled) {
+  background-color: #1976d2;
 }
 
-.calculate-btn:disabled {
-  background: #bdc3c7;
+.calculate-button:disabled {
+  background-color: #888;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
-.reset-btn {
-  background: #e74c3c;
-  color: white;
+.reset-button {
+  background-color: #e74c3c;
+  color: #ffffff;
 }
 
-.reset-btn:hover {
-  background: #c0392b;
+.reset-button:hover {
+  background-color: #c0392b;
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .scroll-controls {
@@ -697,24 +948,23 @@ onUnmounted(() => {
   margin-left: auto;
 }
 
-.scroll-btn {
-  background: #95a5a6;
+.scroll-button {
+  background-color: #5b1fa8;
   color: white;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: background-color 0.25s ease;
   font-size: 0.9rem;
 }
 
-.scroll-btn:hover {
-  background: #7f8c8d;
-  transform: scale(1.1);
+.scroll-button:hover {
+  background-color: #7b1fa8;
 }
 
 .scroll-indicator {
@@ -722,113 +972,229 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.1);
+  height: 3px;
+  background: rgba(91, 31, 168, 0.3);
   z-index: 10;
 }
 
 .scroll-progress {
   height: 100%;
-  background: linear-gradient(90deg, #3498db, #9b59b6);
+  background: linear-gradient(90deg, #5b1fa8, #ff4fc4);
   transition: width 0.1s ease;
   border-radius: 0 2px 2px 0;
 }
 
 .result-section {
-  background: #f8f9fa;
+  background: rgba(155, 89, 182, 0.2);
+  border-color: #9b59b6;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.result-badge {
+  background: linear-gradient(135deg, #5b1fa8, #ff4fc4);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.result-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.result-main {
+  text-align: center;
+  padding: 20px;
+  background: rgba(47, 16, 92, 0.5);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #5b1fa8;
+}
+
+.result-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+  font-family: 'Courier New', monospace;
+}
+
+.result-label {
+  color: #cccccc;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .result-details {
-  margin: 15px 0;
-  padding: 15px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(47, 16, 92, 0.5);
+  border-radius: 12px;
+  border: 1px solid #5b1fa8;
 }
 
-.result-details p {
-  margin: 8px 0;
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(91, 31, 168, 0.3);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #cccccc;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #ffffff;
 }
 
 .performance-chart {
   margin-top: 20px;
 }
 
+.performance-chart h4 {
+  margin: 0 0 15px 0;
+  color: #ffffff;
+}
+
 .chart-container {
   height: 250px;
   position: relative;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  font-size: 1.2rem;
-  color: #7f8c8d;
+  background: rgba(47, 16, 92, 0.5);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #5b1fa8;
 }
 
 @media (max-width: 768px) {
-  .settings-row {
-    flex-direction: column;
+  .integration-window {
+    width: 95%;
+    margin: 10px;
+    max-height: 95vh;
+    padding: 20px 15px;
   }
 
-  .integration-modal {
-    width: 98%;
-    margin: 10px;
+  .window-header {
+    padding: 0 10px;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .section {
+    padding: 15px;
+    margin-bottom: 20px;
   }
 
   .function-controls {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .integration-actions {
+  .function-select {
+    min-width: auto;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-section {
     flex-direction: column;
   }
 
   .scroll-controls {
     margin-left: 0;
-    margin-top: 10px;
+    margin-top: 12px;
     order: 3;
   }
 
-  .modal-body {
-    max-height: calc(90vh - 120px);
+  .result-content {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .result-value {
+    font-size: 1.8rem;
+  }
+
+  .window-body {
+    max-height: calc(95vh - 100px);
   }
 }
 
 @media (max-width: 480px) {
-  .integration-actions {
-    gap: 10px;
+  .integration-window {
+    padding: 15px 10px;
   }
 
-  .calculate-btn, .reset-btn {
+  .section {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .calculate-button, .reset-button {
+    min-width: auto;
+    width: 100%;
     padding: 10px 20px;
-    font-size: 0.9rem;
   }
 
-  .scroll-btn {
-    width: 35px;
-    height: 35px;
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .performance-stats {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
-.modal-body::-webkit-scrollbar {
-  width: 8px;
+/* Кастомный скроллбар */
+.window-body::-webkit-scrollbar {
+  width: 6px;
 }
 
-.modal-body::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+.window-body::-webkit-scrollbar-track {
+  background: #2f105c;
+  border-radius: 3px;
 }
 
-.modal-body::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+.window-body::-webkit-scrollbar-thumb {
+  background: #5b1fa8;
+  border-radius: 3px;
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.window-body::-webkit-scrollbar-thumb:hover {
+  background: #ff4fc4;
 }
 </style>

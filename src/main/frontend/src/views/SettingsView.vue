@@ -1,3 +1,4 @@
+<!-- src/views/SettingsView.vue -->
 <template>
   <SettingsModal :is-open="true" @close="goBack" />
 </template>

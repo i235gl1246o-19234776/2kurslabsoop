@@ -5,10 +5,12 @@
         <h2>{{ functionName ? `Функция: ${functionName}` : 'Новая функция' }}</h2>
         <button class="close-btn" @click="close">&times;</button>
       </div>
+
       <div class="modal-body">
         <div v-if="isLoading" class="loading">
           <p>Загрузка данных...</p>
         </div>
+
         <div v-else>
           <div class="file-controls">
             <button @click="createNewFunction" class="primary-button">
@@ -21,20 +23,7 @@
               <i class="fas fa-download"></i> Сохранить
             </button>
           </div>
-          <!-- Управление масштабом оси X -->
-          <div class="scale-controls">
-            <label>
-              Масштаб оси X:
-              <input
-                type="range"
-                v-model.number="xAxisScale"
-                min="0.1"
-                max="10"
-                step="0.1"
-              />
-              <span>{{ xAxisScale.toFixed(1) }}×</span>
-            </label>
-          </div>
+
           <div class="chart-section">
             <FunctionChart
               :points="points"
@@ -44,6 +33,7 @@
               @range-changed="handleRangeChanged"
             />
           </div>
+
           <div class="points-table">
             <div class="table-header">
               <h3>Точки функции ({{ visiblePoints.length }} из {{ points.length }})</h3>
@@ -55,7 +45,8 @@
                 </button>
               </div>
             </div>
-            <table v-if="visiblePoints.length > 0">
+
+            <table class="large-table" v-if="visiblePoints.length > 0">
               <thead>
                 <tr>
                   <th>#</th>
@@ -82,6 +73,7 @@
               </tbody>
             </table>
             <p v-else class="empty-table">Нет точек для отображения</p>
+
             <div v-if="points.length > maxVisiblePoints" class="pagination-controls">
               <div v-if="points.length > 0" class="slider-container">
                 <h4>Навигация по точкам:</h4>
@@ -117,6 +109,7 @@
               </button>
             </div>
           </div>
+
           <div class="apply-section">
             <h3>Вычисление значения функции</h3>
             <div class="apply-input">
@@ -144,26 +137,11 @@ import FunctionChart from './FunctionChart.vue'
 import { api } from '../api.js'
 
 const props = defineProps({
-  functionId: {
-    type: Number,
-    default: null
-  },
-  functionName: {
-    type: String,
-    default: ''
-  },
-  initialPoints: {
-    type: Array,
-    default: () => []
-  },
-  insertable: {
-    type: Boolean,
-    default: false
-  },
-  removable: {
-    type: Boolean,
-    default: false
-  }
+  functionId: { type: Number, default: null },
+  functionName: { type: String, default: '' },
+  initialPoints: { type: Array, default: () => [] },
+  insertable: { type: Boolean, default: false },
+  removable: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['close', 'function-created', 'function-updated', 'create-new-function'])
@@ -179,14 +157,14 @@ const highlightedIndex = ref(-1)
 const visibleRange = ref({ start: 0, end: 0 })
 const currentPage = ref(1)
 const maxVisiblePoints = ref(50)
-const xAxisScale = ref(1.0) // Масштаб оси X
+const xAxisScale = ref(1.0)
+
 const sliderStart = ref(0)
 const sliderEnd = ref(0)
 
 const syncSliderEnd = () => {
   if (sliderEnd.value < sliderStart.value) sliderEnd.value = sliderStart.value
 }
-
 const syncSliderStart = () => {
   if (sliderStart.value > sliderEnd.value) sliderStart.value = sliderEnd.value
 }
@@ -200,21 +178,15 @@ watch(() => points.value, (newPoints) => {
 
 const formatNumber = (num) => {
   if (typeof num !== 'number' || isNaN(num)) return '0.00'
-  if (Math.abs(num) < 0.001 || Math.abs(num) > 1000) {
-    return num.toExponential(2)
-  }
+  if (Math.abs(num) < 0.001 || Math.abs(num) > 1000) return num.toExponential(2)
   return num.toFixed(2)
 }
 
-const totalPages = computed(() => {
-  return Math.ceil(points.value.length / maxVisiblePoints.value)
-})
+const totalPages = computed(() => Math.ceil(points.value.length / maxVisiblePoints.value))
 
 const visiblePoints = computed(() => {
   if (!points.value.length) return []
-  if (sliderEnd.value > sliderStart.value) {
-    return points.value.slice(sliderStart.value, sliderEnd.value + 1)
-  }
+  if (sliderEnd.value > sliderStart.value) return points.value.slice(sliderStart.value, sliderEnd.value + 1)
   if (points.value.length > maxVisiblePoints.value) {
     const start = (currentPage.value - 1) * maxVisiblePoints.value
     const end = Math.min(start + maxVisiblePoints.value, points.value.length)
@@ -243,37 +215,27 @@ watch(() => props.initialPoints, (newPoints) => {
   points.value = [...newPoints].sort((a, b) => a.x - b.x)
 })
 
-const close = () => {
-  emit('close')
-}
-
-const createNewFunction = () => {
-  emit('create-new-function')
-}
+const close = () => emit('close')
+const createNewFunction = () => emit('create-new-function')
 
 const loadFromFile = () => {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.json'
-  input.onchange = (e) => {
+  input.onchange = e => {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (event) => {
+    reader.onload = event => {
       try {
         const data = JSON.parse(event.target.result)
         if (data.points && Array.isArray(data.points)) {
-          points.value = data.points.map(p => ({
-            x: parseFloat(p.x),
-            y: parseFloat(p.y)
-          })).sort((a, b) => a.x - b.x)
+          points.value = data.points.map(p => ({ x: parseFloat(p.x), y: parseFloat(p.y) })).sort((a,b)=>a.x-b.x)
           applyResult.value = null
           currentPage.value = 1
-        } else {
-          throw new Error('Неверный формат файла')
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки файла:', error)
+        } else throw new Error('Неверный формат файла')
+      } catch (err) {
+        console.error(err)
         alert('Ошибка при загрузке файла. Проверьте формат данных.')
       }
     }
@@ -284,72 +246,32 @@ const loadFromFile = () => {
 
 const saveToFile = () => {
   if (!points.value.length) return
-  const data = {
-    functionName: props.functionName || 'Безымянная функция',
-    points: points.value,
-    createdAt: new Date().toISOString()
-  }
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json'
-  })
+  const data = { functionName: props.functionName || 'Безымянная функция', points: points.value, createdAt: new Date().toISOString() }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `${props.functionName || 'function'}_${Date.now()}.json`
   document.body.appendChild(a)
   a.click()
-  setTimeout(() => {
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, 0)
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 0)
 }
 
 const insertPoint = () => {
-  let xRaw = newPoint.value.x;
-  let yRaw = newPoint.value.y;
-
-  // Поддержка строковых чисел (",", лишние пробелы)
-  if (typeof xRaw === 'string') xRaw = xRaw.trim().replace(',', '.');
-  if (typeof yRaw === 'string') yRaw = yRaw.trim().replace(',', '.');
-
-  const x = parseFloat(xRaw);
-  const y = parseFloat(yRaw);
-
-  if (isNaN(x) || isNaN(y)) {
-    alert('Введите корректные числовые значения для x и y');
-    return;
-  }
-
-  // 🔑 КЛЮЧЕВАЯ ФУНКЦИЯ: нормализация x для сравнения
-  const normalizeX = (val) => {
-    // Округляем до 10 знаков — достаточно для UI-приложений
-    return Math.round(val * 1e10) / 1e10;
-  };
-
-  const xNorm = normalizeX(x);
-  let found = false;
-
-  // 🔍 Ищем и обновляем
+  let x = parseFloat(newPoint.value.x.toString().trim().replace(',', '.'))
+  let y = parseFloat(newPoint.value.y.toString().trim().replace(',', '.'))
+  if (isNaN(x) || isNaN(y)) { alert('Введите корректные числовые значения для x и y'); return }
+  const xNorm = Math.round(x * 1e10) / 1e10
+  let found = false
   for (let i = 0; i < points.value.length; i++) {
-    const pNorm = normalizeX(points.value[i].x);
-    if (pNorm === xNorm) {
-      points.value[i].y = y; // ⚠️ Обновляем y
-      found = true;
-      break;
-    }
+    if (Math.round(points.value[i].x * 1e10) / 1e10 === xNorm) { points.value[i].y = y; found = true; break }
   }
-
-  // ➕ Если не найдено — добавляем
-  if (!found) {
-    points.value.push({ x, y });
-  }
-
-  // 🧹 Сортируем и сбрасываем
-  points.value.sort((a, b) => a.x - b.x);
-  newPoint.value = { x: '', y: '' };
-  applyResult.value = null;
-  currentPage.value = 1;
-};
+  if (!found) points.value.push({ x, y })
+  points.value.sort((a, b) => a.x - b.x)
+  newPoint.value = { x: '', y: '' }
+  applyResult.value = null
+  currentPage.value = 1
+}
 
 const removePoint = (index) => {
   if (confirm('Вы уверены, что хотите удалить эту точку?')) {
@@ -357,48 +279,35 @@ const removePoint = (index) => {
     applyResult.value = null
     if (points.value.length > 0) {
       const maxPage = Math.ceil(points.value.length / maxVisiblePoints.value)
-      if (currentPage.value > maxPage) {
-        currentPage.value = maxPage
-      }
+      if (currentPage.value > maxPage) currentPage.value = maxPage
     }
   }
 }
 
 const applyFunction = () => {
-  if (!points.value.length) {
-    alert('Нет точек для вычисления')
-    return
-  }
+  if (!points.value.length) { alert('Нет точек для вычисления'); return }
   const x = parseFloat(applyX.value)
-  if (isNaN(x)) {
-    alert('Введите корректное значение x')
-    return
-  }
+  if (isNaN(x)) { alert('Введите корректное значение x'); return }
   applyResult.value = interpolate(points.value, x)
 }
 
 const interpolate = (points, x) => {
-  const sortedPoints = [...points].sort((a, b) => a.x - b.x)
-  if (x <= sortedPoints[0].x) return sortedPoints[0].y
-  if (x >= sortedPoints[sortedPoints.length - 1].x) return sortedPoints[sortedPoints.length - 1].y
-  for (let i = 0; i < sortedPoints.length - 1; i++) {
-    if (x >= sortedPoints[i].x && x <= sortedPoints[i + 1].x) {
-      const x0 = sortedPoints[i].x
-      const y0 = sortedPoints[i].y
-      const x1 = sortedPoints[i + 1].x
-      const y1 = sortedPoints[i + 1].y
-      return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+  const sorted = [...points].sort((a,b)=>a.x-b.x)
+  if (x <= sorted[0].x) return sorted[0].y
+  if (x >= sorted[sorted.length-1].x) return sorted[sorted.length-1].y
+  for (let i = 0; i < sorted.length-1; i++) {
+    if (x >= sorted[i].x && x <= sorted[i+1].x) {
+      const {x:x0, y:y0} = sorted[i], {x:x1, y:y1} = sorted[i+1]
+      return y0 + (y1-y0)*(x-x0)/(x1-x0)
     }
   }
   return null
 }
 
 const handlePointSelected = (pointData) => {
-  highlightedIndex.value = pointData.index + (sliderEnd.value > sliderStart.value ? sliderStart.value : (currentPage.value - 1) * maxVisiblePoints.value)
+  highlightedIndex.value = pointData.index + (sliderEnd.value>sliderStart.value ? sliderStart.value : (currentPage.value-1)*maxVisiblePoints.value)
   applyX.value = pointData.x
-  setTimeout(() => {
-    highlightedIndex.value = -1
-  }, 2000)
+  setTimeout(() => { highlightedIndex.value = -1 }, 2000)
 }
 
 const handleRangeChanged = (range) => {
@@ -406,17 +315,8 @@ const handleRangeChanged = (range) => {
   currentPage.value = 1
 }
 
-const decreasePage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-const increasePage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
+const decreasePage = () => { if(currentPage.value>1) currentPage.value-- }
+const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.value++ }
 </script>
 
 <style scoped>
@@ -424,9 +324,10 @@ const increasePage = () => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -434,12 +335,12 @@ const increasePage = () => {
 }
 
 .explorer-modal {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
-  width: 95%;
-  max-width: 1000px;
-  max-height: 90vh;
+  background: #230942;
+  border-radius: 20px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  width: 95vw;
+  height: 95vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -449,316 +350,483 @@ const increasePage = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background: #2c3e50;
-  color: white;
-  border-bottom: 2px solid #34495e;
-  flex-shrink: 0;
+  padding: 2rem;
+  background: linear-gradient(135deg, #2f105c 0%, #5b1fa8 100%);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-  max-height: calc(90vh - 70px);
+.modal-header h2 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 600;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 1.5rem;
+  color: #ffffff;
+  font-size: 3rem;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  border-radius: 50%;
+  transition: background-color 0.2s;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  background: #230942;
+  flex: 1;
+  font-size: 1.1rem;
 }
 
 .file-controls {
   display: flex;
-  gap: 10px;
-  padding: 15px;
+  gap: 20px;
   flex-wrap: wrap;
-  border-bottom: 1px solid #eee;
-}
-
-.scale-controls {
-  padding: 0 15px 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #eee;
-}
-
-.scale-controls label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-.scale-controls input[type="range"] {
-  width: 200px;
-}
-
-.scale-controls span {
-  min-width: 40px;
-  text-align: center;
-  font-weight: bold;
-  color: #e74c3c;
+  margin-bottom: 30px;
 }
 
 .primary-button, .secondary-button {
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
+  gap: 10px;
+  font-size: 1.2rem;
+  min-height: 60px;
 }
 
 .primary-button {
-  background: #3498db;
-  color: white;
+  background: linear-gradient(135deg, #ff4fc4 0%, #9b59b6 100%);
+  color: #ffffff;
 }
 
 .primary-button:hover {
-  background: #2980b9;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #ff6fda 0%, #a96bc1 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 79, 196, 0.4);
 }
 
 .secondary-button {
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: #2f105c;
+  color: #ffffff;
+  border: 2px solid #5b1fa8;
 }
 
-.secondary-button:hover {
-  background: #bdc3c7;
+.secondary-button:hover:not(:disabled) {
+  background: #5b1fa8;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(91, 31, 168, 0.4);
 }
 
 .chart-section {
-  padding: 15px;
-  flex: 1;
-  min-height: 400px;
+  margin-bottom: 30px;
+  background: rgba(47, 16, 92, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #5b1fa8;
+  min-height: 300px;
 }
 
 .points-table {
-  padding: 0 15px 15px;
-  overflow-x: auto;
+  margin-bottom: 30px;
+  background: rgba(47, 16, 92, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #5b1fa8;
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px;
+}
+
+.table-header h3 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
 }
 
 .insert-control {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .insert-control input {
-  width: 80px;
-  padding: 5px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 16px;
+  border: 2px solid #5b1fa8;
+  border-radius: 8px;
+  background: #2f105c;
+  color: #ffffff;
+  width: 120px;
+  font-size: 1.2rem;
+}
+
+.insert-control input::placeholder {
+  color: #cccccc;
+  font-size: 1.1rem;
 }
 
 .insert-btn {
-  background: #27ae60;
-  color: white;
+  padding: 12px 20px;
+  background: #ff4fc4;
+  color: #ffffff;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s;
 }
 
 .insert-btn:hover {
-  background: #219653;
+  background: #ff6fda;
+  transform: translateY(-2px);
 }
 
-table {
+/* TABLE STYLES - ENHANCED SPACING */
+.large-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  table-layout: fixed;
 }
 
-table th, table td {
-  padding: 10px;
+.large-table th,
+.large-table td {
+  padding: 16px 32px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2px solid #5b1fa8;
+  word-break: break-all;
 }
 
-table th {
-  background: #f8f9fa;
-  font-weight: 600;
+.large-table th:first-child,
+.large-table td:first-child {
+  padding-left: 24px;
+}
+
+.large-table th:last-child,
+.large-table td:last-child {
+  padding-right: 24px;
+}
+
+.large-table th {
+  background: #2f105c;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.3rem;
+  min-width: 80px;
+}
+
+.large-table td {
+  background: rgba(35, 9, 66, 0.7);
+  color: #ffffff;
+  font-size: 1.2rem;
+}
+
+/* COLUMN WIDTHS */
+.large-table th:nth-child(2),
+.large-table td:nth-child(2) {
+  width: 30%;
+  min-width: 120px;
+}
+
+.large-table th:nth-child(3),
+.large-table td:nth-child(3) {
+  width: 30%;
+  min-width: 120px;
+}
+
+.large-table th:nth-child(4),
+.large-table td:nth-child(4) {
+  width: 25%;
+  min-width: 150px;
+}
+
+.large-table th:first-child,
+.large-table td:first-child {
+  width: 15%;
+  min-width: 80px;
+}
+
+.highlighted-row {
+  background: rgba(255, 79, 196, 0.3) !important;
+  animation: highlight 2s ease;
+}
+
+@keyframes highlight {
+  0% { background: rgba(255, 79, 196, 0.5); }
+  100% { background: rgba(255, 79, 196, 0.3); }
 }
 
 .remove-btn {
+  padding: 8px 15px;
   background: #e74c3c;
-  color: white;
+  color: #ffffff;
   border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   transition: all 0.2s;
 }
 
 .remove-btn:hover {
   background: #c0392b;
+  transform: translateY(-2px);
 }
 
 .empty-table {
   text-align: center;
-  padding: 20px;
-  color: #7f8c8d;
+  color: #cccccc;
   font-style: italic;
+  padding: 40px;
+  font-size: 1.4rem;
 }
 
-.apply-section {
-  padding: 15px;
-  border-top: 1px solid #eee;
-  background: #f8f9fa;
-}
-
-.apply-input {
+.pagination-controls {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
   align-items: center;
-  margin: 10px 0;
+  gap: 15px;
   flex-wrap: wrap;
+  padding: 15px;
+  background: rgba(47, 16, 92, 0.6);
+  border-radius: 8px;
 }
 
-.apply-input input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 120px;
-}
-
-.apply-input button {
-  padding: 8px 15px;
-  background: #9b59b6;
-  color: white;
+.pagination-controls button {
+  padding: 12px 20px;
+  background: #5b1fa8;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
   transition: all 0.2s;
 }
 
-.apply-input button:hover {
-  background: #8e44ad;
+.pagination-controls button:hover:not(:disabled) {
+  background: #ff4fc4;
+  transform: translateY(-2px);
 }
 
-.apply-input button:disabled {
-  background: #bdc3c7;
+.pagination-controls button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
-.apply-result {
-  margin-top: 15px;
-  padding: 10px;
-  background: #e8f4f8;
-  border-radius: 4px;
-  font-weight: 500;
-  color: #2980b9;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  font-size: 1.2rem;
-  color: #7f8c8d;
+.pagination-controls span {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.3rem;
 }
 
 .slider-container {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #eee;
+  width: 100%;
+  margin-bottom: 15px;
 }
 
 .slider-container h4 {
-  margin-bottom: 10px;
-  color: #333;
+  color: #ffffff;
+  margin-bottom: 12px;
+  font-size: 1.4rem;
 }
 
 .slider {
   width: 100%;
-  margin: 5px 0;
-  height: 8px;
-  appearance: none;
-  background: #ddd;
+  margin: 8px 0;
+  height: 12px;
+  border-radius: 6px;
+  background: #2f105c;
   outline: none;
-  border-radius: 4px;
+  -webkit-appearance: none;
 }
 
 .slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #2196f3;
+  background: #ff4fc4;
   cursor: pointer;
-  border: 2px solid white;
-}
-
-.slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #2196f3;
-  cursor: pointer;
-  border: 2px solid white;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .slider-labels {
   display: flex;
   justify-content: space-between;
-  margin-top: 5px;
-  font-size: 0.9em;
-  color: #666;
+  color: #cccccc;
+  font-size: 1.2rem;
+  margin-top: 8px;
 }
 
-/* Кастомный скроллбар */
-.modal-body::-webkit-scrollbar {
-  width: 8px;
+.apply-section {
+  background: rgba(47, 16, 92, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #5b1fa8;
 }
 
-.modal-body::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+.apply-section h3 {
+  color: #ffffff;
+  margin-bottom: 20px;
+  font-size: 1.6rem;
+  font-weight: 600;
 }
 
-.modal-body::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+.apply-input {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.apply-input label {
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.apply-input input {
+  padding: 10px 15px;
+  border: 2px solid #5b1fa8;
+  border-radius: 8px;
+  background: #2f105c;
+  color: #ffffff;
+  width: 150px;
+  font-size: 1.2rem;
+}
+
+.apply-input button {
+  padding: 12px 24px;
+  background: #ff4fc4;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.apply-input button:hover:not(:disabled) {
+  background: #ff6fda;
+  transform: translateY(-2px);
+}
+
+.apply-input button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.apply-result {
+  padding: 15px;
+  background: rgba(255, 79, 196, 0.2);
+  border-radius: 8px;
+  border: 2px solid #ff4fc4;
+}
+
+.apply-result p {
+  color: #ffffff;
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: #ffffff;
+  font-size: 1.4rem;
+}
+
+/* Увеличиваем размер иконок */
+.fas {
+  font-size: 1.3em;
+}
+
+@media (max-width: 768px) {
+  .explorer-modal {
+    width: 98vw;
+    height: 98vh;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.8rem;
+  }
+
+  .file-controls {
+    flex-direction: column;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .large-table th,
+  .large-table td {
+    padding: 12px 18px;
+    font-size: 1.1rem;
+  }
+
+  .large-table th:nth-child(4),
+  .large-table td:nth-child(4) {
+    display: none;
+  }
+
+  .pagination-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .insert-control {
+    justify-content: center;
+  }
 }
 </style>

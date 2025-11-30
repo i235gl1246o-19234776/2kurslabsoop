@@ -1,3 +1,4 @@
+<!-- src/views/HomeView.vue -->
 <template>
   <div class="home">
     <h1>Добро пожаловать!</h1>
@@ -35,24 +36,20 @@ const openSettings = () => {
   flex-direction: column;
   gap: 1rem;
   align-items: center;
-  margin-top: 2rem;
 }
 
 button {
   padding: 12px 24px;
   font-size: 1rem;
-  background-color: var(--button-primary);
+  background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   width: 200px;
-  transition: all 0.2s;
 }
 
 button:hover {
-  background-color: var(--button-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #0056b3;
 }
 </style>

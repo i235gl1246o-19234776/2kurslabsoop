@@ -1,61 +1,63 @@
 <template>
-  <div class="dashboard">
-    <h2>Добро пожаловать в приложение "Табулированные Функции"</h2>
-    <p>Выберите действие:</p>
-    <div class="dashboard-buttons">
-      <!-- КНОПКА ДОБАВЛЕНИЯ ФУНКЦИИ -->
-      <button @click="openFunctionCreator(null)" class="primary-button">
-        <i class="fas fa-plus"></i> Добавить функцию
-      </button>
-      <button @click="openFunctionExplorer" class="secondary-button">
-        <i class="fas fa-chart-line"></i> Изучить функцию
-      </button>
-      <button @click="openWindow('operations')" class="secondary-button">
-        <i class="fas fa-calculator"></i> Операции над функциями
-      </button>
-      <button @click="openWindow('integration')" class="secondary-button">
-        <i class="fas fa-integral"></i> Вычисление интеграла
-      </button>
-      <button @click="openWindow('composite')" class="secondary-button">
-        <i class="fas fa-project-diagram"></i> Составные функции
-      </button>
-      <button @click="openWindow('differentiation')" class="secondary-button">
-        <i class="fas fa-derivative"></i> Дифференцирование
-      </button>
-      <button @click="openWindow('settings')" class="secondary-button">
-        <i class="fas fa-cog"></i> Настройки
-      </button>
+  <div class="dashboard dark-mode">
+    <!-- Шапка -->
+    <div class="app-header-bar">
+      <div class="user-actions">
+        <h3>Добро пожаловать в приложение "Табулированные Функции"</h3>
+      </div>
     </div>
-    <!-- Модальные окна -->
-    <OperationsWindow
-      v-if="activeWindow === 'operations'"
-      :show="true"
-      @close="closeWindow"
-      @create-function="openFunctionCreator"
-    />
-    <IntegrationWindow
-      v-if="activeWindow === 'integration'"
-      :show="true"
-      @close="closeWindow"
-    />
-    <CompositeFunctionCreator
-      v-if="activeWindow === 'composite'"
-      :show="true"
-      @close="closeWindow"
-      @function-created="handleCompositeFunctionCreated"
-    />
-    <DifferentiationWindow
-      v-if="activeWindow === 'differentiation'"
-      :show="true"
-      @close="closeWindow"
-      @create-function="openFunctionCreator"
-    />
-    <SettingsModal
-      v-if="activeWindow === 'settings'"
-      :is-open="true"
-      @close="closeWindow"
-    />
-    <!-- Модальное окно создания функции -->
+
+    <!-- Основной контент -->
+    <main class="dashboard-content">
+      <p>Выберите действие:</p>
+
+      <div class="content-with-ads">
+        <!-- Левая реклама -->
+        <aside class="ad-banner left" @click="rickroll">
+          <img src="/images/1.png" alt="Реклама" class="ad-image" />
+        </aside>
+
+        <!-- Кнопки приложения -->
+        <div class="dashboard-buttons">
+          <button @click="openFunctionCreator(null)" class="app-button">
+            Добавить функцию
+          </button>
+
+          <button @click="openFunctionExplorer" class="app-button">
+            Изучить функцию
+          </button>
+
+          <button @click="openWindow('operations')" class="app-button">
+            Операции над функциями
+          </button>
+
+          <button @click="openWindow('integration')" class="app-button">
+            Вычисление интеграла
+          </button>
+
+          <button @click="openWindow('differentiation')" class="app-button">
+            Дифференцирование
+          </button>
+
+          <button @click="openWindow('settings')" class="app-button">
+            Настройки
+          </button>
+
+          <button @click="showAllMemes" class="app-button">
+            Музыкальная пауза
+          </button>
+        </div>
+
+        <!-- Правая реклама -->
+        <aside class="ad-banner right" @click="rickroll">
+          <img src="/images/2.png" alt="Реклама" class="ad-image" />
+        </aside>
+      </div>
+    </main>
+
+    <!-- === МОДАЛЬНЫЕ ОКНА === -->
+
+    <!-- FunctionCreator -->
     <div v-if="showFunctionCreator" class="modal-overlay">
       <div class="modal-content">
         <FunctionCreator
@@ -65,65 +67,152 @@
         />
       </div>
     </div>
-    <!-- Модальное окно изучения функции -->
-    <FunctionExplorer
-      v-if="showFunctionExplorer"
-      :function-id="selectedFunctionId"
-      :function-name="selectedFunctionName"
-      :initial-points="selectedPoints"
-      :insertable="selectedInsertable"
-      :removable="selectedRemovable"
-      @close="closeFunctionExplorer"
-      @create-new-function="handleCreateNewFunctionFromExplorer"
-    />
+
+    <!-- FunctionExplorer -->
+    <div v-if="showFunctionExplorer" class="modal-overlay">
+      <div class="modal-content">
+        <FunctionExplorer
+          :function-id="selectedFunctionId"
+          :function-name="selectedFunctionName"
+          :initial-points="selectedPoints"
+          :insertable="selectedInsertable"
+          :removable="selectedRemovable"
+          @close="closeFunctionExplorer"
+          @create-new-function="handleCreateNewFunctionFromExplorer"
+        />
+      </div>
+    </div>
+
+    <!-- OperationsWindow -->
+    <div v-if="showOperationsWindow" class="modal-overlay">
+      <div class="modal-content">
+        <OperationsWindow
+          ref="operationsWindowRef"
+          @close="closeWindow('operations')"
+          @create-function="openFunctionCreator"
+        />
+      </div>
+    </div>
+
+    <!-- IntegrationWindow -->
+    <div v-if="showIntegrationWindow" class="modal-overlay">
+      <div class="modal-content">
+        <IntegrationWindow
+          @close="closeWindow('integration')"
+        />
+      </div>
+    </div>
+
+    <!-- DifferentiationWindow -->
+    <div v-if="showDifferentiationWindow" class="modal-overlay">
+      <div class="modal-content">
+        <DifferentiationWindow
+          @close="closeWindow('differentiation')"
+          @create-function="openFunctionCreator"
+        />
+      </div>
+    </div>
+
+    <!-- SettingsModal -->
+    <div v-if="showSettingsModal" class="modal-overlay">
+      <div class="modal-content">
+        <SettingsModal
+          @close="closeWindow('settings')"
+        />
+      </div>
+    </div>
+
+    <!-- Секция мемов -->
+    <div id="meme-container" class="memes-section" v-if="showMemes">
+       <h3>Мемы:</h3>
+          <div class="memes-container">
+            <img
+              v-for="(meme, index) in allMemes"
+              :key="index"
+              :src="meme"
+              :alt="`Мем ${index + 1}`"
+              class="meme-image"
+            />
+          </div>
+          <button @click="hideMemes" class="close-memes-button">
+            Скрыть мемы
+          </button>
+        </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, inject, nextTick } from 'vue';
+import { ref, inject, nextTick } from 'vue';
 import OperationsWindow from './OperationsWindow.vue';
 import IntegrationWindow from './IntegrationWindow.vue';
-import CompositeFunctionCreator from './CompositeFunctionCreator.vue';
 import DifferentiationWindow from './DifferentiationWindow.vue';
 import SettingsModal from './SettingsModal.vue';
 import FunctionCreator from './FunctionCreator.vue';
 import FunctionExplorer from './FunctionExplorer.vue';
 import { api } from '../api.js';
 
-// Состояние окон
-const activeWindow = ref(null);
+// === Состояние окон ===
 const showFunctionCreator = ref(false);
 const showFunctionExplorer = ref(false);
-const creatorTarget = ref(null); // null, 'A', 'B', 'diff' и т.д.
+const showOperationsWindow = ref(false);
+const showIntegrationWindow = ref(false);
+const showDifferentiationWindow = ref(false);
+const showSettingsModal = ref(false);
+const creatorTarget = ref(null);
 
-// Состояние выбранной функции для FunctionExplorer
+// === Состояние выбранной функции ===
 const selectedFunctionId = ref(null);
 const selectedFunctionName = ref('');
 const selectedPoints = ref([]);
 const selectedInsertable = ref(false);
 const selectedRemovable = ref(false);
 
+// === Состояние мемов ===
+const showMemes = ref(false);
+const allMemes = ref([
+  '/images/photo_2025-11-30_17-21-33.jpg',
+  '/images/photo_2025-11-30_17-21-21.jpg',
+  '/images/photo_2025-11-30_17-20-54.jpg',
+  '/images/photo_2025-11-30_17-20-57.jpg',
+  '/images/photo_2025-11-30_17-20-59.jpg',
+  '/images/photo_2025-11-30_17-21-02.jpg',
+  '/images/photo_2025-11-30_17-21-05.jpg',
+  '/images/photo_2025-11-30_17-21-07.jpg',
+  '/images/photo_2025-11-30_17-21-14.jpg',
+  '/images/photo_2025-11-30_17-21-18.jpg',
+  '/images/photo_2025-11-30_17-21-23.jpg',
+  '/images/photo_2025-11-30_17-21-26.jpg',
+  '/images/photo_2025-11-30_17-21-28.jpg',
+  '/images/photo_2025-11-30_17-21-31.jpg'
+]);
+
 // Глобальная функция отображения ошибок
 const showError = inject('showError');
 
-// === УПРАВЛЕНИЕ ОКНАМИ ===
-const openWindow = async (windowName) => {
-  // Сначала закрываем все окна
-  closeAllWindows();
-  // Даем Vue обновиться перед открытием нового окна
+// === Управление окнами ===
+const openWindow = async (name) => {
+  await closeAllWindows();
   await nextTick();
-  activeWindow.value = windowName;
+  switch (name) {
+    case 'operations': showOperationsWindow.value = true; break;
+    case 'integration': showIntegrationWindow.value = true; break;
+    case 'differentiation': showDifferentiationWindow.value = true; break;
+    case 'settings': showSettingsModal.value = true; break;
+  }
 };
 
-const closeWindow = async () => {
-  activeWindow.value = null;
-  await nextTick(); // Даем Vue завершить обновление DOM
+const closeWindow = async (name) => {
+  switch (name) {
+    case 'operations': showOperationsWindow.value = false; break;
+    case 'integration': showIntegrationWindow.value = false; break;
+    case 'differentiation': showDifferentiationWindow.value = false; break;
+    case 'settings': showSettingsModal.value = false; break;
+  }
+  await nextTick();
 };
 
 const openFunctionCreator = async (target) => {
-  // Сначала закрываем все окна
-  closeAllWindows();
-  // Даем Vue обновиться
+  await closeAllWindows();
   await nextTick();
   creatorTarget.value = target;
   showFunctionCreator.value = true;
@@ -135,12 +224,32 @@ const closeFunctionCreator = async () => {
   await nextTick();
 };
 
-// Обработка события "Новая функция" из FunctionExplorer
-const handleCreateNewFunctionFromExplorer = async () => {
-  await closeFunctionExplorer();
-  await nextTick();
-  creatorTarget.value = null;
-  showFunctionCreator.value = true;
+const openFunctionExplorer = async () => {
+  try {
+    await closeAllWindows();
+    await nextTick();
+
+    const userId = api.getStoredUserId();
+    const functions = await api.getFunctionsByUserId(userId);
+
+    if (functions.length === 0) {
+      showError('У вас нет сохраненных функций. Сначала создайте функцию.');
+      return;
+    }
+
+    const firstFunction = functions[0];
+    selectedFunctionId.value = firstFunction.functionId;
+    selectedFunctionName.value = firstFunction.functionName;
+    selectedInsertable.value = firstFunction.insertable || false;
+    selectedRemovable.value = firstFunction.removable || false;
+
+    const points = await api.getTabulatedPointsByFunctionId(firstFunction.functionId);
+    selectedPoints.value = points.map(p => ({ x: parseFloat(p.xval), y: parseFloat(p.yval) }));
+
+    showFunctionExplorer.value = true;
+  } catch (error) {
+    showError(error.message || 'Ошибка при загрузке функций');
+  }
 };
 
 const closeFunctionExplorer = async () => {
@@ -150,62 +259,40 @@ const closeFunctionExplorer = async () => {
   await nextTick();
 };
 
-// === ИЗУЧЕНИЕ ФУНКЦИИ ===
-const openFunctionExplorer = async () => {
-  try {
-    // Сначала закрываем все окна
-    closeAllWindows();
-    await nextTick();
-    const userId = api.getStoredUserId();
-    const functions = await api.getFunctionsByUserId(userId);
-    if (functions.length === 0) {
-      showError('У вас нет сохраненных функций. Сначала создайте функцию.');
-      return;
-    }
-    const firstFunction = functions[0];
-    selectedFunctionId.value = firstFunction.functionId;
-    selectedFunctionName.value = firstFunction.functionName;
-    selectedInsertable.value = firstFunction.insertable || false;
-    selectedRemovable.value = firstFunction.removable || false;
-    const points = await api.getTabulatedPointsByFunctionId(firstFunction.functionId);
-    selectedPoints.value = points.map(p => ({
-      x: parseFloat(p.xval),
-      y: parseFloat(p.yval)
-    }));
-    showFunctionExplorer.value = true;
-  } catch (error) {
-    showError(error.message || 'Ошибка при загрузке функций');
-  }
+const handleCreateNewFunctionFromExplorer = async () => {
+  await closeFunctionExplorer();
+  await nextTick();
+  creatorTarget.value = null;
+  showFunctionCreator.value = true;
 };
 
-// === ОБРАБОТКА СОЗДАННОЙ ФУНКЦИИ ===
-const handleFunctionCreated = async (eventData) => {
-  const { functionId, functionName, points } = eventData;
+const handleFunctionCreated = async ({ functionId, functionName, points }) => {
   if (creatorTarget.value) {
-    // Если функция создана для операции — передаём данные через глобальное событие
-    let eventName, detail;
+    const eventName = creatorTarget.value === 'diff'
+      ? 'diff-function-created'
+      : 'operation-function-created';
+    const detail = {
+      operand: creatorTarget.value,
+      functionId,
+      functionName,
+      points
+    };
+    window.dispatchEvent(new CustomEvent(eventName, { detail }));
+
     if (creatorTarget.value === 'A' || creatorTarget.value === 'B') {
-      eventName = 'operation-function-created';
-      detail = { operand: creatorTarget.value, functionId, functionName, points };
-    } else if (creatorTarget.value === 'diff') {
-      eventName = 'diff-function-created';
-      detail = { functionId, functionName, points };
-    }
-    if (eventName) {
-      // Используем setTimeout для гарантии, что событие будет обработано после обновления DOM
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent(eventName, { detail }));
-      }, 0);
+      if (operationsWindowRef.value && typeof operationsWindowRef.value.assignNewFunction === 'function') {
+        const func = { functionName, points };
+        operationsWindowRef.value.assignNewFunction(func, creatorTarget.value);
+      }
     }
   } else {
-    // Обычное создание — предлагаем открыть FunctionExplorer
     if (confirm('Функция успешно создана! Хотите перейти в окно изучения функции?')) {
       selectedFunctionId.value = functionId;
       selectedFunctionName.value = functionName;
       selectedPoints.value = points;
       selectedInsertable.value = true;
       selectedRemovable.value = true;
-      // Закрываем создатель функций перед открытием explorer
+
       await closeFunctionCreator();
       await nextTick();
       showFunctionExplorer.value = true;
@@ -215,112 +302,117 @@ const handleFunctionCreated = async (eventData) => {
   }
 };
 
-// === СОСТАВНЫЕ ФУНКЦИИ ===
-const handleCompositeFunctionCreated = () => {
-  alert('Составная функция создана! Перейдите в "Изучить функцию" для табуляции.');
-};
-
-// === ЗАКРЫТИЕ ВСЕХ ОКОН ===
 const closeAllWindows = async () => {
-  activeWindow.value = null;
   showFunctionCreator.value = false;
   showFunctionExplorer.value = false;
+  showOperationsWindow.value = false;
+  showIntegrationWindow.value = false;
+  showDifferentiationWindow.value = false;
+  showSettingsModal.value = false;
   creatorTarget.value = null;
-  // Даем Vue время на обновление
   await nextTick();
 };
 
-// При монтировании — ничего не делаем (окна открываются по кнопкам)
-onMounted(() => {
-  // Можно добавить логику, если нужно
-});
+// Рикролл
+const rickroll = () => {
+  window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener,noreferrer');
+};
+
+// Функции для управления мемами
+const showAllMemes = () => {
+  showMemes.value = true;
+
+  // Скроллим к мемам
+  nextTick(() => {
+    const memeContainer = document.getElementById('meme-container');
+    if (memeContainer) {
+      memeContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+};
+
+const hideMemes = () => {
+  showMemes.value = false;
+};
 </script>
 
 <style scoped>
-.dashboard {
+/* Стили остаются без изменений */
+.dashboard { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; background-color: #230942; color: #fff; position: relative; }
+.app-header-bar { display:flex; justify-content:center; align-items:center; padding:1.2rem 2rem; background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); border-bottom:1px solid rgba(255,255,255,0.15); border-radius:0 0 12px 12px; box-shadow:0 6px 20px rgba(0,0,0,0.4); }
+.app-header-bar h3 { margin:0; font-size:1.4rem; font-weight:600; }
+.dashboard-content { max-width:1200px; margin:3rem auto; padding:2rem; text-align:center; }
+.dashboard-content p { margin-bottom:2rem; color:#ffd9fb; font-size:1.2rem; }
+.content-with-ads { display:flex; justify-content:space-between; align-items:flex-start; gap:2rem; max-width:1100px; margin:0 auto; }
+.ad-banner { flex:0 0 250px; background:transparent; border-radius:12px; cursor:pointer; transition:all 0.3s ease; box-shadow:0 4px 15px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.3); min-height:300px; display:flex; align-items:center; justify-content:center; }
+.ad-banner:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+.ad-image { width:100%; height:100%; object-fit:cover; border-radius:10px; display:block; }
+.dashboard-buttons { display:flex; flex-direction:column; gap:1.1rem; align-items:center; flex:1; max-width:400px; }
+.app-button { width:100%; max-width:320px; padding:0.9rem 1.5rem; font-size:1.05rem; font-weight:600; background:linear-gradient(135deg,#2f105c 0%,#7b1fa8 40%,#ff4fc4 100%); color:#fff; border:none; border-radius:12px; cursor:pointer; transition: all 0.25s ease; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
+.app-button:hover { transform: translateY(-3px); background: linear-gradient(135deg,#3d1474 0%,#9e27c8 40%,#ff6fda 100%); box-shadow:0 8px 22px rgba(0,0,0,0.45); }
+.app-button:active { transform: scale(0.97); }
+.modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1001; }
+.modal-content { background: linear-gradient(160deg,#2a0c55 0%,#551e90 45%,#ff4fc494 100%); color:#fff; border-radius:14px; padding:25px; width:90%; max-width:850px; max-height:90vh; overflow-y:auto; box-shadow:0 8px 28px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); }
+@media (max-width:768px) {
+  .content-with-ads { flex-direction:column; align-items:center; gap:1.5rem; }
+  .ad-banner { flex:none; width:100%; max-width:300px; min-height:200px; }
+  .dashboard-buttons { order:-1; }
+}
+.memes-section {
+  margin: 3rem auto;
+  max-width: 1200px;
   text-align: center;
+  color: #ffd9fb;
   padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.dashboard h2 {
-  margin-bottom: 1rem;
-  color: #333;
+.memes-section h3 {
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
 }
 
-.dashboard p {
-  margin-bottom: 1.5rem;
-  color: #666;
-}
-
-.dashboard-buttons {
+.memes-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.dashboard-buttons button {
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  max-width: 300px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.meme-image {
+  width: 600px;
+  max-width: 90%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease;
 }
 
-.dashboard-buttons button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.meme-image:hover {
+  transform: scale(1.03);
 }
 
-.dashboard-buttons .primary-button {
-  background-color: #2196f3;
-  font-weight: bold;
+.close-memes-button {
+  padding: 0.8rem 2rem;
   font-size: 1.1rem;
+  background: linear-gradient(135deg, #ff4fc4 0%, #7b1fa8 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 1rem;
 }
 
-.dashboard-buttons .primary-button:hover {
-  background-color: #1976d2;
+.close-memes-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
 }
-
-.dashboard-buttons .secondary-button {
-  background-color: #3498db;
-}
-
-.dashboard-buttons .secondary-button:hover {
-  background-color: #2980b9;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1001;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  z-index: 1002;
+.music-pause-button {
+  background: linear-gradient(135deg, #ff4fc4 0%, #ff6bda 100%);
+  /* Чисто розовая градиентная кнопка */
 }
 </style>

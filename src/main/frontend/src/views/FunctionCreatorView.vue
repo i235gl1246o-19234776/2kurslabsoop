@@ -1,3 +1,4 @@
+<!-- src/views/FunctionCreatorView.vue -->
 <template>
   <div class="modal-overlay" @click="goBack">
     <div class="modal-content" @click.stop>
@@ -25,7 +26,7 @@ const goBack = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--modal-overlay);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -33,7 +34,7 @@ const goBack = () => {
 }
 
 .modal-content {
-  background-color: var(--bg-modal);
+  background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

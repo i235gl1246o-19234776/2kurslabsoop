@@ -2,7 +2,9 @@
   <div class="creator">
     <!-- Крестик для закрытия окна -->
     <div class="close-button" @click="$emit('close')">&times;</div>
+
     <h2>Создать функцию</h2>
+
     <div class="tabs">
       <button
         @click="activeTab = 'fromArrays'"
@@ -17,19 +19,28 @@
         Из функции MathFunction
       </button>
     </div>
+
     <div v-if="activeTab === 'fromArrays'">
       <h3>Создание из массивов</h3>
-      <!-- Добавляем валидацию для pointCount -->
+
+      <!-- Добавляем валидацию для pointCount с максимумом 100 -->
       <input
         v-model.number="pointCount"
         type="number"
         placeholder="Количество точек"
         min="1"
+        max="100"
         @blur="validatePointCount"
         :class="{ 'error-input': pointCountError }"
       />
       <span v-if="pointCountError" class="error-message">{{ pointCountError }}</span>
       <button @click="generateTable" class="generate-button">Сгенерировать таблицу</button>
+
+      <!-- Показываем предупреждение если точек много -->
+      <div v-if="pointCount > 50" class="warning-message">
+        ⚠️ Большое количество точек может замедлить работу приложения
+      </div>
+
       <table v-if="points.length > 0">
         <thead>
           <tr>
@@ -60,6 +71,7 @@
           </tr>
         </tbody>
       </table>
+
       <!-- Валидация для functionName -->
       <input
         v-model="functionName"
@@ -69,12 +81,15 @@
         :class="{ 'error-input': functionNameError }"
       />
       <span v-if="functionNameError" class="error-message">{{ functionNameError }}</span>
+
       <input v-model="functionExpression" type="text" placeholder="Выражение функции (опционально)" />
+
       <!-- Выбор типа функции только если НЕ создаем для операций -->
       <select v-if="!isForOperation" v-model="typeFunction">
         <option value="tabular">Табулированная</option>
         <option value="analytic">Аналитическая</option>
       </select>
+
       <!-- Кнопки JSON -->
       <div class="json-controls">
         <button @click="loadFromJson" class="json-button secondary">
@@ -84,26 +99,37 @@
           <i class="fas fa-download"></i> Сохранить как JSON
         </button>
       </div>
+
       <button @click="createFunctionFromArrays" class="create-button">Создать</button>
     </div>
+
     <div v-if="activeTab === 'fromFunction'">
       <h3>Создание из функции</h3>
       <select v-model="selectedFunctionName">
         <option disabled value="">Выберите функцию</option>
         <option v-for="name in sortedFunctionNames" :key="name" :value="name">{{ name }}</option>
       </select>
-      <!-- Валидация для pointCount в этой вкладке тоже -->
+
+      <!-- Валидация для pointCount в этой вкладке тоже с максимумом 100 -->
       <input
         v-model.number="pointCountFromFunction"
         type="number"
         placeholder="Количество точек"
         min="1"
+        max="100"
         @blur="validatePointCountFromFunction"
         :class="{ 'error-input': pointCountFromFunctionError }"
       />
       <span v-if="pointCountFromFunctionError" class="error-message">{{ pointCountFromFunctionError }}</span>
+
+      <!-- Показываем предупреждение если точек много -->
+      <div v-if="pointCountFromFunction > 50" class="warning-message">
+        ⚠️ Большое количество точек может замедлить работу приложения
+      </div>
+
       <input v-model.number="startXFromFunction" type="number" placeholder="Начало интервала X" />
       <input v-model.number="endXFromFunction" type="number" placeholder="Конец интервала X" />
+
       <!-- Валидация для functionName в этой вкладке -->
       <input
         v-model="functionNameFromFunction"
@@ -113,12 +139,15 @@
         :class="{ 'error-input': functionNameFromFunctionError }"
       />
       <span v-if="functionNameFromFunctionError" class="error-message">{{ functionNameFromFunctionError }}</span>
+
       <input v-model="functionExpressionFromFunction" type="text" placeholder="Выражение функции (опционально)" />
+
       <!-- Выбор типа функции только если НЕ создаем для операций -->
       <select v-if="!isForOperation" v-model="typeFunctionFromFunction">
         <option value="tabular">Табулированная</option>
         <option value="analytic">Аналитическая</option>
       </select>
+
       <!-- Кнопки JSON -->
       <div class="json-controls">
         <button @click="loadFromJson" class="json-button secondary">
@@ -128,6 +157,7 @@
           <i class="fas fa-download"></i> Сохранить как JSON
         </button>
       </div>
+
       <button @click="createFunctionFromMathFunction" class="create-button">Создать</button>
     </div>
   </div>
@@ -153,6 +183,9 @@ const showError = inject('showError');
 if (!showError) {
   console.error("FunctionCreator: 'showError' function not provided by parent component.");
 }
+
+// Константа максимального количества точек
+const MAX_POINTS = 100;
 // --- КОНЕЦ ИНЪЕКЦИИ ---
 
 const activeTab = ref('fromArrays');
@@ -170,7 +203,6 @@ const endXFromFunction = ref(1);
 const functionNameFromFunction = ref('');
 const functionExpressionFromFunction = ref('');
 const typeFunctionFromFunction = ref('tabular');
-
 // --- КОНЕЦ НОВЫХ ПЕРЕМЕННЫХ ---
 
 // --- СОСТОЯНИЯ ДЛЯ ОШИБОК ВАЛИДАЦИИ ---
@@ -178,12 +210,10 @@ const pointCountError = ref('');
 const functionNameError = ref('');
 const pointCountFromFunctionError = ref('');
 const functionNameFromFunctionError = ref('');
-
 // --- КОНЕЦ СОСТОЯНИЙ ОШИБОК ---
 
 // --- СОСТОЯНИЕ ДЛЯ ОШИБОК ТОЧЕК ---
 const pointErrors = ref({});
-
 // --- КОНЕЦ СОСТОЯНИЯ ---
 
 // Маппинг названий функций
@@ -219,6 +249,10 @@ const validatePointCount = () => {
   }
   if (isNaN(pointCount.value) || pointCount.value < 1) {
     pointCountError.value = 'Количество точек должно быть положительным числом.';
+    return false;
+  }
+  if (pointCount.value > MAX_POINTS) {
+    pointCountError.value = `Максимальное количество точек: ${MAX_POINTS}`;
     return false;
   }
   pointCountError.value = '';
@@ -261,6 +295,10 @@ const validatePointCountFromFunction = () => {
     pointCountFromFunctionError.value = 'Количество точек должно быть положительным числом.';
     return false;
   }
+  if (pointCountFromFunction.value > MAX_POINTS) {
+    pointCountFromFunctionError.value = `Максимальное количество точек: ${MAX_POINTS}`;
+    return false;
+  }
   pointCountFromFunctionError.value = '';
   return true;
 };
@@ -277,16 +315,12 @@ const validateFunctionNameFromFunction = () => {
   functionNameFromFunctionError.value = '';
   return true;
 };
-
 // --- КОНЕЦ ФУНКЦИЙ ВАЛИДАЦИИ ---
 
 const generateTable = () => {
   if (!validatePointCount()) return;
-  if (pointCount.value > 100) {
-    if (!confirm(`Вы ввели ${pointCount.value} точек. Это может быть неудобно. Продолжить?`)) {
-      return;
-    }
-  }
+
+  // Убираем confirm для большого количества точек, так как теперь ограничиваем максимум 100
   points.value = Array.from({ length: pointCount.value }, () => ({ x: 0, y: 0 }));
   pointErrors.value = {};
 };
@@ -295,6 +329,7 @@ const generateTable = () => {
 const createFunctionFromArrays = async () => {
   const isPointCountValid = validatePointCount();
   const isFunctionNameValid = validateFunctionName();
+
   let allPointsValid = true;
   points.value.forEach((point, index) => {
     const xValid = validatePointValue(point, 'x', index);
@@ -317,10 +352,21 @@ const createFunctionFromArrays = async () => {
       typeFunction: actualType,
     };
 
-    const functionResponse = await api.createFunction(functionData);
+    await api.createFunction(functionData);
     console.log("Запрос на создание функции отправлен.");
 
-    const functionId = functionResponse.functionId;
+    const userId = api.getStoredUserId();
+    const allFunctions = await api.getFunctionsByUserId(userId);
+
+    const createdFunction = allFunctions
+        .filter(f => f.functionName === currentFunctionName)
+        .sort((a, b) => b.functionId - a.functionId)[0];
+
+    if (!createdFunction) {
+        throw new Error("Не удалось получить ID созданной функции.");
+    }
+
+    const functionId = createdFunction.functionId;
     console.log("Найден functionId:", functionId);
 
     if (typeof functionId !== 'number' || isNaN(functionId)) {
@@ -329,7 +375,7 @@ const createFunctionFromArrays = async () => {
 
     console.log("Отправляем точки для functionId:", functionId);
     for (const point of points.value) {
-        await api.createTabulatedPoint(functionId, point.x, point.y);
+        await api.createTabulatedPoints(functionId, point.x, point.y);
     }
 
     emit('function-created', {
@@ -346,6 +392,7 @@ const createFunctionFromArrays = async () => {
     typeFunction.value = "tabular";
     pointErrors.value = {};
     emit('close');
+
   } catch (e) {
     console.error("Create from arrays error:", e);
     showError(e.message || 'Ошибка при создании функции');
@@ -384,14 +431,25 @@ const createFunctionFromMathFunction = async () => {
       typeFunction: actualType,
     };
 
-    const functionResponse = await api.createFunction(functionData);
-    const functionId = functionResponse.functionId;
+    await api.createFunction(functionData);
 
+    const userId = api.getStoredUserId();
+    const allFunctions = await api.getFunctionsByUserId(userId);
+    const createdFunction = allFunctions
+      .filter(f => f.functionName === currentFunctionName)
+      .sort((a, b) => b.functionId - a.functionId)[0];
+
+    if (!createdFunction) {
+      throw new Error("Не удалось найти созданную функцию.");
+    }
+
+    const functionId = createdFunction.functionId;
     if (typeof functionId !== 'number' || isNaN(functionId)) {
       throw new Error("Получен некорректный ID функции.");
     }
 
     const factoryType = localStorage.getItem('tabulatedFunctionFactory') || 'array';
+
     await api.calculateAndSaveTabulatedPoints(
       functionId,
       mathFunctionName,
@@ -416,6 +474,7 @@ const createFunctionFromMathFunction = async () => {
     startXFromFunction.value = 0;
     endXFromFunction.value = 1;
     emit('close');
+
   } catch (e) {
     console.error("Create from function error:", e);
     showError(e.message || 'Неизвестная ошибка при создании функции.');
@@ -427,20 +486,31 @@ const loadFromJson = () => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
+
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target.result);
+
         if (!data.functionName) {
           throw new Error('Отсутствует название функции');
         }
+
+        // Проверяем количество точек при загрузке из JSON
+        if (Array.isArray(data.points) && data.points.length > MAX_POINTS) {
+          showError(`Файл содержит ${data.points.length} точек. Максимально допустимое количество: ${MAX_POINTS}`);
+          return;
+        }
+
         activeTab.value = 'fromArrays';
         functionName.value = data.functionName;
         functionExpression.value = data.functionExpression || '';
         typeFunction.value = data.typeFunction || 'tabular';
+
         if (Array.isArray(data.points) && data.points.length > 0) {
           points.value = data.points
             .map(p => ({ x: parseFloat(p.x), y: parseFloat(p.y) }))
@@ -450,9 +520,11 @@ const loadFromJson = () => {
           points.value = [];
           pointCount.value = 0;
         }
+
         pointErrors.value = {};
         pointCountError.value = '';
         functionNameError.value = '';
+
         alert('Данные успешно загружены из JSON!');
       } catch (error) {
         console.error('Ошибка загрузки JSON:', error);
@@ -461,11 +533,13 @@ const loadFromJson = () => {
     };
     reader.readAsText(file);
   };
+
   input.click();
 };
 
 const saveAsJson = () => {
   let data;
+
   if (activeTab.value === 'fromArrays') {
     if (!functionName.value || points.value.length === 0) {
       showError('Недостаточно данных для экспорта');
@@ -508,22 +582,23 @@ const saveAsJson = () => {
 <style scoped>
 .creator {
   position: relative;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 25px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
   max-width: 800px;
-  margin: 0 auto;
+  margin: 20px auto;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Стили для крестика */
+/* Крестик */
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   cursor: pointer;
   font-size: 24px;
-  color: #666;
+  color: #ffffff;
   width: 28px;
   height: 28px;
   display: flex;
@@ -533,155 +608,191 @@ const saveAsJson = () => {
   transition: all 0.2s;
   z-index: 10;
 }
-
 .close-button:hover {
-  background-color: #f0f0f0;
-  color: #d32f2f;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ff6fda;
   transform: rotate(90deg);
 }
 
 h2 {
-  color: #333;
-  margin-bottom: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 1.8rem;
   text-align: center;
 }
 
+/* Вкладки */
 .tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 25px;
   justify-content: center;
 }
-
 .tabs button {
-  padding: 8px 15px;
-  background-color: #e9ecef;
+  padding: 10px 18px;
+  background-color: #5b1fa8;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.25s ease;
+  color: #ffffff;
+  font-weight: 500;
 }
-
 .tabs button.active {
-  background-color: #2196f3;
-  color: white;
+  background-color: #ff4fc4;
+  color: #ffffff;
 }
-
 .tabs button:hover:not(.active) {
-  background-color: #dee2e6;
+  background-color: #7b1fa8;
 }
 
-input, select, button {
-  padding: 8px;
-  margin: 0.25rem 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+/* Инпуты и селекты */
+input, select {
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid #5b1fa8;
+  border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
+  background-color: #2f105c;
+  color: #ffffff;
 }
 
+/* Убираем стрелки у number input */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+input::placeholder {
+  color: #cccccc;
+}
+select {
+  background-color: #2f105c;
+  color: #ffffff;
+}
+
+/* Кнопки */
 button {
-  background-color: #42b983;
-  color: white;
+  padding: 10px 15px;
+  margin: 6px 0;
   border: none;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.25s ease;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
 }
-
-button:hover {
-  background-color: #359c6d;
+button:not(.close-button) {
+  background-color: #5b1fa8;
 }
-
+button:not(.close-button):hover {
+  background-color: #7b1fa8;
+}
 button:disabled {
-  background-color: #cccccc;
+  background-color: #888;
   cursor: not-allowed;
 }
 
+/* Специальные кнопки */
 .generate-button {
   background-color: #2196f3;
 }
-
 .generate-button:hover {
   background-color: #1976d2;
 }
-
 .create-button {
-  background-color: #4caf50;
+  background-color: #ff4fc4;
   font-weight: bold;
-  padding: 10px;
   margin-top: 1rem;
   font-size: 16px;
 }
-
 .create-button:hover {
-  background-color: #43a047;
+  background-color: #ff6fda;
 }
 
+/* Таблицы */
 table {
   width: 100%;
   margin-top: 1rem;
   border-collapse: collapse;
 }
-
 table th, table td {
-  border: 1px solid #ddd;
+  border: 1px solid #5b1fa8;
   padding: 8px;
   text-align: left;
 }
-
 table th {
-  background-color: #f5f5f5;
+  background-color: #2f105c;
+  color: #ffffff;
+}
+table td {
+  background-color: #230942;
+  color: #ffffff;
 }
 
-/* Стили для валидации */
+/* Ошибки */
 .error-input {
-  border: 2px solid #d32f2f !important;
+  border: 2px solid #ff4fc4 !important;
 }
-
 .error-message {
-  color: #d32f2f;
+  color: #ff4fc4;
   font-size: 0.85em;
   display: block;
   margin-top: 0.25rem;
   min-height: 1.2em;
 }
 
-/* Стили для JSON кнопок */
+/* Предупреждения */
+.warning-message {
+  color: #ffa500;
+  font-size: 0.9em;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: rgba(255, 165, 0, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #ffa500;
+}
+
+/* JSON кнопки */
 .json-controls {
   display: flex;
-  gap: 10px;
-  margin: 15px 0;
+  gap: 12px;
+  margin: 20px 0;
   justify-content: center;
   flex-wrap: wrap;
 }
-
 .json-button {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  gap: 6px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  background-color: #5b1fa8;
+  color: #ffffff;
   font-weight: 500;
-  background: #ecf0f1;
-  color: #2c3e50;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
 }
-
 .json-button:hover {
-  background: #bdc3c7;
+  background-color: #7b1fa8;
 }
-
 .json-button:disabled {
-  background: #ddd;
+  background: #888;
   cursor: not-allowed;
 }
 
+/* Адаптив */
 @media (max-width: 600px) {
   .creator {
-    padding: 15px;
-    margin: 10px;
+    padding: 20px;
+    margin: 15px;
   }
   table {
     font-size: 0.9em;

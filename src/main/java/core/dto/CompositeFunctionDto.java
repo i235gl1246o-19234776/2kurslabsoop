@@ -1,14 +1,12 @@
-// src/main/java/core/dto/CompositeFunctionDto.java
 package core.dto;
 
 import lombok.*;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Setter
+@Getter
 public class CompositeFunctionDto {
+    private Long userId;
     private String baseFunctionName;
     private String outerFunctionName;
     private String customName;
-    private Long userId;
 }

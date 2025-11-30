@@ -1,3 +1,4 @@
+<!-- src/components/FunctionChart.vue -->
 <template>
   <div class="chart-container">
     <canvas ref="chartCanvas"></canvas>
@@ -21,7 +22,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import zoomPlugin from 'chartjs-plugin-zoom';
+import zoomPlugin from 'chartjs-plugin-zoom'; // ← Убедитесь, что установлен!
 
 // Регистрация компонентов
 Chart.register(
@@ -48,11 +49,11 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  xAxisScale: {
+  xAxisScale: { // ← НОВЫЙ ПРОПС
     type: Number,
     default: 1.0
   }
-});
+})
 
 const emit = defineEmits(['point-selected', 'range-changed']);
 
@@ -63,6 +64,7 @@ const createChart = () => {
   if (!chartCanvas.value || !props.points.length) return;
 
   const ctx = chartCanvas.value.getContext('2d');
+
   if (myChart) {
     myChart.destroy();
   }
@@ -179,7 +181,10 @@ const resetZoom = () => {
 };
 
 onMounted(createChart);
+
 watch(() => props.points, createChart, { deep: true });
+
+// Эмит события при выборе точки (если нужно)
 </script>
 
 <style scoped>

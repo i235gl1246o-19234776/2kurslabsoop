@@ -1,3 +1,4 @@
+<!-- src/components/OperationsWindow.vue -->
 <template>
   <div class="operations-window">
     <div class="window-header">
@@ -9,7 +10,6 @@
       <div class="function-section">
         <h3>Функция A</h3>
         <div class="function-controls">
-          <button @click="createFunction('A')">Создать</button>
           <button @click="openFunctionSelector('A')">Загрузить</button>
           <button @click="loadFunctionFromJson('A')">Загрузить из JSON</button>
           <button @click="exportFunctionToJson('A')" :disabled="!selectedFunctionA || functionAPoints.length === 0">
@@ -64,7 +64,6 @@
       <div class="function-section">
         <h3>Функция B</h3>
         <div class="function-controls">
-          <button @click="createFunction('B')">Создать</button>
           <button @click="openFunctionSelector('B')">Загрузить</button>
           <button @click="loadFunctionFromJson('B')">Загрузить из JSON</button>
           <button @click="exportFunctionToJson('B')" :disabled="!selectedFunctionB || functionBPoints.length === 0">
@@ -426,14 +425,11 @@ const checkFunctionCompatibility = () => {
     functionCompatibility.value = { isCompatible: false, warning: '', aError: '', bError: '' };
     return;
   }
-
   let warning = '';
   let aError = '', bError = '';
   let isCompatible = true;
-
   if (hasDuplicateX('A')) { aError = 'Дублирующиеся X'; isCompatible = false; }
   if (hasDuplicateX('B')) { bError = 'Дублирующиеся X'; isCompatible = false; }
-
   if (isCompatible) {
     const xsA = functionAPoints.value.map(p => getXValue(p));
     const xsB = functionBPoints.value.map(p => getXValue(p));
@@ -445,7 +441,6 @@ const checkFunctionCompatibility = () => {
       isCompatible = false;
     }
   }
-
   functionCompatibility.value = { isCompatible, warning, aError, bError };
 };
 
@@ -489,17 +484,14 @@ const loadFunctionPoints = async (id, target) => {
   try {
     if (target === 'A') loadingPointsA.value = true;
     if (target === 'B') loadingPointsB.value = true;
-
     const pointsRes = await api.getTabulatedPointsByFunctionId(id);
     const pts = pointsRes.map(p => createPointObject(parseFloat(p.xval), parseFloat(p.yval)));
     const sorted = [...pts].sort((a, b) => a.getX() - b.getX());
-
     const userId = api.getStoredUserId();
     const all = await api.getFunctionsByUserId(userId);
     const func = all.find(f => f.functionId === id);
     if (!func) throw new Error('Функция не найдена');
     func.pointCount = pts.length;
-
     if (target === 'A') {
       selectedFunctionA.value = func;
       functionAPoints.value = [...sorted];
@@ -511,7 +503,6 @@ const loadFunctionPoints = async (id, target) => {
       originalPointsB.value = sorted.map(p => createPointObject(p.getX(), p.getY()));
       tempYValues.value.B = {};
     }
-
     checkFunctionCompatibility();
     updateCanExecute();
   } catch (err) {
@@ -527,7 +518,6 @@ const saveFunctionPoints = async (target) => {
   const func = target === 'A' ? selectedFunctionA.value : selectedFunctionB.value;
   const pts = target === 'A' ? functionAPoints.value : functionBPoints.value;
   if (!func || !pts.length) return;
-
   const xs = new Set();
   for (const p of pts) {
     const x = getXValue(p);
@@ -537,14 +527,12 @@ const saveFunctionPoints = async (target) => {
     }
     xs.add(x);
   }
-
   try {
     await api.deleteTabulatedPointsByFunctionId(func.functionId);
     for (let i = 0; i < pts.length; i++) {
       const y = getYValue(pts[i], i, target);
-      await api.createTabulatedPoint(func.functionId, getXValue(pts[i], i), y);
+      await api.createTabulatedPoints(func.functionId, getXValue(pts[i], i), y);
     }
-
     const updated = pts.map((p, i) => createPointObject(getXValue(p, i), getYValue(p, i, target)));
     if (target === 'A') {
       originalPointsA.value = updated;
@@ -553,7 +541,6 @@ const saveFunctionPoints = async (target) => {
       originalPointsB.value = updated;
       tempYValues.value.B = {};
     }
-
     alert('Изменения сохранены!');
   } catch (err) {
     alert('Ошибка сохранения: ' + (err.message || ''));
@@ -577,26 +564,24 @@ const clearFunction = (target) => {
   updateCanExecute();
 };
 
-// --- LOCAL OPERATION HELPER (должна быть ДО executeOperation!) ---
+// --- LOCAL OPERATION HELPER ---
 const performLocalOperation = (pointsA, pointsB, operation) => {
   if (pointsA.length !== pointsB.length) {
     throw new Error(`Несовпадение количества точек: A=${pointsA.length}, B=${pointsB.length}`);
   }
-
   for (let i = 0; i < pointsA.length; i++) {
     if (Math.abs(pointsA[i].getX() - pointsB[i].getX()) > 1e-6) {
       throw new Error(`Несовпадение X в точке ${i}: A=${pointsA[i].getX()}, B=${pointsB[i].getX()}`);
     }
   }
-
   return pointsA.map((pA, i) => {
     const pB = pointsB[i];
     const x = pA.getX();
     let y;
     switch (operation) {
-      case 'add':       y = pA.getY() + pB.getY(); break;
-      case 'subtract':  y = pA.getY() - pB.getY(); break;
-      case 'multiply':  y = pA.getY() * pB.getY(); break;
+      case 'add': y = pA.getY() + pB.getY(); break;
+      case 'subtract': y = pA.getY() - pB.getY(); break;
+      case 'multiply': y = pA.getY() * pB.getY(); break;
       case 'divide':
         if (Math.abs(pB.getY()) < 1e-12) throw new Error(`Деление на ноль при x=${x}`);
         y = pA.getY() / pB.getY();
@@ -614,68 +599,33 @@ const executeOperation = async (op) => {
     alert('Невозможно выполнить операцию: функции несовместимы или содержат дублирующиеся X-значения.');
     return;
   }
-
   const funcA = selectedFunctionA.value;
   const funcB = selectedFunctionB.value;
-
   const ptsA = functionAPoints.value.map((p, i) =>
     createPointObject(getXValue(p, i), getYValue(p, i, 'A'))
   ).sort((a, b) => a.getX() - b.getX());
-
   const ptsB = functionBPoints.value.map((p, i) =>
     createPointObject(getXValue(p, i), getYValue(p, i, 'B'))
   ).sort((a, b) => a.getX() - b.getX());
 
   const useLocalOnly = !funcA?.functionId || !funcB?.functionId;
-
   try {
-    let resultPts;
-    if (useLocalOnly) {
-      resultPts = performLocalOperation(ptsA, ptsB, op);
-    } else {
-      // Для выполнения операции на сервере используем метод executeOperation из api
-      const response = await api.executeOperation(
-        funcA.functionId,
-        funcB.functionId,
-        op,
-        factoryType.value
-      );
-
-      resultPts = response.points.map(p => ({
-        x: parseFloat(p.x !== undefined ? p.x : p.xval),
-        y: parseFloat(p.y !== undefined ? p.y : p.yval)
-      }));
-    }
+    // Всегда выполняем локально
+    const resultPts = performLocalOperation(ptsA, ptsB, op);
 
     resultPoints.value = resultPts;
     resultName.value = `Результат_${op}_${funcA?.functionName || 'A'}_${funcB?.functionName || 'B'}`;
     resultOperationType.value = operationTypeMap[op];
+
     alert(`Операция "${op}" успешно выполнена!`);
   } catch (err) {
     console.error('Ошибка при выполнении операции:', err);
     let msg = err.message || 'Неизвестная ошибка';
-    if (err.response?.data?.message) msg = err.response.data.message;
-    if (err.response?.data?.error) msg = err.response.data.error;
     alert('Ошибка операции: ' + msg);
   }
 };
 
 // --- Result ---
-const exportToCSV = () => {
-  if (resultPoints.value.length === 0) return;
-  const csv = [
-    ['X', 'Y'],
-    ...resultPoints.value.map(p => [p.x.toFixed(6), p.y.toFixed(6)])
-  ].map(row => row.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${resultName.value}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
 const exportResultToJson = () => {
   if (resultPoints.value.length === 0) return;
   const jsonData = {
@@ -698,18 +648,15 @@ const exportResultToJson = () => {
 
 const saveResult = async () => {
   if (resultPoints.value.length === 0) return;
-
   try {
     const meta = await api.createFunction({
       functionName: resultName.value,
-      functionExpression: `Результат операции ${resultOperationType.value}`,
+      functionExpression: `Результат операции`,
       typeFunction: 'tabular'
     });
-
     for (const p of resultPoints.value) {
-      await api.createTabulatedPoint(meta.functionId, p.x, p.y);
+      await api.createTabulatedPoints(meta.functionId, p.x, p.y);
     }
-
     alert('Результат сохранён!');
   } catch (err) {
     alert('Ошибка сохранения результата: ' + (err.message || ''));
@@ -722,6 +669,47 @@ const clearResult = () => {
   resultName.value = '';
   resultFunctionId.value = null;
   resultOperationType.value = null;
+};
+
+// --- 🔑 НОВЫЙ МЕТОД: приём созданной функции из FunctionCreator ---
+const assignNewFunction = (func, target) => {
+  if (!func || !Array.isArray(func.points) || func.points.length === 0) {
+    console.error('Невозможно загрузить функцию: отсутствуют точки');
+    return;
+  }
+
+  const points = func.points.map(p => {
+    const x = parseFloat(p.x);
+    const y = parseFloat(p.y);
+    if (isNaN(x) || isNaN(y)) {
+      throw new Error('Некорректные x/y в точке');
+    }
+    return createPointObject(x, y);
+  });
+
+  const sorted = [...points].sort((a, b) => a.getX() - b.getX());
+
+  const fakeFunc = {
+    functionId: null,
+    functionName: func.functionName || 'Новая функция',
+    typeFunction: 'tabular',
+    pointCount: sorted.length
+  };
+
+  if (target === 'A') {
+    selectedFunctionA.value = fakeFunc;
+    functionAPoints.value = [...sorted];
+    originalPointsA.value = sorted.map(p => createPointObject(p.getX(), p.getY()));
+    tempYValues.value.A = {};
+  } else if (target === 'B') {
+    selectedFunctionB.value = fakeFunc;
+    functionBPoints.value = [...sorted];
+    originalPointsB.value = sorted.map(p => createPointObject(p.getX(), p.getY()));
+    tempYValues.value.B = {};
+  }
+
+  checkFunctionCompatibility();
+  updateCanExecute();
 };
 
 // --- Lifecycle ---
@@ -743,19 +731,25 @@ watch([functionAPoints, functionBPoints], () => {
   checkFunctionCompatibility();
   updateCanExecute();
 });
+
+// --- Экспорт метода для родителя ---
+defineExpose({
+  assignNewFunction
+});
 </script>
 
 <style scoped>
-/* Все стили из оригинального файла */
+/* ... (ваш оригинальный CSS без изменений) ... */
 .operations-window {
   position: relative;
   padding: 20px;
-  background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   max-width: 1200px;
   margin: 0 auto;
   font-family: Arial, sans-serif;
+  background-color: #230942; /* добавлено */
+  color: #fff; /* чтобы текст был виден на темном фоне */
 }
 
 .window-header {
@@ -766,7 +760,6 @@ watch([functionAPoints, functionBPoints], () => {
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
 }
-
 .close-button {
   font-size: 24px;
   cursor: pointer;
@@ -781,33 +774,27 @@ watch([functionAPoints, functionBPoints], () => {
   justify-content: center;
   transition: all 0.2s;
 }
-
 .close-button:hover {
   background-color: #f0f0f0;
   color: #d32f2f;
 }
-
 .functions-container {
   display: flex;
   gap: 30px;
   margin-bottom: 30px;
 }
-
 .function-section {
   flex: 1;
   padding: 15px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #f9f9f9;
 }
-
 .function-controls {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
   flex-wrap: wrap;
 }
-
 .function-controls button {
   padding: 8px 15px;
   background-color: #2196f3;
@@ -817,82 +804,65 @@ watch([functionAPoints, functionBPoints], () => {
   cursor: pointer;
   transition: background-color 0.2s;
 }
-
 .function-controls button:nth-child(3) {
   background-color: #9c27b0;
 }
-
 .function-controls button:nth-child(4) {
   background-color: #607d8b;
 }
-
 .function-controls button:hover {
   background-color: #1976d2;
 }
-
 .function-controls button:nth-child(3):hover {
   background-color: #7b1fa2;
 }
-
 .function-controls button:nth-child(4):hover {
   background-color: #546e7a;
 }
-
 .function-details {
-  background-color: white;
   padding: 15px;
   border-radius: 6px;
   border: 1px solid #ddd;
   margin-top: 10px;
 }
-
 .error-message {
   color: #d32f2f;
   font-size: 0.9em;
   margin: 5px 0;
 }
-
 .warning-message {
   color: #ed6c02;
   font-weight: bold;
   margin: 0;
 }
-
 .compatibility-warning {
-  background-color: #fff8e1;
   border-left: 4px solid #ffc107;
   padding: 10px 15px;
   margin: 15px 0;
   border-radius: 0 4px 4px 0;
 }
-
 .compatibility-message {
   color: #ed6c02;
   font-size: 0.9em;
   margin-top: 8px;
   text-align: center;
 }
-
 .function-table, .result-table {
   margin-top: 15px;
   border: 1px solid #ddd;
   border-radius: 6px;
   overflow: hidden;
 }
-
 .function-table h4, .result-table h4 {
   margin: 0 0 10px 0;
   padding: 10px;
-  background-color: #e9ecef;
   border-bottom: 1px solid #ddd;
 }
-
 .empty-table {
   text-align: center;
   padding: 20px;
   color: #999;
 }
-
 .point-y-input {
   width: 100%;
   padding: 6px 8px;
@@ -900,24 +870,20 @@ watch([functionAPoints, functionBPoints], () => {
   border-radius: 4px;
   font-size: 14px;
 }
-
 .point-y-input:focus {
   outline: none;
   border-color: #2196f3;
   box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
 }
-
 .operations-section {
   margin: 30px 0;
 }
-
 .operations-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 15px;
   margin-top: 15px;
 }
-
 .operation-button {
   padding: 12px;
   border: none;
@@ -928,35 +894,27 @@ watch([functionAPoints, functionBPoints], () => {
   transition: all 0.2s;
   font-size: 14px;
 }
-
 .operation-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 .operation-button.add { background-color: #4caf50; }
 .operation-button.subtract { background-color: #2196f3; }
 .operation-button.multiply { background-color: #ff9800; }
 .operation-button.divide { background-color: #f44336; }
-
 .operation-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-
 .result-section {
   margin-top: 30px;
   padding: 20px;
   border-radius: 8px;
-  background-color: #f8f9fa;
 }
-
 .result-table {
-  background-color: white;
   max-height: 400px;
   overflow-y: auto;
 }
-
 .result-actions {
   display: flex;
   gap: 15px;
@@ -964,7 +922,6 @@ watch([functionAPoints, functionBPoints], () => {
   justify-content: center;
   flex-wrap: wrap;
 }
-
 .save-button, .clear-button, .export-button {
   padding: 10px 20px;
   border: none;
@@ -973,60 +930,44 @@ watch([functionAPoints, functionBPoints], () => {
   font-weight: bold;
   transition: all 0.2s;
 }
-
 .save-button {
   background-color: #4caf50;
   color: white;
 }
-
 .save-button:hover:not(:disabled) {
   background-color: #45a049;
 }
-
 .save-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }
-
 .clear-button {
   background-color: #f44336;
   color: white;
 }
-
 .clear-button:hover {
   background-color: #e53935;
 }
-
 .export-button {
   background-color: #607d8b;
   color: white;
 }
-
 .export-button:hover {
   background-color: #546e7a;
 }
-
 table {
   width: 100%;
   border-collapse: collapse;
   min-width: 300px;
 }
-
 table th, table td {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
 }
-
 table th {
-  background-color: #f5f5f5;
   font-weight: bold;
 }
-
-table td {
-  background-color: white;
-}
-
 @media (max-width: 768px) {
   .functions-container {
     flex-direction: column;
@@ -1035,16 +976,13 @@ table td {
     grid-template-columns: 1fr;
   }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 .function-section, .operations-section, .result-section {
   animation: fadeIn 0.3s ease-out;
 }
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1057,9 +995,8 @@ table td {
   justify-content: center;
   z-index: 1000;
 }
-
 .function-selector-modal {
-  background-color: white;
+  background-color: #2f0f5e;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   width: 90%;
@@ -1067,36 +1004,29 @@ table td {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: modalFadeIn 0.3s ease-out;
 }
-
 .modal-header {
   padding: 15px 20px;
   border-bottom: 1px solid #eee;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f8f9fa;
 }
-
 .modal-header h3 {
   margin: 0;
   color: #333;
   font-size: 1.2rem;
 }
-
 .modal-body {
   padding: 20px;
   overflow-y: auto;
   flex-grow: 1;
 }
-
 .functions-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-
 .function-item {
   display: flex;
   justify-content: space-between;
@@ -1106,25 +1036,22 @@ table td {
   cursor: pointer;
   transition: all 0.2s;
   border-radius: 4px;
-}
 
+}
 .function-item:hover {
   background-color: #f0f7ff;
   transform: translateX(5px);
 }
-
 .function-item div {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .function-id {
   color: #666;
   font-size: 0.9rem;
   margin-left: 8px;
 }
-
 .function-meta {
   display: flex;
   gap: 15px;
@@ -1132,15 +1059,12 @@ table td {
   font-size: 0.85rem;
   color: #666;
 }
-
 .modal-footer {
   padding: 15px 20px;
   border-top: 1px solid #eee;
   text-align: right;
-  background-color: #f8f9fa;
   border-radius: 0 0 8px 8px;
 }
-
 .cancel-button {
   padding: 8px 16px;
   background-color: #e0e0e0;
@@ -1150,34 +1074,7 @@ table td {
   font-weight: 500;
   transition: background-color 0.2s;
 }
-
 .cancel-button:hover {
   background-color: #d5d5d5;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 600px) {
-  .function-selector-modal {
-    width: 95%;
-    margin: 10px;
-  }
-  .function-item div {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .function-meta {
-    margin-top: 8px;
-    width: 100%;
-  }
 }
 </style>
