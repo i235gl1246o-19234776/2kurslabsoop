@@ -237,6 +237,17 @@ export const api = {
     return handleResponse(response);
   },
 
+  register: async (name, password) => {
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, password }),
+    });
+    return handleResponse(response);
+  },
+
   // - Вычисление определенного интеграла -
   calculateIntegral: async function(functionId, a, b, steps, threadCount) {
     if (!storedCredentials) throw new Error('Not authenticated');
