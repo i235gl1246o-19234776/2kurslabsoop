@@ -42,6 +42,10 @@
           <button @click="openWindow('settings')" class="app-button">
             Настройки
           </button>
+
+          <button @click="showAllMemes" class="app-button">
+            Музыкальная пауза
+          </button>
         </div>
 
         <!-- Правая реклама -->
@@ -83,6 +87,7 @@
     <div v-if="showOperationsWindow" class="modal-overlay">
       <div class="modal-content">
         <OperationsWindow
+          ref="operationsWindowRef"
           @close="closeWindow('operations')"
           @create-function="openFunctionCreator"
         />
@@ -116,6 +121,23 @@
         />
       </div>
     </div>
+
+    <!-- Секция мемов -->
+    <div id="meme-container" class="memes-section" v-if="showMemes">
+       <h3>Мемы:</h3>
+          <div class="memes-container">
+            <img
+              v-for="(meme, index) in allMemes"
+              :key="index"
+              :src="meme"
+              :alt="`Мем ${index + 1}`"
+              class="meme-image"
+            />
+          </div>
+          <button @click="hideMemes" class="close-memes-button">
+            Скрыть мемы
+          </button>
+        </div>
   </div>
 </template>
 
@@ -144,6 +166,25 @@ const selectedFunctionName = ref('');
 const selectedPoints = ref([]);
 const selectedInsertable = ref(false);
 const selectedRemovable = ref(false);
+
+// === Состояние мемов ===
+const showMemes = ref(false);
+const allMemes = ref([
+  '/images/photo_2025-11-30_17-21-33.jpg',
+  '/images/photo_2025-11-30_17-21-21.jpg',
+  '/images/photo_2025-11-30_17-20-54.jpg',
+  '/images/photo_2025-11-30_17-20-57.jpg',
+  '/images/photo_2025-11-30_17-20-59.jpg',
+  '/images/photo_2025-11-30_17-21-02.jpg',
+  '/images/photo_2025-11-30_17-21-05.jpg',
+  '/images/photo_2025-11-30_17-21-07.jpg',
+  '/images/photo_2025-11-30_17-21-14.jpg',
+  '/images/photo_2025-11-30_17-21-18.jpg',
+  '/images/photo_2025-11-30_17-21-23.jpg',
+  '/images/photo_2025-11-30_17-21-26.jpg',
+  '/images/photo_2025-11-30_17-21-28.jpg',
+  '/images/photo_2025-11-30_17-21-31.jpg'
+]);
 
 // Глобальная функция отображения ошибок
 const showError = inject('showError');
@@ -227,9 +268,23 @@ const handleCreateNewFunctionFromExplorer = async () => {
 
 const handleFunctionCreated = async ({ functionId, functionName, points }) => {
   if (creatorTarget.value) {
-    const eventName = creatorTarget.value === 'diff' ? 'diff-function-created' : 'operation-function-created';
-    const detail = { operand: creatorTarget.value, functionId, functionName, points };
+    const eventName = creatorTarget.value === 'diff'
+      ? 'diff-function-created'
+      : 'operation-function-created';
+    const detail = {
+      operand: creatorTarget.value,
+      functionId,
+      functionName,
+      points
+    };
     window.dispatchEvent(new CustomEvent(eventName, { detail }));
+
+    if (creatorTarget.value === 'A' || creatorTarget.value === 'B') {
+      if (operationsWindowRef.value && typeof operationsWindowRef.value.assignNewFunction === 'function') {
+        const func = { functionName, points };
+        operationsWindowRef.value.assignNewFunction(func, creatorTarget.value);
+      }
+    }
   } else {
     if (confirm('Функция успешно создана! Хотите перейти в окно изучения функции?')) {
       selectedFunctionId.value = functionId;
@@ -262,10 +317,27 @@ const closeAllWindows = async () => {
 const rickroll = () => {
   window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener,noreferrer');
 };
+
+// Функции для управления мемами
+const showAllMemes = () => {
+  showMemes.value = true;
+
+  // Скроллим к мемам
+  nextTick(() => {
+    const memeContainer = document.getElementById('meme-container');
+    if (memeContainer) {
+      memeContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+};
+
+const hideMemes = () => {
+  showMemes.value = false;
+};
 </script>
 
 <style scoped>
-/* --- базовые стили (как у тебя) --- */
+/* Стили остаются без изменений */
 .dashboard { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; background-color: #230942; color: #fff; position: relative; }
 .app-header-bar { display:flex; justify-content:center; align-items:center; padding:1.2rem 2rem; background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); border-bottom:1px solid rgba(255,255,255,0.15); border-radius:0 0 12px 12px; box-shadow:0 6px 20px rgba(0,0,0,0.4); }
 .app-header-bar h3 { margin:0; font-size:1.4rem; font-weight:600; }
@@ -285,5 +357,62 @@ const rickroll = () => {
   .content-with-ads { flex-direction:column; align-items:center; gap:1.5rem; }
   .ad-banner { flex:none; width:100%; max-width:300px; min-height:200px; }
   .dashboard-buttons { order:-1; }
+}
+.memes-section {
+  margin: 3rem auto;
+  max-width: 1200px;
+  text-align: center;
+  color: #ffd9fb;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.memes-section h3 {
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+}
+
+.memes-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.meme-image {
+  width: 600px;
+  max-width: 90%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease;
+}
+
+.meme-image:hover {
+  transform: scale(1.03);
+}
+
+.close-memes-button {
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #ff4fc4 0%, #7b1fa8 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 1rem;
+}
+
+.close-memes-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+.music-pause-button {
+  background: linear-gradient(135deg, #ff4fc4 0%, #ff6bda 100%);
+  /* Чисто розовая градиентная кнопка */
 }
 </style>

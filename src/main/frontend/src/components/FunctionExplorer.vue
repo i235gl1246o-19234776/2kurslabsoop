@@ -24,15 +24,6 @@
             </button>
           </div>
 
-          <!-- Масштаб оси X -->
-          <div class="scale-controls">
-            <label>
-              Масштаб оси X:
-              <input type="range" v-model.number="xAxisScale" min="0.1" max="10" step="0.1" />
-              <span>{{ xAxisScale.toFixed(1) }}×</span>
-            </label>
-          </div>
-
           <div class="chart-section">
             <FunctionChart
               :points="points"
@@ -55,7 +46,7 @@
               </div>
             </div>
 
-            <table v-if="visiblePoints.length > 0">
+            <table class="large-table" v-if="visiblePoints.length > 0">
               <thead>
                 <tr>
                   <th>#</th>
@@ -442,51 +433,6 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   box-shadow: 0 8px 20px rgba(91, 31, 168, 0.4);
 }
 
-.scale-controls {
-  margin-bottom: 30px;
-  padding: 20px;
-  background: rgba(47, 16, 92, 0.6);
-  border-radius: 12px;
-  border: 2px solid #5b1fa8;
-}
-
-.scale-controls label {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 1.3rem;
-}
-
-.scale-controls input[type="range"] {
-  flex: 1;
-  height: 12px;
-  border-radius: 6px;
-  background: #2f105c;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.scale-controls input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #ff4fc4;
-  cursor: pointer;
-  border: 3px solid #ffffff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.scale-value {
-  font-weight: bold;
-  color: #ff4fc4;
-  min-width: 60px;
-  font-size: 1.4rem;
-}
-
 .chart-section {
   margin-bottom: 30px;
   background: rgba(47, 16, 92, 0.4);
@@ -510,7 +456,7 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   align-items: center;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 20px;
 }
 
 .table-header h3 {
@@ -527,7 +473,7 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   flex-wrap: wrap;
 }
 
-.large-input {
+.insert-control input {
   padding: 12px 16px;
   border: 2px solid #5b1fa8;
   border-radius: 8px;
@@ -537,27 +483,24 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   font-size: 1.2rem;
 }
 
-.large-input::placeholder {
+.insert-control input::placeholder {
   color: #cccccc;
   font-size: 1.1rem;
 }
 
-.large-button {
+.insert-btn {
   padding: 12px 20px;
+  background: #ff4fc4;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1.2rem;
   font-weight: 600;
-  transition: all 0.2s;
-}
-
-.insert-btn {
-  background: #ff4fc4;
-  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.2s;
 }
 
 .insert-btn:hover {
@@ -565,17 +508,31 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   transform: translateY(-2px);
 }
 
+/* TABLE STYLES - ENHANCED SPACING */
 .large-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
   font-size: 1.2rem;
+  table-layout: fixed;
 }
 
-.large-table th, .large-table td {
-  padding: 16px 20px;
+.large-table th,
+.large-table td {
+  padding: 16px 32px;
   text-align: left;
   border-bottom: 2px solid #5b1fa8;
+  word-break: break-all;
+}
+
+.large-table th:first-child,
+.large-table td:first-child {
+  padding-left: 24px;
+}
+
+.large-table th:last-child,
+.large-table td:last-child {
+  padding-right: 24px;
 }
 
 .large-table th {
@@ -583,12 +540,38 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   color: #ffffff;
   font-weight: 700;
   font-size: 1.3rem;
+  min-width: 80px;
 }
 
-.large-cell {
+.large-table td {
   background: rgba(35, 9, 66, 0.7);
   color: #ffffff;
   font-size: 1.2rem;
+}
+
+/* COLUMN WIDTHS */
+.large-table th:nth-child(2),
+.large-table td:nth-child(2) {
+  width: 30%;
+  min-width: 120px;
+}
+
+.large-table th:nth-child(3),
+.large-table td:nth-child(3) {
+  width: 30%;
+  min-width: 120px;
+}
+
+.large-table th:nth-child(4),
+.large-table td:nth-child(4) {
+  width: 25%;
+  min-width: 150px;
+}
+
+.large-table th:first-child,
+.large-table td:first-child {
+  width: 15%;
+  min-width: 80px;
 }
 
 .highlighted-row {
@@ -602,11 +585,18 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
 }
 
 .remove-btn {
+  padding: 8px 15px;
   background: #e74c3c;
   color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  transition: all 0.2s;
 }
 
 .remove-btn:hover {
@@ -645,6 +635,7 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   gap: 8px;
   font-size: 1.2rem;
   font-weight: 600;
+  transition: all 0.2s;
 }
 
 .pagination-controls button:hover:not(:disabled) {
@@ -658,7 +649,7 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   transform: none;
 }
 
-.page-info {
+.pagination-controls span {
   color: #ffffff;
   font-weight: 600;
   font-size: 1.3rem;
@@ -675,15 +666,26 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   font-size: 1.4rem;
 }
 
-.large-slider {
+.slider {
   width: 100%;
   margin: 8px 0;
   height: 12px;
+  border-radius: 6px;
+  background: #2f105c;
+  outline: none;
+  -webkit-appearance: none;
 }
 
-.large-slider::-webkit-slider-thumb {
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
   width: 28px;
   height: 28px;
+  border-radius: 50%;
+  background: #ff4fc4;
+  cursor: pointer;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .slider-labels {
@@ -716,13 +718,23 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   margin-bottom: 15px;
 }
 
-.large-label {
+.apply-input label {
   color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 1.3rem;
   font-weight: 600;
+}
+
+.apply-input input {
+  padding: 10px 15px;
+  border: 2px solid #5b1fa8;
+  border-radius: 8px;
+  background: #2f105c;
+  color: #ffffff;
+  width: 150px;
+  font-size: 1.2rem;
 }
 
 .apply-input button {
@@ -734,6 +746,7 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   cursor: pointer;
   font-size: 1.2rem;
   font-weight: 600;
+  transition: all 0.2s;
 }
 
 .apply-input button:hover:not(:disabled) {
@@ -753,7 +766,7 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   border: 2px solid #ff4fc4;
 }
 
-.large-result {
+.apply-result p {
   color: #ffffff;
   margin: 0;
   font-weight: 600;
@@ -793,22 +806,27 @@ const increasePage = () => { if(currentPage.value<totalPages.value) currentPage.
   .table-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 15px;
   }
 
-  .insert-control {
-    justify-content: center;
+  .large-table th,
+  .large-table td {
+    padding: 12px 18px;
+    font-size: 1.1rem;
+  }
+
+  .large-table th:nth-child(4),
+  .large-table td:nth-child(4) {
+    display: none;
   }
 
   .pagination-controls {
     flex-direction: column;
+    gap: 10px;
   }
 
-  .large-table {
-    font-size: 1.1rem;
-  }
-
-  .large-table th, .large-table td {
-    padding: 12px 15px;
+  .insert-control {
+    justify-content: center;
   }
 }
 </style>

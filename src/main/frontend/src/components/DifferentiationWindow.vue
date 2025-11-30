@@ -12,7 +12,6 @@
           <div class="function-section">
             <h3>Исходная функция</h3>
             <div class="function-controls">
-              <button @click="createFunction('source')">Создать</button>
               <button @click="openFunctionSelector('source')">Загрузить</button>
               <button @click="loadFunctionFromJson">Загрузить из JSON</button>
               <button @click="exportFunctionToJson" :disabled="!sourceFunction || sourcePoints.length === 0">

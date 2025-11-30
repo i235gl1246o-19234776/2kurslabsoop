@@ -23,9 +23,6 @@
                   {{ func.functionName }} (ID: {{ func.functionId }})
                 </option>
               </select>
-              <button @click="openFunctionCreator" class="create-button">
-                <span class="btn-icon">+</span> Создать новую
-              </button>
             </div>
 
             <div v-if="selectedFunction" class="function-info">

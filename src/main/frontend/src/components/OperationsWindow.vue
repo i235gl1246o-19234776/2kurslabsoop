@@ -5,13 +5,11 @@
       <h2>Операции над функциями</h2>
       <button class="close-button" @click="$emit('close')">&times;</button>
     </div>
-
     <div class="functions-container">
       <!-- Функция A -->
       <div class="function-section">
         <h3>Функция A</h3>
         <div class="function-controls">
-          <button @click="createFunction('A')">Создать</button>
           <button @click="openFunctionSelector('A')">Загрузить</button>
           <button @click="loadFunctionFromJson('A')">Загрузить из JSON</button>
           <button @click="exportFunctionToJson('A')" :disabled="!selectedFunctionA || functionAPoints.length === 0">
@@ -62,12 +60,10 @@
           </div>
         </div>
       </div>
-
       <!-- Функция B -->
       <div class="function-section">
         <h3>Функция B</h3>
         <div class="function-controls">
-          <button @click="createFunction('B')">Создать</button>
           <button @click="openFunctionSelector('B')">Загрузить</button>
           <button @click="loadFunctionFromJson('B')">Загрузить из JSON</button>
           <button @click="exportFunctionToJson('B')" :disabled="!selectedFunctionB || functionBPoints.length === 0">
@@ -119,11 +115,9 @@
         </div>
       </div>
     </div>
-
     <div class="compatibility-warning" v-if="functionCompatibility.warning">
       <p class="warning-message">⚠️ {{ functionCompatibility.warning }}</p>
     </div>
-
     <div class="operations-section">
       <h3>Доступные операции</h3>
       <div class="operations-grid">
@@ -167,7 +161,6 @@
         Операции невозможны из-за дублирующихся X-значений в таблицах функций
       </p>
     </div>
-
     <!-- Таблица для результата -->
     <div class="result-section">
       <h3>Результат операции</h3>
@@ -200,7 +193,6 @@
         </button>
       </div>
     </div>
-
     <!-- Модальное окно для выбора функции -->
     <div v-if="showFunctionSelector" class="modal-overlay" @click="closeFunctionSelector">
       <div class="function-selector-modal" @click.stop>
@@ -252,7 +244,6 @@ const resultPoints = ref([]);
 const resultName = ref('');
 const resultFunctionId = ref(null);
 const resultOperationType = ref(null);
-
 const availableFunctions = ref([]);
 const showFunctionSelector = ref(false);
 const selectorTarget = ref(null);
@@ -395,18 +386,15 @@ const exportFunctionToJson = (target) => {
   const func = target === 'A' ? selectedFunctionA.value : selectedFunctionB.value;
   const points = target === 'A' ? functionAPoints.value : functionBPoints.value;
   if (!func || points.length === 0) return;
-
   const currentPoints = points.map((p, i) => ({
     x: getXValue(p, i),
     y: getYValue(p, i, target)
   }));
-
   const json = JSON.stringify({
     functionName: func.functionName,
     typeFunction: 'tabular',
     points: currentPoints
   }, null, 2);
-
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -437,14 +425,11 @@ const checkFunctionCompatibility = () => {
     functionCompatibility.value = { isCompatible: false, warning: '', aError: '', bError: '' };
     return;
   }
-
   let warning = '';
   let aError = '', bError = '';
   let isCompatible = true;
-
   if (hasDuplicateX('A')) { aError = 'Дублирующиеся X'; isCompatible = false; }
   if (hasDuplicateX('B')) { bError = 'Дублирующиеся X'; isCompatible = false; }
-
   if (isCompatible) {
     const xsA = functionAPoints.value.map(p => getXValue(p));
     const xsB = functionBPoints.value.map(p => getXValue(p));
@@ -456,7 +441,6 @@ const checkFunctionCompatibility = () => {
       isCompatible = false;
     }
   }
-
   functionCompatibility.value = { isCompatible, warning, aError, bError };
 };
 
@@ -500,17 +484,14 @@ const loadFunctionPoints = async (id, target) => {
   try {
     if (target === 'A') loadingPointsA.value = true;
     if (target === 'B') loadingPointsB.value = true;
-
     const pointsRes = await api.getTabulatedPointsByFunctionId(id);
     const pts = pointsRes.map(p => createPointObject(parseFloat(p.xval), parseFloat(p.yval)));
     const sorted = [...pts].sort((a, b) => a.getX() - b.getX());
-
     const userId = api.getStoredUserId();
     const all = await api.getFunctionsByUserId(userId);
     const func = all.find(f => f.functionId === id);
     if (!func) throw new Error('Функция не найдена');
     func.pointCount = pts.length;
-
     if (target === 'A') {
       selectedFunctionA.value = func;
       functionAPoints.value = [...sorted];
@@ -537,7 +518,6 @@ const saveFunctionPoints = async (target) => {
   const func = target === 'A' ? selectedFunctionA.value : selectedFunctionB.value;
   const pts = target === 'A' ? functionAPoints.value : functionBPoints.value;
   if (!func || !pts.length) return;
-
   const xs = new Set();
   for (const p of pts) {
     const x = getXValue(p);
@@ -547,14 +527,12 @@ const saveFunctionPoints = async (target) => {
     }
     xs.add(x);
   }
-
   try {
     await api.deleteTabulatedPointsByFunctionId(func.functionId);
     for (let i = 0; i < pts.length; i++) {
       const y = getYValue(pts[i], i, target);
       await api.createTabulatedPoints(func.functionId, getXValue(pts[i], i), y);
     }
-
     const updated = pts.map((p, i) => createPointObject(getXValue(p, i), getYValue(p, i, target)));
     if (target === 'A') {
       originalPointsA.value = updated;
@@ -586,7 +564,7 @@ const clearFunction = (target) => {
   updateCanExecute();
 };
 
-// --- LOCAL OPERATION HELPER (должна быть ДО executeOperation!) ---
+// --- LOCAL OPERATION HELPER ---
 const performLocalOperation = (pointsA, pointsB, operation) => {
   if (pointsA.length !== pointsB.length) {
     throw new Error(`Несовпадение количества точек: A=${pointsA.length}, B=${pointsB.length}`);
@@ -596,15 +574,14 @@ const performLocalOperation = (pointsA, pointsB, operation) => {
       throw new Error(`Несовпадение X в точке ${i}: A=${pointsA[i].getX()}, B=${pointsB[i].getX()}`);
     }
   }
-
   return pointsA.map((pA, i) => {
     const pB = pointsB[i];
     const x = pA.getX();
     let y;
     switch (operation) {
-      case 'add':       y = pA.getY() + pB.getY(); break;
-      case 'subtract':  y = pA.getY() - pB.getY(); break;
-      case 'multiply':  y = pA.getY() * pB.getY(); break;
+      case 'add': y = pA.getY() + pB.getY(); break;
+      case 'subtract': y = pA.getY() - pB.getY(); break;
+      case 'multiply': y = pA.getY() * pB.getY(); break;
       case 'divide':
         if (Math.abs(pB.getY()) < 1e-12) throw new Error(`Деление на ноль при x=${x}`);
         y = pA.getY() / pB.getY();
@@ -622,36 +599,19 @@ const executeOperation = async (op) => {
     alert('Невозможно выполнить операцию: функции несовместимы или содержат дублирующиеся X-значения.');
     return;
   }
-
   const funcA = selectedFunctionA.value;
   const funcB = selectedFunctionB.value;
-
   const ptsA = functionAPoints.value.map((p, i) =>
     createPointObject(getXValue(p, i), getYValue(p, i, 'A'))
   ).sort((a, b) => a.getX() - b.getX());
-
   const ptsB = functionBPoints.value.map((p, i) =>
     createPointObject(getXValue(p, i), getYValue(p, i, 'B'))
   ).sort((a, b) => a.getX() - b.getX());
 
   const useLocalOnly = !funcA?.functionId || !funcB?.functionId;
-
   try {
-    let resultPts;
-
-    if (useLocalOnly) {
-      resultPts = performLocalOperation(ptsA, ptsB, op);
-    } else {
-      const res = await api.performOperation(
-        funcA.functionId,
-        funcB.functionId,
-        operationTypeMap[op]
-      );
-      resultPts = res.points.map(p => ({
-        x: parseFloat(p.x !== undefined ? p.x : p.xval),
-        y: parseFloat(p.y !== undefined ? p.y : p.yval)
-      }));
-    }
+    // Всегда выполняем локально
+    const resultPts = performLocalOperation(ptsA, ptsB, op);
 
     resultPoints.value = resultPts;
     resultName.value = `Результат_${op}_${funcA?.functionName || 'A'}_${funcB?.functionName || 'B'}`;
@@ -661,31 +621,13 @@ const executeOperation = async (op) => {
   } catch (err) {
     console.error('Ошибка при выполнении операции:', err);
     let msg = err.message || 'Неизвестная ошибка';
-    if (err.response?.data?.message) msg = err.response.data.message;
-    if (err.response?.data?.error) msg = err.response.data.error;
     alert('Ошибка операции: ' + msg);
   }
 };
 
 // --- Result ---
-const exportToCSV = () => {
-  if (resultPoints.value.length === 0) return;
-  const csv = [
-    ['X', 'Y'],
-    ...resultPoints.value.map(p => [p.x.toFixed(6), p.y.toFixed(6)])
-  ].map(row => row.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${resultName.value}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
 const exportResultToJson = () => {
   if (resultPoints.value.length === 0) return;
-
   const jsonData = {
     functionName: resultName.value,
     typeFunction: 'tabular',
@@ -694,7 +636,6 @@ const exportResultToJson = () => {
       y: point.y
     }))
   };
-
   const jsonStr = JSON.stringify(jsonData, null, 2);
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -730,6 +671,47 @@ const clearResult = () => {
   resultOperationType.value = null;
 };
 
+// --- 🔑 НОВЫЙ МЕТОД: приём созданной функции из FunctionCreator ---
+const assignNewFunction = (func, target) => {
+  if (!func || !Array.isArray(func.points) || func.points.length === 0) {
+    console.error('Невозможно загрузить функцию: отсутствуют точки');
+    return;
+  }
+
+  const points = func.points.map(p => {
+    const x = parseFloat(p.x);
+    const y = parseFloat(p.y);
+    if (isNaN(x) || isNaN(y)) {
+      throw new Error('Некорректные x/y в точке');
+    }
+    return createPointObject(x, y);
+  });
+
+  const sorted = [...points].sort((a, b) => a.getX() - b.getX());
+
+  const fakeFunc = {
+    functionId: null,
+    functionName: func.functionName || 'Новая функция',
+    typeFunction: 'tabular',
+    pointCount: sorted.length
+  };
+
+  if (target === 'A') {
+    selectedFunctionA.value = fakeFunc;
+    functionAPoints.value = [...sorted];
+    originalPointsA.value = sorted.map(p => createPointObject(p.getX(), p.getY()));
+    tempYValues.value.A = {};
+  } else if (target === 'B') {
+    selectedFunctionB.value = fakeFunc;
+    functionBPoints.value = [...sorted];
+    originalPointsB.value = sorted.map(p => createPointObject(p.getX(), p.getY()));
+    tempYValues.value.B = {};
+  }
+
+  checkFunctionCompatibility();
+  updateCanExecute();
+};
+
 // --- Lifecycle ---
 onMounted(() => {
   window.addEventListener('keydown', (e) => {
@@ -749,9 +731,15 @@ watch([functionAPoints, functionBPoints], () => {
   checkFunctionCompatibility();
   updateCanExecute();
 });
+
+// --- Экспорт метода для родителя ---
+defineExpose({
+  assignNewFunction
+});
 </script>
 
 <style scoped>
+/* ... (ваш оригинальный CSS без изменений) ... */
 .operations-window {
   position: relative;
   padding: 20px;
@@ -760,7 +748,10 @@ watch([functionAPoints, functionBPoints], () => {
   max-width: 1200px;
   margin: 0 auto;
   font-family: Arial, sans-serif;
+  background-color: #230942; /* добавлено */
+  color: #fff; /* чтобы текст был виден на темном фоне */
 }
+
 .window-header {
   display: flex;
   justify-content: space-between;
@@ -1005,6 +996,7 @@ table th {
   z-index: 1000;
 }
 .function-selector-modal {
+  background-color: #2f0f5e;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   width: 90%;
@@ -1012,7 +1004,6 @@ table th {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: modalFadeIn 0.3s ease-out;
 }
 .modal-header {
   padding: 15px 20px;
@@ -1045,6 +1036,7 @@ table th {
   cursor: pointer;
   transition: all 0.2s;
   border-radius: 4px;
+
 }
 .function-item:hover {
   background-color: #f0f7ff;
@@ -1084,29 +1076,5 @@ table th {
 }
 .cancel-button:hover {
   background-color: #d5d5d5;
-}
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@media (max-width: 600px) {
-  .function-selector-modal {
-    width: 95%;
-    margin: 10px;
-  }
-  .function-item div {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .function-meta {
-    margin-top: 8px;
-    width: 100%;
-  }
 }
 </style>

@@ -23,17 +23,23 @@
     <div v-if="activeTab === 'fromArrays'">
       <h3>Создание из массивов</h3>
 
-      <!-- Добавляем валидацию для pointCount -->
+      <!-- Добавляем валидацию для pointCount с максимумом 100 -->
       <input
         v-model.number="pointCount"
         type="number"
         placeholder="Количество точек"
         min="1"
+        max="100"
         @blur="validatePointCount"
         :class="{ 'error-input': pointCountError }"
       />
       <span v-if="pointCountError" class="error-message">{{ pointCountError }}</span>
       <button @click="generateTable" class="generate-button">Сгенерировать таблицу</button>
+
+      <!-- Показываем предупреждение если точек много -->
+      <div v-if="pointCount > 50" class="warning-message">
+        ⚠️ Большое количество точек может замедлить работу приложения
+      </div>
 
       <table v-if="points.length > 0">
         <thead>
@@ -104,16 +110,22 @@
         <option v-for="name in sortedFunctionNames" :key="name" :value="name">{{ name }}</option>
       </select>
 
-      <!-- Валидация для pointCount в этой вкладке тоже -->
+      <!-- Валидация для pointCount в этой вкладке тоже с максимумом 100 -->
       <input
         v-model.number="pointCountFromFunction"
         type="number"
         placeholder="Количество точек"
         min="1"
+        max="100"
         @blur="validatePointCountFromFunction"
         :class="{ 'error-input': pointCountFromFunctionError }"
       />
       <span v-if="pointCountFromFunctionError" class="error-message">{{ pointCountFromFunctionError }}</span>
+
+      <!-- Показываем предупреждение если точек много -->
+      <div v-if="pointCountFromFunction > 50" class="warning-message">
+        ⚠️ Большое количество точек может замедлить работу приложения
+      </div>
 
       <input v-model.number="startXFromFunction" type="number" placeholder="Начало интервала X" />
       <input v-model.number="endXFromFunction" type="number" placeholder="Конец интервала X" />
@@ -171,6 +183,9 @@ const showError = inject('showError');
 if (!showError) {
   console.error("FunctionCreator: 'showError' function not provided by parent component.");
 }
+
+// Константа максимального количества точек
+const MAX_POINTS = 100;
 // --- КОНЕЦ ИНЪЕКЦИИ ---
 
 const activeTab = ref('fromArrays');
@@ -236,6 +251,10 @@ const validatePointCount = () => {
     pointCountError.value = 'Количество точек должно быть положительным числом.';
     return false;
   }
+  if (pointCount.value > MAX_POINTS) {
+    pointCountError.value = `Максимальное количество точек: ${MAX_POINTS}`;
+    return false;
+  }
   pointCountError.value = '';
   return true;
 };
@@ -276,6 +295,10 @@ const validatePointCountFromFunction = () => {
     pointCountFromFunctionError.value = 'Количество точек должно быть положительным числом.';
     return false;
   }
+  if (pointCountFromFunction.value > MAX_POINTS) {
+    pointCountFromFunctionError.value = `Максимальное количество точек: ${MAX_POINTS}`;
+    return false;
+  }
   pointCountFromFunctionError.value = '';
   return true;
 };
@@ -297,11 +320,7 @@ const validateFunctionNameFromFunction = () => {
 const generateTable = () => {
   if (!validatePointCount()) return;
 
-  if (pointCount.value > 100) {
-    if (!confirm(`Вы ввели ${pointCount.value} точек. Это может быть неудобно. Продолжить?`)) {
-      return;
-    }
-  }
+  // Убираем confirm для большого количества точек, так как теперь ограничиваем максимум 100
   points.value = Array.from({ length: pointCount.value }, () => ({ x: 0, y: 0 }));
   pointErrors.value = {};
 };
@@ -479,6 +498,12 @@ const loadFromJson = () => {
 
         if (!data.functionName) {
           throw new Error('Отсутствует название функции');
+        }
+
+        // Проверяем количество точек при загрузке из JSON
+        if (Array.isArray(data.points) && data.points.length > MAX_POINTS) {
+          showError(`Файл содержит ${data.points.length} точек. Максимально допустимое количество: ${MAX_POINTS}`);
+          return;
         }
 
         activeTab.value = 'fromArrays';
@@ -722,6 +747,17 @@ table td {
   display: block;
   margin-top: 0.25rem;
   min-height: 1.2em;
+}
+
+/* Предупреждения */
+.warning-message {
+  color: #ffa500;
+  font-size: 0.9em;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: rgba(255, 165, 0, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #ffa500;
 }
 
 /* JSON кнопки */
