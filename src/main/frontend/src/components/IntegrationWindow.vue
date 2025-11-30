@@ -208,13 +208,6 @@
                 </div>
               </div>
             </div>
-
-            <div class="performance-chart" v-if="performanceData.length > 0">
-              <h4>Сравнение производительности</h4>
-              <div class="chart-container">
-                <canvas ref="performanceChart"></canvas>
-              </div>
-            </div>
           </div>
         </div>
       </div>
