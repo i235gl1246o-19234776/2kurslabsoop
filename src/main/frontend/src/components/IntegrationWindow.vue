@@ -176,9 +176,7 @@
           <div v-if="calculationResult" class="section result-section">
             <div class="result-header">
               <h3>Результат вычисления</h3>
-              <div class="result-badge">
-                ∫<sub>{{ integrationStart.toFixed(2) }}</sub><sup>{{ integrationEnd.toFixed(2) }}</sup> f(x) dx
-              </div>
+
             </div>
 
             <div class="result-content">
