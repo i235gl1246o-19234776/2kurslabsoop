@@ -253,7 +253,7 @@ export const api = {
     try {
       console.log('Отправка запроса на вычисление интеграла:', payload);
 
-      const response = await fetch('/api/integration', {
+      const response = await fetch('/api/integrate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ export const api = {
         body: JSON.stringify(payload),
       });
 
-      const result = await handleResponse(response, '/api/integration');
+      const result = await handleResponse(response, '/api/integrate');
       console.log('Успешный ответ от сервера при вычислении интеграла:', result);
       return result;
     } catch (error) {

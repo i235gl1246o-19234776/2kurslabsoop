@@ -87,7 +87,7 @@
                     v-model="integrationSteps"
                     min="10"
                     max="1000000"
-                    step="1000"
+                    step="1"
                     class="setting-input"
                   >
                   <span class="setting-hint">(рекомендуется от 1000 до 100000)</span>
@@ -173,7 +173,13 @@
             </div>
           </div>
 
-          <div v-if="calculationResult" class="section result-section">
+          <div v-if="errorMessage" class="error-section">
+            <p class="error-message">
+              <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+            </p>
+          </div>
+
+          <div v-if="calculationResult !== null" class="section result-section">
             <div class="result-header">
               <h3>Результат вычисления</h3>
               <div class="result-badge">
@@ -231,12 +237,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import FunctionChart from './FunctionChart.vue'
 import { api } from '../api.js'
 import { Chart, registerables } from 'chart.js'
+
 Chart.register(...registerables)
 
 const emit = defineEmits(['close'])
 
 const isLoading = ref(false)
 const isCalculating = ref(false)
+const errorMessage = ref('')
 const availableFunctions = ref([])
 const selectedFunctionId = ref(null)
 const selectedFunction = ref(null)
@@ -278,14 +286,18 @@ const chartPoints = computed(() => {
   )
 })
 
+// Исправленный метод форматирования результата
 const formattedResult = computed(() => {
-  if (!calculationResult.value) return '0.0000'
-  const absValue = Math.abs(calculationResult.value)
+  if (calculationResult.value === null) return '0.000000'
 
+  const value = Number(calculationResult.value)
+  if (isNaN(value)) return '0.000000'
+
+  const absValue = Math.abs(value)
   if (absValue < 0.001 || absValue > 10000) {
-    return calculationResult.value.toExponential(6)
+    return value.toExponential(6)
   }
-  return calculationResult.value.toFixed(6)
+  return value.toFixed(6)
 })
 
 const canCalculate = computed(() => {
@@ -337,6 +349,7 @@ const handleScroll = () => {
 // Загрузка доступных функций
 const loadAvailableFunctions = async () => {
   isLoading.value = true
+  errorMessage.value = ''
   try {
     const userId = api.getStoredUserId()
     const functions = await api.getFunctionsByUserId(userId)
@@ -350,7 +363,7 @@ const loadAvailableFunctions = async () => {
     }
   } catch (error) {
     console.error('Ошибка загрузки функций:', error)
-    alert('Ошибка загрузки списка функций: ' + error.message)
+    errorMessage.value = 'Ошибка загрузки списка функций: ' + (error.message || 'неизвестная ошибка')
   } finally {
     isLoading.value = false
   }
@@ -361,6 +374,7 @@ const loadFunctionPoints = async () => {
   if (!selectedFunctionId.value) return
 
   isLoading.value = true
+  errorMessage.value = ''
   try {
     const userId = api.getStoredUserId()
     const allFunctions = await api.getFunctionsByUserId(userId)
@@ -376,13 +390,20 @@ const loadFunctionPoints = async () => {
       y: parseFloat(p.yval)
     })).sort((a, b) => a.x - b.x)
 
+    // Проверяем, что есть точки и они различны
+    if (functionPoints.value.length === 0) {
+      throw new Error('Функция не содержит точек для интегрирования')
+    }
+
     integrationStart.value = domainStart.value
     integrationEnd.value = domainEnd.value
-    integrationSteps.value = Math.min(100000, Math.max(1000, functionPoints.value.length * 10))
+
+    // Увеличиваем количество шагов для более точного вычисления
+    integrationSteps.value = Math.min(1000000, Math.max(1000, functionPoints.value.length * 100))
     threadCount.value = recommendedThreads.value
   } catch (error) {
     console.error('Ошибка загрузки точек функции:', error)
-    alert('Ошибка загрузки точек функции: ' + error.message)
+    errorMessage.value = 'Ошибка загрузки точек функции: ' + (error.message || 'неизвестная ошибка')
   } finally {
     isLoading.value = false
   }
@@ -390,10 +411,20 @@ const loadFunctionPoints = async () => {
 
 // Вычисление интеграла
 const calculateIntegral = async () => {
-  if (!canCalculate.value) return
+  if (!canCalculate.value) {
+    const missingItems = []
+    if (!selectedFunctionId.value) missingItems.push('функция')
+    if (functionPoints.value.length === 0) missingItems.push('точки функции')
+    if (integrationStart.value >= integrationEnd.value) missingItems.push('корректный интервал')
+    if (integrationSteps.value < 10) missingItems.push('достаточное количество разбиений')
+
+    errorMessage.value = `Невозможно вычислить интеграл. Не хватает: ${missingItems.join(', ')}.`
+    return
+  }
 
   isCalculating.value = true
   calculationResult.value = null
+  errorMessage.value = ''
 
   try {
     const startTime = performance.now()
@@ -406,15 +437,31 @@ const calculateIntegral = async () => {
       parseInt(threadCount.value)
     )
 
+    // Универсальная обработка разных форматов ответа
+    let integralValue
+    if (typeof result === 'number') {
+      integralValue = result
+    } else if (result && typeof result.result === 'number') {
+      integralValue = result.result
+    } else if (result && typeof result.value === 'number') {
+      integralValue = result.value
+    } else if (result && result.data && typeof result.data.value === 'number') {
+      integralValue = result.data.value
+    } else if (result && result.data && typeof result.data === 'number') {
+      integralValue = result.data
+    } else {
+      throw new Error('Некорректный формат ответа от сервера')
+    }
+
     const endTime = performance.now()
 
-    calculationResult.value = result.value
+    calculationResult.value = integralValue
     executionTime.value = (endTime - startTime).toFixed(2)
 
     performanceData.value.push({
       threads: threadCount.value,
       time: parseFloat(executionTime.value),
-      result: calculationResult.value
+      result: integralValue
     })
 
     renderPerformanceChart()
@@ -424,7 +471,10 @@ const calculateIntegral = async () => {
     }, 100)
   } catch (error) {
     console.error('Ошибка вычисления интеграла:', error)
-    alert('Ошибка вычисления интеграла: ' + (error.message || 'неизвестная ошибка'))
+    errorMessage.value = 'Ошибка вычисления интеграла: ' + (error.message || 'неизвестная ошибка')
+
+    // Сбрасываем результат в случае ошибки
+    calculationResult.value = null
   } finally {
     isCalculating.value = false
   }
@@ -517,6 +567,7 @@ const reset = () => {
   calculationResult.value = null
   executionTime.value = 0
   performanceData.value = []
+  errorMessage.value = ''
 
   if (integrationChartInstance) {
     integrationChartInstance.destroy()
@@ -1088,6 +1139,27 @@ h3, h4 {
   border-radius: 8px;
   padding: 15px;
   border: 1px solid #5b1fa8;
+}
+
+.error-section {
+  background-color: rgba(231, 76, 60, 0.15);
+  border: 1px solid #e74c3c;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  color: #ff4fc4;
+  font-size: 0.95rem;
+}
+
+.error-message {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fas {
+  color: #e74c3c;
 }
 
 @media (max-width: 768px) {

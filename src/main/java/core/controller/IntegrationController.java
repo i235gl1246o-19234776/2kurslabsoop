@@ -30,7 +30,7 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/integration")
+@RequestMapping("/api")
 public class IntegrationController {
 
     @Autowired
@@ -76,8 +76,8 @@ public class IntegrationController {
         return functionOpt.get().getUser().getId().equals(currentUser.getId());
     }
 
-    // POST /api/integration - вычисление интеграла
-    @PostMapping
+    // POST /api/integrate - вычисление интеграла
+    @PostMapping("/integrate")
     public ResponseEntity<IntegrationResultDto> performIntegration(
             @RequestBody IntegrationRequestDto requestDto) {
 
@@ -98,7 +98,7 @@ public class IntegrationController {
 
         try {
             // Ограничиваем количество потоков от 1 до 16
-            int threadCount = Math.max(1, Math.min(16, requestDto.getThreadCount()));
+            int threadCount = Math.max(1, Math.min(16, requestDto.getThreads()));
 
             // Преобразуем TabulatedFunction в MathFunction для интегрирования
             MathFunction mathFunction = (MathFunction) function;
@@ -107,9 +107,9 @@ public class IntegrationController {
             long startTime = System.nanoTime();
             double result = operations.ParallelIntegrator.integrateWithFixedPool(
                     mathFunction,
-                    requestDto.getFromX(),
-                    requestDto.getToX(),
-                    function.getCount() * 10, // Увеличиваем количество точек для точности
+                    requestDto.getA(), // Начало интервала
+                    requestDto.getB(), // Конец интервала
+                    requestDto.getSteps(), // Количество шагов из запроса
                     threadCount
             ).result();
             long endTime = System.nanoTime();
@@ -121,6 +121,13 @@ public class IntegrationController {
             log.error("Ошибка при вычислении интеграла: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(null);
         }
+    }
+
+    // POST /api/operations/integrate - альтернативный эндпоинт для совместимости
+    @PostMapping("/operations/integrate")
+    public ResponseEntity<IntegrationResultDto> performIntegrationOperations(
+            @RequestBody IntegrationRequestDto requestDto) {
+        return performIntegration(requestDto);
     }
 
     // Загрузка функции из БД
