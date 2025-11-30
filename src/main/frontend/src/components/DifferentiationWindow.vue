@@ -1,136 +1,152 @@
 <template>
-  <div v-if="show" class="differentiation-window">
-    <div class="window-header">
-      <h2>Дифференцирование функции</h2>
-      <button class="close-button" @click="$emit('close')">&times;</button>
-    </div>
+  <div class="modal-overlay" @click.self="close">
+    <div class="differentiation-window">
+      <div class="window-header">
+        <h2>Дифференцирование функции</h2>
+        <button class="close-button" @click="close">&times;</button>
+      </div>
 
-    <div class="functions-container">
-      <!-- Исходная функция -->
-      <div class="function-section">
-        <h3>Исходная функция</h3>
-        <div class="function-controls">
-          <button @click="createFunction('source')">Создать</button>
-          <button @click="openFunctionSelector('source')">Загрузить</button>
-          <button @click="loadFunctionFromJson">Загрузить из JSON</button>
-          <button @click="exportFunctionToJson" :disabled="!sourceFunction || sourcePoints.length === 0">
-            Экспорт в JSON
-          </button>
-          <button @click="saveFunction('source')" :disabled="!sourceFunction || !hasUnsavedChanges">
-            Сохранить изменения
-          </button>
-        </div>
-        <div v-if="sourceFunction" class="function-details">
-          <p><strong>Имя:</strong> {{ sourceFunction.functionName || 'Ручная функция' }}</p>
-          <p><strong>ID:</strong> {{ sourceFunction.functionId || 'Не сохранено' }}</p>
-          <p><strong>Точек:</strong> {{ sourcePoints.length }}</p>
-          <p v-if="sourceError" class="error-message">{{ sourceError }}</p>
-          <button @click="clearFunction('source')" class="clear-button">Очистить</button>
-        </div>
-        <div class="function-table">
-          <h4>Точки функции</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>X</th>
-                <th>Y</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(point, index) in sourcePoints" :key="index">
-                <td>{{ getXValue(point, index) }}</td>
-                <td>
-                  <input
-                    type="number"
-                    :value="getYValue(point, index)"
-                    @input="event => handleYInput('source', index, event.target.value)"
-                    @change="event => setYValue('source', index, parseFloat(event.target.value))"
-                    class="point-y-input"
-                    :disabled="!sourceFunction"
-                  />
-                </td>
-              </tr>
-              <tr v-if="sourcePoints.length === 0">
-                <td colspan="2" class="empty-table">Нет точек для отображения</td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-if="hasDuplicateX('source')" class="error-message">
-            Ошибка: обнаружены дублирующиеся X-значения.
-            Для корректного дифференцирования X-значения должны быть уникальными и упорядоченными.
+      <div class="window-body">
+        <div class="functions-container">
+          <!-- Исходная функция -->
+          <div class="function-section">
+            <h3>Исходная функция</h3>
+            <div class="function-controls">
+              <button @click="createFunction('source')">Создать</button>
+              <button @click="openFunctionSelector('source')">Загрузить</button>
+              <button @click="loadFunctionFromJson">Загрузить из JSON</button>
+              <button @click="exportFunctionToJson" :disabled="!sourceFunction || sourcePoints.length === 0">
+                Экспорт в JSON
+              </button>
+              <button @click="saveFunction('source')" :disabled="!sourceFunction || !hasUnsavedChanges">
+                Сохранить изменения
+              </button>
+            </div>
+            <div v-if="sourceFunction" class="function-details">
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Имя:</span>
+                  <span class="info-value">{{ sourceFunction.functionName || 'Ручная функция' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">ID:</span>
+                  <span class="info-value">{{ sourceFunction.functionId || 'Не сохранено' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Точек:</span>
+                  <span class="info-value">{{ sourcePoints.length }}</span>
+                </div>
+              </div>
+              <p v-if="sourceError" class="error-message">{{ sourceError }}</p>
+              <button @click="clearFunction('source')" class="clear-button">Очистить</button>
+            </div>
+            <div class="function-table">
+              <h4>Точки функции</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>X</th>
+                    <th>Y</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(point, index) in sourcePoints" :key="index">
+                    <td>{{ getXValue(point, index) }}</td>
+                    <td>
+                      <input
+                        type="number"
+                        :value="getYValue(point, index)"
+                        @input="event => handleYInput('source', index, event.target.value)"
+                        @change="event => setYValue('source', index, parseFloat(event.target.value))"
+                        class="point-y-input"
+                        :disabled="!sourceFunction"
+                      />
+                    </td>
+                  </tr>
+                  <tr v-if="sourcePoints.length === 0">
+                    <td colspan="2" class="empty-table">Нет точек для отображения</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div v-if="hasDuplicateX('source')" class="error-message">
+                Ошибка: обнаружены дублирующиеся X-значения.
+                Для корректного дифференцирования X-значения должны быть уникальными и упорядоченными.
+              </div>
+            </div>
+          </div>
+
+          <!-- Производная -->
+          <div class="function-section">
+            <h3>Производная</h3>
+            <div class="function-controls">
+              <button
+                @click="differentiate"
+                :disabled="!canDifferentiate || hasDuplicateX('source')"
+                class="operation-button derivative"
+              >
+                Дифференцировать
+              </button>
+              <button @click="saveResult" :disabled="resultPoints.length === 0" class="save-button">Сохранить результат</button>
+              <button @click="exportResultToJson" :disabled="resultPoints.length === 0" class="export-button">
+                Экспорт в JSON
+              </button>
+              <button @click="clearResult" class="clear-button">Очистить результат</button>
+            </div>
+            <div class="result-table">
+              <h4>Результат дифференцирования</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>X</th>
+                    <th>Y (производная)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(point, index) in resultPoints" :key="index">
+                    <td>{{ point.x.toFixed(4) }}</td>
+                    <td>{{ point.y.toFixed(6) }}</td>
+                  </tr>
+                  <tr v-if="resultPoints.length === 0">
+                    <td colspan="2" class="empty-table">Результат отсутствует</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Производная -->
-      <div class="function-section">
-        <h3>Производная</h3>
-        <div class="function-controls">
-          <button
-            @click="differentiate"
-            :disabled="!canDifferentiate || hasDuplicateX('source')"
-            class="operation-button derivative"
-          >
-            Дифференцировать
-          </button>
-          <button @click="saveResult" :disabled="resultPoints.length === 0" class="save-button">Сохранить результат</button>
-          <button @click="exportResultToJson" :disabled="resultPoints.length === 0" class="export-button">
-            Экспорт в JSON
-          </button>
-          <button @click="clearResult" class="clear-button">Очистить результат</button>
-        </div>
-        <div class="result-table">
-          <table>
-            <thead>
-              <tr>
-                <th>X</th>
-                <th>Y</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(point, index) in resultPoints" :key="index">
-                <td>{{ point.x.toFixed(4) }}</td>
-                <td>{{ point.y.toFixed(6) }}</td>
-              </tr>
-              <tr v-if="resultPoints.length === 0">
-                <td colspan="2" class="empty-table">Результат отсутствует</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Модальное окно выбора функции -->
-    <div v-if="showFunctionSelector" class="modal-overlay" @click="closeFunctionSelector">
-      <div class="function-selector-modal" @click.stop>
-        <div class="modal-header">
-          <h3>Выберите функцию для {{ selectorTarget }}</h3>
-          <button class="close-button" @click="closeFunctionSelector">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p v-if="loadingFunctions">Загрузка функций...</p>
-          <p v-else-if="availableFunctions.length === 0">Нет доступных функций</p>
-          <ul v-else class="functions-list">
-            <li
-              v-for="func in availableFunctions"
-              :key="func.functionId"
-              @click="selectFunction(func)"
-              class="function-item"
-            >
-              <div>
-                <strong>{{ func.functionName }}</strong>
-                <span class="function-id">(ID: {{ func.functionId }})</span>
-              </div>
-              <div class="function-meta">
-                <span>Точек: {{ func.pointCount || 0 }}</span>
-                <span>Тип: {{ func.typeFunction === 'tabular' ? 'Табличная' : func.typeFunction }}</span>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="modal-footer">
-          <button @click="closeFunctionSelector" class="cancel-button">Отмена</button>
+      <!-- Модальное окно выбора функции -->
+      <div v-if="showFunctionSelector" class="modal-overlay" @click="closeFunctionSelector">
+        <div class="function-selector-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Выберите функцию для {{ selectorTarget }}</h3>
+            <button class="close-button" @click="closeFunctionSelector">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p v-if="loadingFunctions">Загрузка функций...</p>
+            <p v-else-if="availableFunctions.length === 0">Нет доступных функций</p>
+            <ul v-else class="functions-list">
+              <li
+                v-for="func in availableFunctions"
+                :key="func.functionId"
+                @click="selectFunction(func)"
+                class="function-item"
+              >
+                <div>
+                  <strong>{{ func.functionName }}</strong>
+                  <span class="function-id">(ID: {{ func.functionId }})</span>
+                </div>
+                <div class="function-meta">
+                  <span>Точек: {{ func.pointCount || 0 }}</span>
+                  <span>Тип: {{ func.typeFunction === 'tabular' ? 'Табличная' : func.typeFunction }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button @click="closeFunctionSelector" class="cancel-button">Отмена</button>
+          </div>
         </div>
       </div>
     </div>
@@ -141,9 +157,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { api } from '../api.js';
 
-const props = defineProps({
-  show: Boolean
-});
 const emit = defineEmits(['close']);
 
 // Состояния
@@ -538,6 +551,10 @@ const saveResult = async () => {
   }
 };
 
+const close = () => {
+  emit('close');
+};
+
 // Подписки
 onMounted(() => {
   window.addEventListener('function-created', handleFunctionCreated);
@@ -549,77 +566,127 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
 .differentiation-window {
   position: relative;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 25px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
   max-width: 1200px;
-  margin: 0 auto;
-  font-family: Arial, sans-serif;
+  max-height: 90vh;
+  margin: 20px auto;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #1a0a2e;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+
+/* Крестик */
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  z-index: 10;
+  background: none;
+  border: none;
+}
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ff6fda;
+  transform: rotate(90deg);
+}
+
 .window-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #5b1fa8;
 }
-.close-button {
-  font-size: 24px;
-  cursor: pointer;
-  background: none;
-  border: none;
-  color: #666;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+
+h2 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.8rem;
 }
-.close-button:hover {
-  background-color: #f0f0f0;
-  color: #d32f2f;
+
+h3, h4 {
+  color: #ffffff;
+  margin: 0 0 1rem 0;
 }
+
+.window-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px;
+}
+
 .functions-container {
   display: flex;
   gap: 30px;
   margin-bottom: 30px;
 }
+
 .function-section {
   flex: 1;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+  padding: 20px;
+  border: 1px solid #5b1fa8;
+  border-radius: 12px;
+  background: rgba(47, 16, 92, 0.3);
 }
+
 .function-controls {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
   flex-wrap: wrap;
 }
+
 .function-controls button {
-  padding: 8px 15px;
-  background-color: #2196f3;
+  padding: 10px 15px;
+  background-color: #5b1fa8;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.25s ease;
+  font-weight: 500;
 }
+
 .function-controls button:nth-child(3) {
   background-color: #9c27b0;
 }
 .function-controls button:nth-child(4) {
   background-color: #607d8b;
 }
+
 .function-controls button:hover {
-  background-color: #1976d2;
+  background-color: #7b1fa8;
 }
 .function-controls button:nth-child(3):hover {
   background-color: #7b1fa2;
@@ -627,181 +694,314 @@ onUnmounted(() => {
 .function-controls button:nth-child(4):hover {
   background-color: #546e7a;
 }
+
 .function-details {
-  background-color: white;
+  background: rgba(91, 31, 168, 0.2);
   padding: 15px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  border-radius: 8px;
+  border: 1px solid #5b1fa8;
   margin-top: 10px;
 }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #cccccc;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #ffffff;
+  font-weight: 500;
+}
+
 .error-message {
-  color: #d32f2f;
+  color: #ff4fc4;
   font-size: 0.9em;
   margin: 5px 0;
 }
+
 .function-table,
 .result-table {
   margin-top: 15px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid #5b1fa8;
+  border-radius: 8px;
   overflow: hidden;
+  background: rgba(47, 16, 92, 0.3);
 }
+
 .function-table h4,
 .result-table h4 {
-  margin: 0 0 10px 0;
-  padding: 10px;
-  background-color: #e9ecef;
-  border-bottom: 1px solid #ddd;
+  margin: 0;
+  padding: 12px;
+  background: rgba(91, 31, 168, 0.4);
+  border-bottom: 1px solid #5b1fa8;
+  color: #ffffff;
 }
+
 .empty-table {
   text-align: center;
   padding: 20px;
-  color: #999;
+  color: #cccccc;
 }
+
 .point-y-input {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border: 1px solid #5b1fa8;
+  border-radius: 6px;
   font-size: 14px;
+  background-color: #2f105c;
+  color: #ffffff;
+  transition: border-color 0.25s ease;
 }
+
 .point-y-input:focus {
   outline: none;
-  border-color: #2196f3;
-  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  border-color: #ff4fc4;
+  box-shadow: 0 0 0 2px rgba(255, 79, 196, 0.2);
 }
+
+/* Убираем стрелки у number input */
+.point-y-input[type=number]::-webkit-outer-spin-button,
+.point-y-input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.point-y-input[type=number] {
+  -moz-appearance: textfield;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
   min-width: 300px;
 }
+
 table th,
 table td {
-  border: 1px solid #ddd;
+  border: 1px solid #5b1fa8;
   padding: 10px;
   text-align: left;
 }
+
 table th {
-  background-color: #f5f5f5;
-  font-weight: bold;
+  background-color: #2f105c;
+  color: #ffffff;
+  font-weight: 600;
 }
+
 table td {
-  background-color: white;
+  background-color: rgba(35, 9, 66, 0.5);
+  color: #ffffff;
 }
+
 .clear-button {
-  background-color: #f44336;
+  background-color: #e74c3c;
   color: white;
   padding: 8px 15px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background-color 0.25s ease;
 }
+
 .clear-button:hover {
-  background-color: #e53935;
+  background-color: #c0392b;
 }
+
 .save-button {
   background-color: #4caf50;
   color: white;
 }
+
 .save-button:hover:not(:disabled) {
   background-color: #45a049;
 }
+
 .save-button:disabled {
-  background-color: #cccccc;
+  background-color: #888;
   cursor: not-allowed;
 }
+
 .export-button {
   background-color: #607d8b;
   color: white;
 }
+
 .export-button:hover {
   background-color: #546e7a;
 }
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+
+.operation-button.derivative {
+  background-color: #2196f3;
+  font-weight: 600;
 }
+
+.operation-button.derivative:hover:not(:disabled) {
+  background-color: #1976d2;
+}
+
+.operation-button.derivative:disabled {
+  background-color: #888;
+  cursor: not-allowed;
+}
+
 .function-selector-modal {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: #1a0a2e;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  border: 1px solid #5b1fa8;
 }
+
 .modal-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
+  padding: 20px;
+  border-bottom: 1px solid #5b1fa8;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f8f9fa;
+  background: rgba(47, 16, 92, 0.3);
 }
+
+.modal-header h3 {
+  margin: 0;
+  color: #ffffff;
+}
+
 .modal-body {
   padding: 20px;
   overflow-y: auto;
   flex-grow: 1;
 }
+
 .functions-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .function-item {
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #5b1fa8;
   cursor: pointer;
   transition: all 0.2s;
-  border-radius: 4px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: rgba(47, 16, 92, 0.3);
 }
+
 .function-item:hover {
-  background-color: #f0f7ff;
+  background-color: rgba(91, 31, 168, 0.4);
   transform: translateX(5px);
 }
+
 .function-id {
-  color: #666;
+  color: #cccccc;
   font-size: 0.9rem;
   margin-left: 8px;
 }
+
 .function-meta {
   display: flex;
   gap: 15px;
-  margin-top: 5px;
+  margin-top: 8px;
   font-size: 0.85rem;
-  color: #666;
+  color: #cccccc;
 }
+
 .modal-footer {
-  padding: 15px 20px;
-  border-top: 1px solid #eee;
+  padding: 20px;
+  border-top: 1px solid #5b1fa8;
   text-align: right;
-  background-color: #f8f9fa;
-  border-radius: 0 0 8px 8px;
+  background: rgba(47, 16, 92, 0.3);
+  border-radius: 0 0 16px 16px;
 }
+
 .cancel-button {
-  padding: 8px 16px;
-  background-color: #e0e0e0;
+  padding: 10px 20px;
+  background-color: #5b1fa8;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.25s ease;
+  color: #ffffff;
 }
+
 .cancel-button:hover {
-  background-color: #d5d5d5;
+  background-color: #7b1fa8;
 }
+
 @media (max-width: 768px) {
+  .differentiation-window {
+    width: 95%;
+    margin: 10px;
+    max-height: 95vh;
+    padding: 20px 15px;
+  }
+
   .functions-container {
     flex-direction: column;
+    gap: 20px;
+  }
+
+  .function-section {
+    padding: 15px;
+  }
+
+  .function-controls {
+    flex-direction: column;
+  }
+
+  .function-controls button {
+    width: 100%;
+  }
+
+  table {
+    font-size: 0.9em;
+  }
+
+  table th, table td {
+    padding: 8px;
+  }
+
+  .window-body {
+    max-height: calc(95vh - 100px);
+  }
+}
+
+@media (max-width: 480px) {
+  .differentiation-window {
+    padding: 15px 10px;
+  }
+
+  .function-section {
+    padding: 12px;
+  }
+
+  .modal-body {
+    padding: 15px;
+  }
+
+  .function-item {
+    padding: 12px;
   }
 }
 </style>

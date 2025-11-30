@@ -752,11 +752,9 @@ watch([functionAPoints, functionBPoints], () => {
 </script>
 
 <style scoped>
-/* Все стили из оригинального файла */
 .operations-window {
   position: relative;
   padding: 20px;
-  background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   max-width: 1200px;
@@ -799,7 +797,6 @@ watch([functionAPoints, functionBPoints], () => {
   padding: 15px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #f9f9f9;
 }
 .function-controls {
   display: flex;
@@ -832,7 +829,6 @@ watch([functionAPoints, functionBPoints], () => {
   background-color: #546e7a;
 }
 .function-details {
-  background-color: white;
   padding: 15px;
   border-radius: 6px;
   border: 1px solid #ddd;
@@ -849,7 +845,6 @@ watch([functionAPoints, functionBPoints], () => {
   margin: 0;
 }
 .compatibility-warning {
-  background-color: #fff8e1;
   border-left: 4px solid #ffc107;
   padding: 10px 15px;
   margin: 15px 0;
@@ -870,7 +865,6 @@ watch([functionAPoints, functionBPoints], () => {
 .function-table h4, .result-table h4 {
   margin: 0 0 10px 0;
   padding: 10px;
-  background-color: #e9ecef;
   border-bottom: 1px solid #ddd;
 }
 .empty-table {
@@ -925,10 +919,8 @@ watch([functionAPoints, functionBPoints], () => {
   margin-top: 30px;
   padding: 20px;
   border-radius: 8px;
-  background-color: #f8f9fa;
 }
 .result-table {
-  background-color: white;
   max-height: 400px;
   overflow-y: auto;
 }
@@ -983,11 +975,7 @@ table th, table td {
   text-align: left;
 }
 table th {
-  background-color: #f5f5f5;
   font-weight: bold;
-}
-table td {
-  background-color: white;
 }
 @media (max-width: 768px) {
   .functions-container {
@@ -1017,7 +1005,6 @@ table td {
   z-index: 1000;
 }
 .function-selector-modal {
-  background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   width: 90%;
@@ -1033,7 +1020,6 @@ table td {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f8f9fa;
 }
 .modal-header h3 {
   margin: 0;
@@ -1085,7 +1071,6 @@ table td {
   padding: 15px 20px;
   border-top: 1px solid #eee;
   text-align: right;
-  background-color: #f8f9fa;
   border-radius: 0 0 8px 8px;
 }
 .cancel-button {

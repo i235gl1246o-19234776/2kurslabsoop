@@ -558,7 +558,6 @@ const saveAsJson = () => {
 .creator {
   position: relative;
   padding: 25px 20px;
-  background-color: #230942;
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
   max-width: 800px;
